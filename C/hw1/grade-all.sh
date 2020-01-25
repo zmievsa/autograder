@@ -1,5 +1,7 @@
 testcases=(
-	"sum_of_digits"
+	"test_sum_of_digits",
+	"test_adjust_array",
+	"test_get_binomial_coefficient"
 )
 
 source_file_name="homework1"
