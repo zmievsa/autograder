@@ -1,9 +1,9 @@
 testcases=(
-	"example_test_case"
+	"sum_of_digits"
 )
 
-source_file_name="example_assignment"
-assignment_name="Example"
+source_file_name="homework1"
+assignment_name="Homework 1"
 total_possible_points=60
 
 earned_points=0
