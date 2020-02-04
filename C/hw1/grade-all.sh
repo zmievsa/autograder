@@ -1,12 +1,17 @@
+# CONFIG BEGINS
+
 testcases=(
-	"test_sum_of_digits",
-	"test_adjust_array",
+	"test_sum_of_digits"
+	"test_adjust_array"
 	"test_get_binomial_coefficient"
 )
 
-source_file_name="homework1"
-assignment_name="Homework 1"
+source_file_name="homework1" # A string that has to be in each source file name
+                             # But it doesn't have to be the entire name
+assignment_name="Homework 1" # For display in the output
 total_possible_points=60
+
+# CONFIG ENDS
 
 earned_points=0
 num_students=0
