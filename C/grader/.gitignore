@@ -1,0 +1,5 @@
+submissions*
+.mypy_cache
+.vscode
+*.sh
+results
