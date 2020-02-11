@@ -8,6 +8,7 @@ import shutil
 from timer import Timer
 import filecmp
 from typing import List
+from multiprocessing import Pool
 
 
 # CONFIG
@@ -15,6 +16,8 @@ TIMEOUT = 1
 SOURCE_FILE_NAME = "homework1.c"  # A string that has to be in each source file name
 ASSIGNMENT_NAME = "Homework 1"  # For display in the output
 total_possible_points = 60
+
+POOL_COUNT = 5  # Better hardware = more pools
 
 # Constants
 KEY = """
@@ -34,22 +37,20 @@ REMOVE_PRINTF = True
 
 
 def main():
-    submissions_dir: Path = CURRENT_DIR / "submissions"
-    results_dir: Path = CURRENT_DIR / "results"
-    results_dir.mkdir(exist_ok=True)
-    tests_dir = CURRENT_DIR / "tests/testcases"
-    total_class_points = 0
-    student_count = 0
-    clean_directory(CURRENT_DIR)
-    tests = gather_tests(tests_dir)
-    for submission in submissions_dir.iterdir():
-        if not SOURCE_FILE_NAME in str(submission):
-            continue
-        student_count += 1
-        total_class_points += run_tests_on_submission(submission, results_dir, tests)
-    class_average = total_class_points / student_count
-    print(f"\nAverage score: {round(class_average)}/{total_possible_points}")
-    clean_directory(CURRENT_DIR)
+    with Timer(print):
+        submissions_dir: Path = CURRENT_DIR / "submissions"
+        results_dir: Path = CURRENT_DIR / "results"
+        results_dir.mkdir(exist_ok=True)
+        tests_dir = CURRENT_DIR / "tests/testcases"
+        total_class_points = 0
+        clean_directory(CURRENT_DIR)
+        tests = gather_tests(tests_dir)
+        submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
+        with Pool(POOL_COUNT) as p:
+            total_class_points = sum(p.map(run_tests_on_submission, submissions))
+        class_average = total_class_points / len(submissions)
+        print(f"\nAverage score: {round(class_average)}/{total_possible_points}")
+        clean_directory(CURRENT_DIR)
 
 
 def clean_directory(directory: Path):
@@ -69,10 +70,11 @@ def gather_tests(tests_dir: Path) -> List[Path]:
     return tests
 
 
-def run_tests_on_submission(submission: Path, results_dir: Path, tests: List[Path]):
+def run_tests_on_submission(args):
+    submission, results_dir, tests = args
     testcase_count = len(tests)
     student_name = submission.name[:submission.name.find("_")]
-    print(f"Grading {student_name}")
+    # print(f"Grading {student_name}")
     shutil.copy(submission, CURRENT_DIR)
     with open(results_dir / submission.name, "w") as f:
         f.write(f"{ASSIGNMENT_NAME} Test Results\n\n")
@@ -82,7 +84,6 @@ def run_tests_on_submission(submission: Path, results_dir: Path, tests: List[Pat
             sh.gcc("-c", f"{submission.name}", "-Dmain=__student_main__", "-Dprintf(...);=")
         except sh.ErrorReturnCode_1 as e:
             f.write("\nYour file failed to compile!")
-            print("Failed to compile")
             return 0
         test: Path
         pass_count = 0
@@ -94,7 +95,7 @@ def run_tests_on_submission(submission: Path, results_dir: Path, tests: List[Pat
             pass_count += int(test_result == "PASS")
         student_score = pass_count * total_possible_points / testcase_count
         student_final_result = f"{round(student_score)}/{total_possible_points}"
-        print("Done.", student_final_result)
+        print(f"{student_name}.", student_final_result)
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)
