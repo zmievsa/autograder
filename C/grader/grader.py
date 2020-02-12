@@ -1,7 +1,3 @@
-# TODO Refactor
-# TODO Fix formatting
-# TODO Speed up
-
 import sh
 from pathlib import Path
 import shutil
@@ -16,8 +12,6 @@ TIMEOUT = 1
 SOURCE_FILE_NAME = "homework1.c"  # A string that has to be in each source file name
 ASSIGNMENT_NAME = "Homework 1"  # For display in the output
 total_possible_points = 60
-
-POOL_COUNT = 5  # Better hardware = more pools
 
 # Constants
 KEY = """
@@ -37,16 +31,16 @@ REMOVE_PRINTF = True
 
 
 def main():
-    with Timer(print):
+    with Timer(lambda t: print(f"It took us {t} seconds")):
+        sh.cd(CURRENT_DIR)
         submissions_dir: Path = CURRENT_DIR / "submissions"
         results_dir: Path = CURRENT_DIR / "results"
         results_dir.mkdir(exist_ok=True)
         tests_dir = CURRENT_DIR / "tests/testcases"
-        total_class_points = 0
         clean_directory(CURRENT_DIR)
         tests = gather_tests(tests_dir)
         submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
-        with Pool(POOL_COUNT) as p:
+        with Pool() as p:
             total_class_points = sum(p.map(run_tests_on_submission, submissions))
         class_average = total_class_points / len(submissions)
         print(f"\nAverage score: {round(class_average)}/{total_possible_points}")
@@ -87,36 +81,27 @@ def run_tests_on_submission(args):
             return 0
         test: Path
         pass_count = 0
-        compiled_tests = compile_tests(tests, submission)
-        for test, compiled_test in zip(tests, compiled_tests):
-            test_result = run_test(test, compiled_test, submission)
+        for test in tests:
+            test_result = run_test(test, submission)
             test_name = test.stem.replace("_", " ").capitalize()
             f.write("\n%-40s%s" % (test_name, test_result))
             pass_count += int(test_result == "PASS")
         student_score = pass_count * total_possible_points / testcase_count
         student_final_result = f"{round(student_score)}/{total_possible_points}"
-        print(f"{student_name}.", student_final_result)
+        if student_score == 60: print(f"{student_name}.", student_final_result)
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)
         return student_score
-
-def compile_tests(tests: List[Path], submission: Path):
-    compiled_tests = []
-    for test in tests:
-        test_executable_path = make_test_executable_path(test, submission)
-        compiled_tests.append(sh.gcc("-o", test_executable_path, test, submission.stem + ".o", _bg=True, _bg_exc=False))
-    return compiled_tests
 
 
 def make_test_executable_path(test: Path, student_submission: Path):
     return test.with_name(test.stem + student_submission.stem + ".exe")
 
 
-
-def run_test(test: Path, compiled_test: sh.RunningCommand, submission: Path):
+def run_test(test: Path,  submission: Path):
     try:
-        result = compiled_test.wait()
+        sh.gcc("-o", make_test_executable_path(test, submission), test, submission.stem + ".o")  # In case we want to do non-background compilation
     except sh.ErrorReturnCode as e:
         return "Failed to Compile!"
     with open(submission.stem + "_output.txt", "w") as runtime_output:
@@ -132,6 +117,16 @@ def run_test(test: Path, compiled_test: sh.RunningCommand, submission: Path):
     else:
         return "Wrong Answer!"
 
+
+def compile_tests(tests: List[Path], submission: Path):
+    """ An optimization to compiling that's supposed to make it faster but doesn't benefit us
+        if we're already using multiprocessing. Don't forget to call .wait() on compiled tests
+    """
+    compiled_tests = []
+    for test in tests:
+        test_executable_path = make_test_executable_path(test, submission)
+        compiled_tests.append(sh.gcc("-o", test_executable_path, test, submission.stem + ".o", _bg=True, _bg_exc=False))
+    return compiled_tests
 
 
 main()
