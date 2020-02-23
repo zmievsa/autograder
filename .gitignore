@@ -1,1 +1,7 @@
+.vscode
 *.zip
+.mypy_cache
+__pycache__
+submissions/
+results/
+tests/*

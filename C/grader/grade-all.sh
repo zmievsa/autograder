@@ -1,9 +1,12 @@
 # CONFIG BEGINS
 
 testcases=(
+	"test_sum_of_digits_zero"
 	"test_sum_of_digits"
+	"test_sum_of_digits_overflow"
 	"test_adjust_array"
 	"test_get_binomial_coefficient"
+	"test_get_binomial_coefficient_zero"
 )
 
 source_file_name="homework1" # A string that has to be in each source file name

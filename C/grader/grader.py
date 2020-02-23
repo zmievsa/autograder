@@ -5,7 +5,7 @@ from timer import Timer
 import filecmp
 from typing import List
 from multiprocessing import Pool
-
+from collections import namedtuple
 
 # CONFIG
 TIMEOUT = 1
@@ -30,6 +30,14 @@ REMOVE_MAIN = True
 REMOVE_PRINTF = True
 
 
+class Test:
+    def __init__(self, path: Path):
+        self.path = path
+    
+    def expected_output_path(self):
+        return 
+
+
 def main():
     with Timer(lambda t: print(f"It took us {t} seconds")):
         sh.cd(CURRENT_DIR)
@@ -42,7 +50,7 @@ def main():
         submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
         with Pool() as p:
             total_class_points = sum(p.map(run_tests_on_submission, submissions))
-        class_average = total_class_points / len(submissions)
+        class_average = total_class_points / (len(submissions) or 1)
         print(f"\nAverage score: {round(class_average)}/{total_possible_points}")
         clean_directory(CURRENT_DIR)
 
@@ -88,7 +96,7 @@ def run_tests_on_submission(args):
             pass_count += int(test_result == "PASS")
         student_score = pass_count * total_possible_points / testcase_count
         student_final_result = f"{round(student_score)}/{total_possible_points}"
-        if student_score == 60: print(f"{student_name}.", student_final_result)
+        print(f"{student_name}.", student_final_result)
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)
@@ -107,7 +115,7 @@ def run_test(test: Path,  submission: Path):
     with open(submission.stem + "_output.txt", "w") as runtime_output:
         test_executable = sh.Command(make_test_executable_path(test, submission))
         try:
-            test_executable(_out=runtime_output, _timeout=TIMEOUT)
+            test_executable(_in=test.input,_out=runtime_output, _timeout=TIMEOUT)
         except sh.TimeoutException:
             return "Exceeded Time Limit"
         except sh.ErrorReturnCode:

@@ -1,6 +1,0 @@
-submissions*
-.mypy_cache
-.vscode
-*.sh
-results
-__pycache__
