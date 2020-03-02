@@ -4,7 +4,6 @@ import shutil
 from timer import Timer
 from typing import List
 from multiprocessing import Pool
-from collections import namedtuple
 from io import StringIO
 
 # CONFIG
@@ -44,7 +43,7 @@ class Test:
         with open(tests_dir / f"input/{path.stem}.txt") as f:
             self.input = StringIO(f.read().strip())
         
-        # Only really works if test is in snake_case
+        # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
     
     def run(self, submission):
@@ -72,6 +71,7 @@ class Test:
 
 def main():
     with Timer(lambda t: print(f"It took us {t} seconds")):
+        make_compilation_arguments()
         sh.cd(CURRENT_DIR)
         results_dir.mkdir(exist_ok=True)
         tests_dir = CURRENT_DIR / "tests/testcases"
@@ -137,6 +137,15 @@ def run_tests_on_submission(args):
 def format_output(output: str):
     """ Removes whitespace and lowers """
     return "".join(output.lower().split())
+
+
+def make_compilation_arguments():
+    if ERASE_PRINTF:
+        COMPILATION_ARGUMENTS.append("-Dprintf(...);=")
+    if ERASE_SCANF:
+        COMPILATION_ARGUMENTS.append("-Dscanf(...);=")  # Causes an error
+    if RENAME_STUDENT_MAIN:
+        COMPILATION_ARGUMENTS.append("-Dmain=__student_main__")
 
 
 if __name__ == "__main__":
