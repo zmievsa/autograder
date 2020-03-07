@@ -5,6 +5,7 @@ from timer import Timer
 from typing import List
 from multiprocessing import Pool
 from io import StringIO
+import os
 
 # CONFIG
 TIMEOUT = 1
@@ -12,9 +13,14 @@ ERASE_PRINTF = False
 ERASE_SCANF  = False  # can't do this yet
 RENAME_STUDENT_MAIN = True
 COMPILATION_ARGUMENTS: List[str] = []
-SOURCE_FILE_NAME = "homework1.c"    # A string that has to be in each source file name
+SOURCE_FILE_NAME = ".c"    # A string that has to be in each source file name
 ASSIGNMENT_NAME = "Homework 1"      # For display in the output
 TOTAL_POINTS_POSSIBLE = 100
+# These two cuties make it possible to give partial credit
+# For example, if we allow exit codes from 0 to 10, we will
+# be able to take as little as 10% (we could even extend it to 0 ... 100)
+PASSING_TEST_RETURN_CODES = [0]
+FAILING_TEST_RETURN_CODES = [1]
 
 # Constants
 KEY = """
@@ -26,6 +32,7 @@ KEY = """
 \tExceeded Time Limit: Your submission took longer than 60 seconds to run (probably an infinite loop)
 \tWrong Answer!: Your submission produced the wrong result or generated too much output
 """
+ALLOWED_RETURN_CODES = PASSING_TEST_RETURN_CODES + FAILING_TEST_RETURN_CODES
 TEMP_FILE_SUFFIXES = (".c", ".o", ".exe", ".txt")
 
 
@@ -47,23 +54,25 @@ class Test:
         self.name = path.stem.replace("_", " ").capitalize()
     
     def run(self, submission):
-        executable_path = make_executable_path(self, submission)
+        self.input.seek(0)
+        executable_path = self.make_executable_path(submission)
         try:
-            sh.gcc("-o", executable_path, self, submission.stem + ".o")  # In case we want to do non-background compilation
+            sh.gcc("-o", executable_path, self.path, submission.stem + ".o")  # In case we want to do non-background compilation
         except sh.ErrorReturnCode as e:
             return "Failed to Compile!"
-        runtime_output = StringIO()
-        test_executable = sh.Command(executable_path)
-        try:
-            test_executable(_in=self.input, _out=runtime_output, _timeout=TIMEOUT)
-        except sh.TimeoutException:
-            return "Exceeded Time Limit"
-        except sh.ErrorReturnCode:
-            return "Crashed"
-        if format_output(runtime_output.read()) == self.expected_output:
-            return "PASS"
-        else:
-            return "Wrong Answer!"
+        with StringIO() as runtime_output:
+            test_executable = sh.Command(executable_path)
+            try:
+                result = test_executable(_in=self.input, _out=runtime_output, _timeout=TIMEOUT, _ok_code=ALLOWED_RETURN_CODES)
+            except sh.TimeoutException:
+                return "Exceeded Time Limit"
+            except sh.ErrorReturnCode as e:
+                return "Crashed"
+            out = runtime_output.getvalue()
+            if format_output(out) == self.expected_output and result.exit_code == 0:
+                return "PASS"
+            else:
+                return "Wrong Answer!"
     
     def make_executable_path(self, submission: Path):
         return self.path.with_name(self.path.stem + submission.stem + ".exe")
@@ -76,8 +85,10 @@ def main():
         results_dir.mkdir(exist_ok=True)
         tests_dir = CURRENT_DIR / "tests/testcases"
         clean_directory(CURRENT_DIR)
+        
         tests = gather_tests(tests_dir)
         submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
+        os.makedirs("results", exist_ok=True)
         with Pool() as p:
             total_class_points = sum(p.map(run_tests_on_submission, submissions))
         class_average = total_class_points / (len(submissions) or 1)
@@ -140,6 +151,7 @@ def format_output(output: str):
 
 
 def make_compilation_arguments():
+    COMPILATION_ARGUMENTS.append("-Dscanf_s=scanf")
     if ERASE_PRINTF:
         COMPILATION_ARGUMENTS.append("-Dprintf(...);=")
     if ERASE_SCANF:
