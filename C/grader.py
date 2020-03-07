@@ -46,7 +46,7 @@ tests_dir: Path = CURRENT_DIR / "tests"
 
 
 class Test:
-    def __init__(self, path: Path, check_output=False):
+    def __init__(self, path: Path):
         self.path = path
         with open(tests_dir / f"output/{path.stem}.txt") as f:
             self.expected_output = format_output(f.read())
