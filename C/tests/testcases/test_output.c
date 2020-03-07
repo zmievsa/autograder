@@ -1,4 +1,4 @@
 int main() {
     numberSaver();
-    return 0;
+    return 1;
 }

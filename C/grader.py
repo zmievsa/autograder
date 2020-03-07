@@ -1,3 +1,6 @@
+# IMPORTANT: CHECKING OUTPUT AND RESULT NEED TO BE DONE SEPARATELY
+# IF THE TEST CASE CHECKS OUTPUT, IT NEEDS TO RETURN A FAILING TEST CASE BY DEFAULT
+
 import sh
 from pathlib import Path
 import shutil
@@ -43,7 +46,7 @@ tests_dir: Path = CURRENT_DIR / "tests"
 
 
 class Test:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, check_output=False):
         self.path = path
         with open(tests_dir / f"output/{path.stem}.txt") as f:
             self.expected_output = format_output(f.read())
@@ -69,8 +72,8 @@ class Test:
             except sh.ErrorReturnCode as e:
                 return "Crashed"
             out = runtime_output.getvalue()
-            if format_output(out) == self.expected_output and result.exit_code == 0:
-                return "PASS"
+            if result.exit_code in PASSING_TEST_RETURN_CODES or format_output(out) == self.expected_output:
+                return "PASS" # edit this with custom logic for calculating scores
             else:
                 return "Wrong Answer!"
     

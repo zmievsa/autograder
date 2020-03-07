@@ -2,7 +2,8 @@
 *.zip
 .mypy_cache
 __pycache__
-submissions/*.c
+C/submissions/*.c
+C/submissions/*.C
 results/
-tests/*.c
-tests/*.txt
+C/tests/*.c
+C/tests/*.txt
