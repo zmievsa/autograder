@@ -10,6 +10,8 @@ import shutil
 # for anything besides their assigned meaning (1 is usually any exception).
 # This is the reason we use exit codes [3, ..., 103], so to calculate student
 # score (0 - 100), just add 3 to your calculated score.
+# IMPORTANT: CHECKING OUTPUT AND RESULT NEED TO BE DONE SEPARATELY
+# IF THE TEST CASE CHECKS OUTPUT, IT NEEDS TO RETURN THE RESULTLESS_EXIT_CODE
 RESULTLESS_EXIT_CODE = 0
 RESULT_EXIT_CODE_SHIFT = 3  # All exit codes that convey student score are shifted by this
 ALLOWED_EXIT_CODES = (RESULTLESS_EXIT_CODE, *range(0 + RESULT_EXIT_CODE_SHIFT, 101 + RESULT_EXIT_CODE_SHIFT))
@@ -138,7 +140,7 @@ class PythonTestCase(TestCase):
     multiprocessing_allowed = True
     def __init__(self, path, *args, **kwargs):
         super().__init__(path, *args, **kwargs)
-        # We prepend automatic import of test_helper and student submission to the testcase code
+        # We prepend macros and student submission import to the testcase code
         macros = f"NO_RESULT=lambda:exit({RESULTLESS_EXIT_CODE})\n" +\
         f"RESULT=lambda r:exit(r+({RESULT_EXIT_CODE_SHIFT}))\n" +\
         f"PASS=lambda:exit({MAX_RESULT})\n" +\
