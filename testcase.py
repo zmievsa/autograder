@@ -127,6 +127,31 @@ class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it could generate errors """
     source_suffix = ".java"
 
+    def __init__(self, path, *args, **kwargs):
+        super().__init__(path, *args, **kwargs)
+        # We prepend macros and student submission import to the testcase code
+        helper_class = f"""
+        class TestHelper {{
+            public static void NO_RESULT() {{
+                System.exit({RESULTLESS_EXIT_CODE});
+            }}
+            public static void RESULT(int result) {{
+                System.exit(result + ({RESULT_EXIT_CODE_SHIFT}));
+            }}
+            
+            public static void PASS() {{
+                System.exit({MAX_RESULT});
+            }}
+            public static void FAIL() {{
+                System.exit({MIN_RESULT});
+            }}
+        }}
+        """
+        with open(path, "r+") as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(helper_class + content)
+
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
         return lambda *args, **kwargs: sh.java(self.path.stem, *args, **kwargs)
@@ -134,7 +159,7 @@ class JavaTestCase(TestCase):
 
 class PythonTestCase(TestCase):
     """ A proof of concept of how easy it is to add new languages
-        Will only work if python executable is accessible via python3 alias
+        Will only work if python executable is accessible via python3 alias for now
     """
     source_suffix = ".py"
     multiprocessing_allowed = True
