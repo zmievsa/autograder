@@ -8,15 +8,16 @@ from timer import Timer
 from multiprocessing import Pool
 from io import StringIO
 import os
-from testcase import CTestCase, JavaTestCase
+from testcase import CTestCase, JavaTestCase, PythonTestCase
+from typing import List
 
 
 # CONFIG --------------------------------------------------------------
 TIMEOUT = 1                     # Student's program is terminated if it takes more than this time in seconds
 TOTAL_POINTS_POSSIBLE = 100     # Total points given for automatic tests
-TestCase = CTestCase            # Specifies which language we're working with
+TestCaseType = PythonTestCase   # Specifies which language we're working with
 ASSIGNMENT_NAME = "Homework"    # For display in the output
-SOURCE_FILE_NAME = "Homework.c" # A string that has to be in each source file name
+SOURCE_FILE_NAME = "Homework.py" # A string that has to be in each source file name
 def FILTER_FUNCTION(s):         # Filters each char in output
     return s.isdigit()
 # ---------------------------------------------------------------------
@@ -50,11 +51,11 @@ def main():
         # Java does not like multiprocessing.
         # Basically, we can't manipulate file names
         # as easily as we do in C so collisions would occur
-        if TestCase == JavaTestCase:
-            total_class_points = sum(map(run_tests_on_submission, submissions))
-        else:
+        if TestCaseType.multiprocessing_allowed:
             with Pool() as p:
                 total_class_points = sum(p.map(run_tests_on_submission, submissions))
+        else:
+            total_class_points = sum(map(run_tests_on_submission, submissions))
         class_average = total_class_points / (len(submissions) or 1)
         print(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
         clean_directory(CURRENT_DIR)
@@ -70,13 +71,13 @@ def clean_directory(directory: Path):
             path.unlink()
 
 
-def gather_tests(tests_dir: Path) -> list:
+def gather_tests(tests_dir: Path) -> List[TestCaseType]:
     tests = []
     for test in (tests_dir / "testcases").iterdir():
-        if not (test.is_file() and TestCase.source_suffix in test.name):
+        if not (test.is_file() and TestCaseType.source_suffix in test.name):
             continue
         shutil.copy(test, CURRENT_DIR)
-        tests.append(TestCase(CURRENT_DIR / test.name, tests_dir, TIMEOUT, FILTER_FUNCTION))
+        tests.append(TestCaseType(CURRENT_DIR / test.name, tests_dir, TIMEOUT, FILTER_FUNCTION))
     return tests
 
 
@@ -84,19 +85,12 @@ def run_tests_on_submission(args):
     submission, results_dir, tests = args
     testcase_count = len(tests)
     student_name = submission.name[:submission.name.find("_")]
-    if TestCase == JavaTestCase:
-        # Again, java wants class name and file name to be the same
-        destination = CURRENT_DIR / SOURCE_FILE_NAME
-    else:
-        destination = CURRENT_DIR / submission.name
-    shutil.copy(submission, destination)
-    submission = destination
     with open(results_dir / submission.name, "w") as f:
         f.write(f"{ASSIGNMENT_NAME} Test Results\n\n")
         f.write("%-40s%s" % ("TestCase", "Result"))
         f.write("\n================================================================")
         try:
-            precompiled_submission = TestCase.precompile_submission(submission)
+            precompiled_submission = TestCaseType.precompile_submission(submission, CURRENT_DIR, SOURCE_FILE_NAME)
         except sh.ErrorReturnCode_1 as e:
             f.write("\nYour file failed to compile")
             return 0

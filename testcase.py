@@ -2,6 +2,7 @@ from pathlib import Path
 from io import StringIO
 from abc import ABC, abstractmethod
 import sh
+import shutil
 
 
 # These two cuties make it possible to give partial credit.
@@ -19,7 +20,8 @@ MIN_RESULT = ALLOWED_EXIT_CODES[1]
 class TestCase(ABC):
     SUBMISSION_COMPILATION_ARGUMENTS = tuple()  # Extra args you'd like to use during compilation
     COMPILATION_ARGUMENTS = tuple()
-    executable_suffix = ".out"               # Default suffix given to the executable
+    multiprocessing_allowed = False             # By default we assume that we can't run tests in parallel
+    executable_suffix = ".out"                  # Default suffix given to the executable
     def __init__(self, path: Path, tests_dir: Path, timeout: int, filter_function):
         self.path = path
         self.timeout = timeout
@@ -69,12 +71,13 @@ class TestCase(ABC):
         return "".join(filter(self.filter_function, "".join(output.lower().split())))
     
     @classmethod
-    def precompile_submission(cls, submission: Path) -> Path:
-        """ Either precompiles student submission and returns the path to
-            the precompiled submission or to original submission if no
-            precompilation is necesessary
+    def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
+        """ Copies student submission into currect_dir and either precompiles it and returns the path to
+            the precompiled submission or to the copied submission if no precompilation is necesessary
         """
-        return submission
+        destination = current_dir / source_file_name
+        shutil.copy(submission, destination)
+        return destination
 
     @abstractmethod
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
@@ -87,6 +90,7 @@ class TestCase(ABC):
 
 class CTestCase(TestCase):
     source_suffix = ".c"
+    multiprocessing_allowed = True
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
     COMPILATION_ARGS = (
         f"-DNO_RESULT={RESULTLESS_EXIT_CODE}",
@@ -94,14 +98,15 @@ class CTestCase(TestCase):
         f"-DPASS={MAX_RESULT}",
         f"-DFAIL={MIN_RESULT}"
     )
-
+    
     @classmethod
-    def precompile_submission(cls, submission: Path) -> Path:
+    def precompile_submission(cls, submission, current_dir, source_file_name):
         """ Links student submission without compiling it.
             It is done to speed up total compilation time
         """
-        sh.gcc("-c", f"{submission.name}", *cls.SUBMISSION_COMPILATION_ARGS)
-        return submission.with_suffix(".o")
+        copied_submission = super().precompile_submission(submission, current_dir, submission.name)
+        sh.gcc("-c", f"{copied_submission}", *cls.SUBMISSION_COMPILATION_ARGS)
+        return copied_submission.with_suffix(".o")
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         executable_path = self.make_executable_path(precompiled_submission)
@@ -121,4 +126,26 @@ class JavaTestCase(TestCase):
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
-        return lambda **kwargs: sh.java(self.path.stem, **kwargs)
+        return lambda *args, **kwargs: sh.java(self.path.stem, *args, **kwargs)
+
+
+class PythonTestCase(TestCase):
+    """ A proof of concept of how easy it is to add new languages
+        Will only work if python executable is accessible via python3 alias
+    """
+    source_suffix = ".py"
+    multiprocessing_allowed = True
+    def __init__(self, path, *args, **kwargs):
+        super().__init__(path, *args, **kwargs)
+        # We prepend automatic import of test_helper and student submission to the testcase code
+        with open(path, "r+") as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(
+                "import sys\nimport importlib\nfrom test_helper import *\n" +
+                "student_submission = importlib.import_module(sys.argv[1])\n"
+                + content
+            )
+
+    def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
+        return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)
