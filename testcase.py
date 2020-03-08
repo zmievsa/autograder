@@ -40,7 +40,6 @@ class TestCase(ABC):
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
-            print(e)
             return 0, "Failed to Compile"
         with StringIO() as runtime_output:
             try:
@@ -53,6 +52,8 @@ class TestCase(ABC):
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
+                print(e)
+                print(e.exit_code)
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
@@ -138,11 +139,16 @@ class PythonTestCase(TestCase):
     def __init__(self, path, *args, **kwargs):
         super().__init__(path, *args, **kwargs)
         # We prepend automatic import of test_helper and student submission to the testcase code
+        macros = f"NO_RESULT=lambda:exit({RESULTLESS_EXIT_CODE})\n" +\
+        f"RESULT=lambda r:exit(r+({RESULT_EXIT_CODE_SHIFT}))\n" +\
+        f"PASS=lambda:exit({MAX_RESULT})\n" +\
+        f"FAIL=lambda:exit({MIN_RESULT})\n"
         with open(path, "r+") as f:
             content = f.read()
             f.seek(0, 0)
             f.write(
-                "import sys\nimport importlib\nfrom test_helper import *\n" +
+                macros + 
+                "import sys\nimport importlib\n" +
                 "student_submission = importlib.import_module(sys.argv[1])\n"
                 + content
             )
