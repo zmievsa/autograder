@@ -2,3 +2,4 @@
 *.zip
 .mypy_cache
 __pycache__
+assignment_*
