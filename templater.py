@@ -1,6 +1,8 @@
 import re
 
+
 matcher = re.compile("{% *([A-Za-z0-9_]+) *%}")
+
 
 def format_template(template, **kwargs):
     for match in matcher.finditer(template):
@@ -12,5 +14,3 @@ def format_template(template, **kwargs):
     if len(kwargs):
         raise ValueError("Too many arguments supplied: " + ", ".join(kwargs.keys()))
     return template
-
-print(format_template("suka bluad pizda {% num %}, {% num2   %},", num=78, num2=-9))

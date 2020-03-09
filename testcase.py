@@ -35,6 +35,8 @@ class TestCase(ABC):
         
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
+        
+        self.prepend_test_helper()
     
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
@@ -89,6 +91,13 @@ class TestCase(ABC):
             precompilation is necesessary
         """
         pass
+
+    def prepend_test_helper(self):
+        with open(path, "r+") as f, open(self.path_to_helper_module) as helper_file:
+            helper_file_contents = templater.helper_file.read()
+            content = f.read()
+            f.seek(0, 0)
+            f.write( + content)
 
 
 class CTestCase(TestCase):
@@ -147,10 +156,7 @@ class JavaTestCase(TestCase):
             }}
         }}
         """
-        with open(path, "r+") as f:
-            content = f.read()
-            f.seek(0, 0)
-            f.write(helper_class + content)
+        
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
