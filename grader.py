@@ -7,7 +7,7 @@ from typing import List
 
 import sh
 
-from testcase import CTestCase, JavaTestCase, PythonTestCase
+from testcases import CTestCase, JavaTestCase, PythonTestCase
 from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR
 
 

@@ -42,7 +42,7 @@ class TestCase(ABC):
         self.name = path.stem.replace("_", " ").capitalize()
         
         self.prepend_test_helper()
-    
+
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
         self.input.seek(0)
@@ -71,15 +71,15 @@ class TestCase(ABC):
                 return 100, "100/100"
             else:
                 return 0, "Wrong answer"
-    
+
     def make_executable_path(self, submission: Path):
         """ By combining test name and student name, it makes a unique path """
         return self.path.with_name(self.path.stem + submission.stem + self.executable_suffix)
-    
+
     def format_output(self, output: str):
         """ Removes whitespace and normalizes the output """
         return "".join(filter(self.filter_function, "".join(output.lower().split())))
-    
+
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
         """ Copies student submission into currect_dir and either precompiles it and returns the path to
