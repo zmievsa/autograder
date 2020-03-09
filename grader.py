@@ -73,6 +73,7 @@ def run_tests_on_submission(args):
     submission, results_dir, tests = args
     testcase_count = len(tests)
     student_name = submission.name[:submission.name.find("_")]
+    print(f"Starting grading {student_name}")
     with open(results_dir / submission.name, "w") as f:
         f.write(f"{ASSIGNMENT_NAME} Test Results\n\n")
         f.write("%-40s%s" % ("TestCase", "Result"))
@@ -89,7 +90,7 @@ def run_tests_on_submission(args):
             total_testcase_score += testcase_score
         student_score = total_testcase_score / testcase_count * TOTAL_SCORE_TO_100_RATIO
         student_final_result = f"{round(student_score)}/{TOTAL_POINTS_POSSIBLE}"
-        print(f"{student_name}.", student_final_result)
+        print(f"{student_name}: ", student_final_result)
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)
