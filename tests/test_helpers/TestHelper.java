@@ -1,15 +1,15 @@
 class TestHelper {
     public static void NO_RESULT() {
-        System.exit(%d);             // RESULTLESS_EXIT_CODE
+        System.exit({% RESULTLESS_EXIT_CODE %});
     }
     public static void RESULT(int result) {
-        System.exit(result + (%d));  // RESULT_EXIT_CODE_SHIFT
+        System.exit(result + ({% RESULT_EXIT_CODE_SHIFT %}));
     }
     
     public static void PASS() {
-        System.exit(%d);            // MIN_RESULT
+        System.exit({% MAX_RESULT %});
     }
     public static void FAIL() {
-        System.exit(%d);            // MAX_RESULT
+        System.exit({% MIN_RESULT %});
     }
 }

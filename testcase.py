@@ -3,8 +3,10 @@ from io import StringIO
 from abc import ABC, abstractmethod
 import sh
 import shutil
+import templater
 
 
+CURRENT_DIR = Path(__file__).parent.resolve()
 # These two cuties make it possible to give partial credit.
 # Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used
 # for anything besides their assigned meaning (1 is usually any exception).
@@ -20,10 +22,11 @@ MIN_RESULT = ALLOWED_EXIT_CODES[1]
 
 
 class TestCase(ABC):
-    SUBMISSION_COMPILATION_ARGUMENTS = tuple()  # Extra args you'd like to use during compilation
-    COMPILATION_ARGUMENTS = tuple()
+    SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()  # Extra args you'd like to use during compilation
+    COMPILATION_ARGUMENTS: tuple = tuple()
     multiprocessing_allowed = False             # By default we assume that we can't run tests in parallel
     executable_suffix = ".out"                  # Default suffix given to the executable
+    path_to_helper_module: Path
     def __init__(self, path: Path, tests_dir: Path, timeout: int, filter_function):
         self.path = path
         self.timeout = timeout
@@ -44,6 +47,7 @@ class TestCase(ABC):
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
+            print(e)
             return 0, "Failed to Compile"
         with StringIO() as runtime_output:
             try:
@@ -57,7 +61,6 @@ class TestCase(ABC):
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 print(e)
-                print(e.exit_code)
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
@@ -93,23 +96,30 @@ class TestCase(ABC):
         pass
 
     def prepend_test_helper(self):
-        with open(path, "r+") as f, open(self.path_to_helper_module) as helper_file:
-            helper_file_contents = templater.helper_file.read()
+        """ Prepends all of the associated test_helper code to test code """
+        with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
+            formatted_helper_file = templater.format_template(
+                helper_file.read(),
+                RESULTLESS_EXIT_CODE=RESULTLESS_EXIT_CODE,
+                RESULT_EXIT_CODE_SHIFT=RESULT_EXIT_CODE_SHIFT,
+                MAX_RESULT=MAX_RESULT,
+                MIN_RESULT=MIN_RESULT
+            )
             content = f.read()
-            f.seek(0, 0)
-            f.write( + content)
+            final_content = formatted_helper_file + "\n" + content
+        with open(self.path, "w") as f:
+            f.write(final_content)
+
+    def cleanup(self):
+        self.input.close()
+        self.path.unlink()
 
 
 class CTestCase(TestCase):
     source_suffix = ".c"
     multiprocessing_allowed = True
+    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    COMPILATION_ARGS = (
-        f"-DNO_RESULT={RESULTLESS_EXIT_CODE}",
-        f"-DRESULT(x)=x+({RESULT_EXIT_CODE_SHIFT})",
-        f"-DPASS={MAX_RESULT}",
-        f"-DFAIL={MIN_RESULT}"
-    )
     
     @classmethod
     def precompile_submission(cls, submission, current_dir, source_file_name):
@@ -126,8 +136,7 @@ class CTestCase(TestCase):
             "-o",
             executable_path,
             self.path,
-            precompiled_submission.name,
-            *self.COMPILATION_ARGS
+            precompiled_submission.name
         )
         return sh.Command(executable_path)
 
@@ -135,28 +144,7 @@ class CTestCase(TestCase):
 class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it could generate errors """
     source_suffix = ".java"
-
-    def __init__(self, path, *args, **kwargs):
-        super().__init__(path, *args, **kwargs)
-        # We prepend macros and student submission import to the testcase code
-        helper_class = f"""
-        class TestHelper {{
-            public static void NO_RESULT() {{
-                System.exit({RESULTLESS_EXIT_CODE});
-            }}
-            public static void RESULT(int result) {{
-                System.exit(result + ({RESULT_EXIT_CODE_SHIFT}));
-            }}
-            
-            public static void PASS() {{
-                System.exit({MAX_RESULT});
-            }}
-            public static void FAIL() {{
-                System.exit({MIN_RESULT});
-            }}
-        }}
-        """
-        
+    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/TestHelper.java"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
@@ -169,22 +157,7 @@ class PythonTestCase(TestCase):
     """
     source_suffix = ".py"
     multiprocessing_allowed = True
-    def __init__(self, path, *args, **kwargs):
-        super().__init__(path, *args, **kwargs)
-        # We prepend macros and student submission import to the testcase code
-        macros = f"NO_RESULT=lambda:exit({RESULTLESS_EXIT_CODE})\n" +\
-        f"RESULT=lambda r:exit(r+({RESULT_EXIT_CODE_SHIFT}))\n" +\
-        f"PASS=lambda:exit({MAX_RESULT})\n" +\
-        f"FAIL=lambda:exit({MIN_RESULT})\n"
-        with open(path, "r+") as f:
-            content = f.read()
-            f.seek(0, 0)
-            f.write(
-                macros + 
-                "import sys\nimport importlib\n" +
-                "student_submission = importlib.import_module(sys.argv[1])\n"
-                + content
-            )
+    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)

@@ -1,7 +1,6 @@
 import sh
 from pathlib import Path
 import shutil
-from timer import Timer
 from multiprocessing import Pool
 from io import StringIO
 import os
@@ -12,9 +11,9 @@ from typing import List
 # CONFIG --------------------------------------------------------------
 TIMEOUT = 1                     # Student's program is terminated if it takes more than this time in seconds
 TOTAL_POINTS_POSSIBLE = 100     # Total points given for automatic tests
-TestCaseType = PythonTestCase   # Specifies which language we're working with
+TestCaseType = CTestCase   # Specifies which language we're working with
 ASSIGNMENT_NAME = "Homework"    # For display in the output
-SOURCE_FILE_NAME = "Homework.py" # A string that has to be in each source file name
+SOURCE_FILE_NAME = "Homework.c" # A string that has to be in each source file name
 def FILTER_FUNCTION(s):         # Filters each char in output
     return s.isdigit()
 # ---------------------------------------------------------------------
@@ -38,27 +37,25 @@ tests_dir: Path = CURRENT_DIR / "tests"
 
 
 def main():
-    with Timer(lambda t: print(f"It took us {t} seconds")):
-        sh.cd(CURRENT_DIR)
-        results_dir.mkdir(exist_ok=True)
-        clean_directory(CURRENT_DIR)
-        tests = gather_tests(tests_dir)
-        submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
-        os.makedirs("results", exist_ok=True)
-        # Java does not like multiprocessing.
-        # Basically, we can't manipulate file names
-        # as easily as we do in C so collisions would occur
-        if TestCaseType.multiprocessing_allowed:
-            with Pool() as p:
-                total_class_points = sum(p.map(run_tests_on_submission, submissions))
-        else:
-            total_class_points = sum(map(run_tests_on_submission, submissions))
-        class_average = total_class_points / (len(submissions) or 1)
-        print(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
-        clean_directory(CURRENT_DIR)
-        for test in tests:
-            test.input.close()
-            test.path.unlink()
+    sh.cd(CURRENT_DIR)
+    results_dir.mkdir(exist_ok=True)
+    clean_directory(CURRENT_DIR)
+    tests = gather_tests(tests_dir)
+    submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
+    os.makedirs("results", exist_ok=True)
+    # Java does not like multiprocessing.
+    # Basically, we can't manipulate file names
+    # as easily as we do in C so collisions would occur
+    if TestCaseType.multiprocessing_allowed:
+        with Pool() as p:
+            total_class_points = sum(p.map(run_tests_on_submission, submissions))
+    else:
+        total_class_points = sum(map(run_tests_on_submission, submissions))
+    class_average = total_class_points / (len(submissions) or 1)
+    print(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
+    clean_directory(CURRENT_DIR)
+    for test in tests:
+        test.cleanup()
 
 
 def clean_directory(directory: Path):
