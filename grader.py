@@ -1,17 +1,20 @@
-import sh
-from pathlib import Path
-import shutil
-from multiprocessing import Pool
-from io import StringIO
 import os
-from testcase import CTestCase, JavaTestCase, PythonTestCase
+import shutil
+from io import StringIO
+from multiprocessing import Pool
+from pathlib import Path
 from typing import List
+
+import sh
+
+from testcase import CTestCase, JavaTestCase, PythonTestCase
+from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR
 
 
 # CONFIG --------------------------------------------------------------
 TIMEOUT = 1                     # Student's program is terminated if it takes more than this time in seconds
 TOTAL_POINTS_POSSIBLE = 100     # Total points given for automatic tests
-TestCaseType = CTestCase   # Specifies which language we're working with
+TestCaseType = CTestCase        # Specifies which language we're working with
 ASSIGNMENT_NAME = "Homework"    # For display in the output
 SOURCE_FILE_NAME = "Homework.c" # A string that has to be in each source file name
 def FILTER_FUNCTION(s):         # Filters each char in output
@@ -30,22 +33,13 @@ KEY = """
 TEMP_FILE_SUFFIXES = (".class", ".o", ".out")
 
 
-CURRENT_DIR = Path(__file__).parent.resolve()
-submissions_dir: Path = CURRENT_DIR / "submissions"
-results_dir: Path = CURRENT_DIR / "results"
-tests_dir: Path = CURRENT_DIR / "tests"
-
-
 def main():
     sh.cd(CURRENT_DIR)
-    results_dir.mkdir(exist_ok=True)
+    RESULTS_DIR.mkdir(exist_ok=True)
     clean_directory(CURRENT_DIR)
-    tests = gather_tests(tests_dir)
-    submissions = [(s, results_dir, tests) for s in submissions_dir.iterdir() if SOURCE_FILE_NAME in str(s)]
+    tests = gather_tests(TESTS_DIR)
+    submissions = [(s, RESULTS_DIR, tests) for s in SUBMISSIONS_DIR.iterdir() if SOURCE_FILE_NAME in str(s)]
     os.makedirs("results", exist_ok=True)
-    # Java does not like multiprocessing.
-    # Basically, we can't manipulate file names
-    # as easily as we do in C so collisions would occur
     if TestCaseType.multiprocessing_allowed:
         with Pool() as p:
             total_class_points = sum(p.map(run_tests_on_submission, submissions))
@@ -88,7 +82,6 @@ def run_tests_on_submission(args):
         except sh.ErrorReturnCode_1 as e:
             f.write("\nYour file failed to compile")
             return 0
-        test: Path
         total_testcase_score = 0
         for test in tests:
             testcase_score, message = test.run(precompiled_submission)

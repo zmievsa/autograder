@@ -1,12 +1,14 @@
-from pathlib import Path
-from io import StringIO
-from abc import ABC, abstractmethod
-import sh
 import shutil
+from abc import ABC, abstractmethod
+from io import StringIO
+from pathlib import Path
+
+import sh
+
 import templater
+from util import CURRENT_DIR, TESTS_DIR
 
 
-CURRENT_DIR = Path(__file__).parent.resolve()
 # These two cuties make it possible to give partial credit.
 # Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used
 # for anything besides their assigned meaning (1 is usually any exception).
@@ -27,13 +29,13 @@ class TestCase(ABC):
     multiprocessing_allowed = False             # By default we assume that we can't run tests in parallel
     executable_suffix = ".out"                  # Default suffix given to the executable
     path_to_helper_module: Path
-    def __init__(self, path: Path, tests_dir: Path, timeout: int, filter_function):
+    def __init__(self, path: Path, TESTS_DIR: Path, timeout: int, filter_function):
         self.path = path
         self.timeout = timeout
         self.filter_function = filter_function
-        with open(tests_dir / f"output/{path.stem}.txt") as f:
+        with open(TESTS_DIR / f"output/{path.stem}.txt") as f:
             self.expected_output = self.format_output(f.read())
-        with open(tests_dir / f"input/{path.stem}.txt") as f:
+        with open(TESTS_DIR / f"input/{path.stem}.txt") as f:
             self.input = StringIO(f.read().strip())
         
         # Only really works if test name is in snake_case
@@ -120,7 +122,7 @@ class CTestCase(TestCase):
     multiprocessing_allowed = True
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    
+
     @classmethod
     def precompile_submission(cls, submission, current_dir, source_file_name):
         """ Links student submission without compiling it.
@@ -145,6 +147,9 @@ class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it could generate errors """
     source_suffix = ".java"
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/TestHelper.java"
+    # Java does not like multiprocessing.
+    # Basically, we can't manipulate file names
+    # as easily as we do in C so collisions would occur
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
