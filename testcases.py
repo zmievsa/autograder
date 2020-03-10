@@ -60,9 +60,10 @@ class TestCase(ABC):
                     _ok_code=ALLOWED_EXIT_CODES
                 )
             except sh.TimeoutException:
+                logger.info(f"Exceeded time limit")
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
-                logger.info(get_stderr(e, "Crashed"))
+                logger.info(f"Crashed due to {e.exit_code}")
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
@@ -119,7 +120,7 @@ class TestCase(ABC):
 
 class CTestCase(TestCase):
     source_suffix = ".c"
-    multiprocessing_allowed = True
+    multiprocessing_allowed = False
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
 
