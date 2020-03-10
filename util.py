@@ -12,7 +12,7 @@ TESTS_DIR: Path = CURRENT_DIR / "tests"
 
 logger = logging.getLogger("Grader")
 logger.setLevel(logging.INFO)
-logger.addHandler(logging.FileHandler("grader_output.txt", mode="w"))
+logger.addHandler(logging.FileHandler(CURRENT_DIR / "grader_output.txt", mode="w"))
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
