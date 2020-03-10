@@ -1,10 +1,6 @@
-# TODO: Remove multiprocessing because it doesn't work with logging
-
-
 import os
 import shutil
 from io import StringIO
-from multiprocessing import Pool
 from pathlib import Path
 from typing import List
 
@@ -43,11 +39,7 @@ def main():
     tests = gather_tests(TESTS_DIR)
     submissions = [(s, RESULTS_DIR, tests) for s in SUBMISSIONS_DIR.iterdir() if SOURCE_FILE_NAME in str(s)]
     os.makedirs("results", exist_ok=True)
-    if TestCaseType.multiprocessing_allowed:
-        with Pool() as p:
-            total_class_points = sum(p.map(run_tests_on_submission, submissions))
-    else:
-        total_class_points = sum(map(run_tests_on_submission, submissions))
+    total_class_points = sum(map(run_tests_on_submission, submissions))
     class_average = total_class_points / (len(submissions) or 1)
     logger.info(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
     clean_directory(CURRENT_DIR)

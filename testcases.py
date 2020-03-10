@@ -26,7 +26,6 @@ MIN_RESULT = ALLOWED_EXIT_CODES[1]
 class TestCase(ABC):
     SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()  # Extra args you'd like to use during compilation
     COMPILATION_ARGUMENTS: tuple = tuple()
-    multiprocessing_allowed = False             # By default we assume that we can't run tests in parallel
     executable_suffix = ".out"                  # Default suffix given to the executable
     path_to_helper_module: Path
     def __init__(self, path: Path, TESTS_DIR: Path, timeout: int, filter_function):
@@ -64,15 +63,20 @@ class TestCase(ABC):
                 logger.info(f"Exceeded time limit")
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
+                # http://man7.org/linux/man-pages/man7/signal.7.html
                 logger.info(f"Crashed due to {e.exit_code}")
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
-                return score, f"{score}/100"
+                msg = f"{score}/100" + " (Wrong answer)" if score == 0 else ""
+                logger.info(msg)
+                return score, msg 
             elif self.format_output(runtime_output.getvalue()) == self.expected_output:
+                logger.info("100/100")
                 return 100, "100/100"
             else:
-                return 0, "Wrong answer"
+                logger.info("0/100 (Wrong answer)")
+                return 0, "0/100 (Wrong answer)"
 
     def make_executable_path(self, submission: Path):
         """ By combining test name and student name, it makes a unique path """
@@ -121,7 +125,6 @@ class TestCase(ABC):
 
 class CTestCase(TestCase):
     source_suffix = ".c"
-    multiprocessing_allowed = False
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
 
@@ -149,9 +152,6 @@ class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it could generate errors """
     source_suffix = ".java"
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/TestHelper.java"
-    # Java does not like multiprocessing.
-    # Basically, we can't manipulate file names
-    # as easily as we do in C so collisions would occur
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
@@ -163,7 +163,6 @@ class PythonTestCase(TestCase):
         Will only work if python executable is accessible via python3 alias for now
     """
     source_suffix = ".py"
-    multiprocessing_allowed = True
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
