@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from io import StringIO
 from pathlib import Path
@@ -26,7 +27,8 @@ KEY = """
 \nKey:
 \tFailed to Compile: Your submission did not compile due to a syntax or naming error
 \tCompiled with warnings: Your submission uses unchecked or unsafe operations
-\tCrashed: Your submission threw an uncaught exception
+\tCrashed due to signal SIGNAL_CODE: Your submission threw an uncaught exception.
+\tAll signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
 \tExceeded Time Limit: Your submission took longer than 60 seconds to run (probably an infinite loop)
 """
 TEMP_FILE_SUFFIXES = (".class", ".o", ".out")
@@ -81,7 +83,9 @@ def run_tests_on_submission(args):
             return 0
         total_testcase_score = 0
         for test in tests:
+            logger.info(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
+            logger.info(message)
             f.write("\n%-40s%s" % (test.name, message))
             total_testcase_score += testcase_score
         student_score = total_testcase_score / testcase_count * TOTAL_SCORE_TO_100_RATIO
@@ -94,4 +98,10 @@ def run_tests_on_submission(args):
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        if sys.argv[1].lower() == "clean":
+            clean_directory(CURRENT_DIR)
+        else:
+            raise ValueError("Unknown command line argument")
+    else:
+        main()
