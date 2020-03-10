@@ -8,7 +8,7 @@ from typing import List
 import sh
 
 from testcases import CTestCase, JavaTestCase, PythonTestCase
-from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR, logger
+from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR, logger, get_stderr
 
 
 # CONFIG --------------------------------------------------------------
@@ -78,8 +78,9 @@ def run_tests_on_submission(args):
         try:
             precompiled_submission = TestCaseType.precompile_submission(submission, CURRENT_DIR, SOURCE_FILE_NAME)
         except sh.ErrorReturnCode_1 as e:
-            logger.info(f"Failed to precompile\nResult: 0/{TOTAL_POINTS_POSSIBLE}\n")
-            f.write("\nYour file failed to compile")
+            stderr = get_stderr(e, "Failed to precompile")
+            logger.info(stderr + f"\nResult: 0/{TOTAL_POINTS_POSSIBLE}\n")
+            f.write(f"\nYour file failed to compile{stderr.replace('Failed to precompile', '')}")
             return 0
         total_testcase_score = 0
         for test in tests:

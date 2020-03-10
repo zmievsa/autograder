@@ -18,4 +18,4 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def get_stderr(error: sh.ErrorReturnCode, string):
     error = str(error)
-    return string + error[error.find("STDERR:") + len("STDERR"):].strip()
+    return string + error[error.find("STDERR:") + len("STDERR"):].strip().replace(str(CURRENT_DIR), "...")

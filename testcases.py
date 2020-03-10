@@ -61,7 +61,7 @@ class TestCase(ABC):
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                return 0, "Crashed"
+                return 0, f"Crashed due to signal {e.exit_code}"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
                 return score, f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
