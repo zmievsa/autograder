@@ -94,7 +94,7 @@ def run_tests_on_submission(args):
             total_testcase_score += testcase_score
         student_score = total_testcase_score / testcase_count * TOTAL_SCORE_TO_100_RATIO
         student_final_result = f"{round(student_score)}/{TOTAL_POINTS_POSSIBLE}"
-        logger.info(f"Result: {student_final_result} {'=' * 20}")
+        logger.info(f"Result: {student_final_result}\n")
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)
