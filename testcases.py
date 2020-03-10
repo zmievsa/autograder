@@ -6,7 +6,7 @@ from pathlib import Path
 import sh
 
 import templater
-from util import CURRENT_DIR, TESTS_DIR, logger, get_stderr
+from util import CURRENT_DIR, TESTS_DIR, get_stderr
 
 
 # These two cuties make it possible to give partial credit.
@@ -44,13 +44,11 @@ class TestCase(ABC):
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
-        logger.info(f"Running {self.name}")
         self.input.seek(0)
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
-            logger.info(get_stderr(e, "Failed to compile"))
-            return 0, "Failed to Compile"
+            return 0, get_stderr(e, "Failed to compile")
         with StringIO() as runtime_output:
             try:
                 result = test_executable(
@@ -60,22 +58,16 @@ class TestCase(ABC):
                     _ok_code=ALLOWED_EXIT_CODES
                 )
             except sh.TimeoutException:
-                logger.info(f"Exceeded time limit")
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                logger.info(f"Crashed due to {e.exit_code}")
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
-                msg = f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
-                logger.info(msg)
-                return score, msg 
+                return score, f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
             elif self.format_output(runtime_output.getvalue()) == self.expected_output:
-                logger.info("100/100")
                 return 100, "100/100"
             else:
-                logger.info("0/100 (Wrong answer)")
                 return 0, "0/100 (Wrong answer)"
 
     def make_executable_path(self, submission: Path):
