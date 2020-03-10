@@ -84,7 +84,7 @@ def run_tests_on_submission(args):
         try:
             precompiled_submission = TestCaseType.precompile_submission(submission, CURRENT_DIR, SOURCE_FILE_NAME)
         except sh.ErrorReturnCode_1 as e:
-            logger.info(f"Failed to compile\nResult: 0/{TOTAL_POINTS_POSSIBLE}\n")
+            logger.info(f"Failed to precompile\nResult: 0/{TOTAL_POINTS_POSSIBLE}\n")
             f.write("\nYour file failed to compile")
             return 0
         total_testcase_score = 0
