@@ -68,7 +68,7 @@ class TestCase(ABC):
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
-                msg = f"{score}/100" + " (Wrong answer)" if score == 0 else ""
+                msg = f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
                 logger.info(msg)
                 return score, msg 
             elif self.format_output(runtime_output.getvalue()) == self.expected_output:
