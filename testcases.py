@@ -45,6 +45,7 @@ class TestCase(ABC):
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
+        logger.info(f"Running {self.name}")
         self.input.seek(0)
         try:
             test_executable = self.compile_testcase(precompiled_submission)
