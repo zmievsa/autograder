@@ -8,7 +8,7 @@ from typing import List
 import sh
 
 from testcases import CTestCase, JavaTestCase, PythonTestCase
-from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR
+from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR, logger
 
 
 # CONFIG --------------------------------------------------------------
@@ -46,7 +46,7 @@ def main():
     else:
         total_class_points = sum(map(run_tests_on_submission, submissions))
     class_average = total_class_points / (len(submissions) or 1)
-    print(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
+    logger.info(f"\nAverage score: {round(class_average)}/{TOTAL_POINTS_POSSIBLE}")
     clean_directory(CURRENT_DIR)
     for test in tests:
         test.cleanup()
@@ -73,7 +73,7 @@ def run_tests_on_submission(args):
     submission, results_dir, tests = args
     testcase_count = len(tests)
     student_name = submission.name[:submission.name.find("_")]
-    print(f"Starting grading {student_name}")
+    logger.info(f"Grading {student_name}")
     with open(results_dir / submission.name, "w") as f:
         f.write(f"{ASSIGNMENT_NAME} Test Results\n\n")
         f.write("%-40s%s" % ("TestCase", "Result"))
@@ -90,7 +90,7 @@ def run_tests_on_submission(args):
             total_testcase_score += testcase_score
         student_score = total_testcase_score / testcase_count * TOTAL_SCORE_TO_100_RATIO
         student_final_result = f"{round(student_score)}/{TOTAL_POINTS_POSSIBLE}"
-        print(f"{student_name}: ", student_final_result)
+        logger.info(f"Result: {student_final_result} {'=' * 20}")
         f.write("\n================================================================\n")
         f.write("Result: " + student_final_result)
         f.write(KEY)

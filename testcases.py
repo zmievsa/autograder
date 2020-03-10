@@ -6,7 +6,7 @@ from pathlib import Path
 import sh
 
 import templater
-from util import CURRENT_DIR, TESTS_DIR
+from util import CURRENT_DIR, TESTS_DIR, logger, get_stderr
 
 
 # These two cuties make it possible to give partial credit.
@@ -49,7 +49,7 @@ class TestCase(ABC):
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
-            print(e)
+            logger.info(get_stderr(e, "Failed to compile"))
             return 0, "Failed to Compile"
         with StringIO() as runtime_output:
             try:
@@ -62,7 +62,7 @@ class TestCase(ABC):
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
-                print(e)
+                logger.info(get_stderr(e, "Crashed"))
                 return 0, "Crashed"
             if result.exit_code != RESULTLESS_EXIT_CODE:
                 score = result.exit_code - RESULT_EXIT_CODE_SHIFT
