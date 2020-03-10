@@ -160,7 +160,7 @@ class JavaTestCase(TestCase):
 
 class PythonTestCase(TestCase):
     """ A proof of concept of how easy it is to add new languages
-        Will only work if python executable is accessible via python3 alias for now
+        Will only work if python is accessible via python3 alias for now
     """
     source_suffix = ".py"
     path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.py"
