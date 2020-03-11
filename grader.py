@@ -103,7 +103,7 @@ if __name__ == "__main__":
         if sys.argv[1].lower() == "clean":
             clean_directory(CURRENT_DIR)
         elif sys.argv[1].lower() == "print":
-            with open("filtered output.txt", "w") as f:
+            with open(CURRENT_DIR / "filtered output.txt", "w") as f:
                 print_results(int(sys.argv[2]), file=f)
         else:
             raise ValueError("Unknown command line argument")
