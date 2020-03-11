@@ -8,7 +8,7 @@ from typing import List
 import sh
 
 from testcases import CTestCase, JavaTestCase, PythonTestCase
-from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR, logger, get_stderr
+from util import CURRENT_DIR, RESULTS_DIR, SUBMISSIONS_DIR, TESTS_DIR, logger, get_stderr, print_results
 
 
 # CONFIG --------------------------------------------------------------
@@ -102,6 +102,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1].lower() == "clean":
             clean_directory(CURRENT_DIR)
+        elif sys.argv[1].lower() == "print":
+            with open("filtered output.txt", "w") as f:
+                print_results(int(sys.argv[2]), file=f)
         else:
             raise ValueError("Unknown command line argument")
     else:
