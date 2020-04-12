@@ -16,7 +16,7 @@ TIMEOUT = 1                     # Student's program is terminated if it takes mo
 TOTAL_POINTS_POSSIBLE = 100     # Total points given for automatic tests
 TestCaseType = CTestCase        # Specifies which language we're working with
 ASSIGNMENT_NAME = "Homework"    # For display in the output
-SOURCE_FILE_NAME = "Homework.c" # A string that has to be in each source file name
+SOURCE_FILE_NAME = "Homework.c".lower() # A string that has to be in each source file name
 def FILTER_FUNCTION(s):         # Filters each char in output
     return s.isdigit()
 # ---------------------------------------------------------------------
@@ -39,7 +39,7 @@ def main():
     RESULTS_DIR.mkdir(exist_ok=True)
     clean_directory(CURRENT_DIR)
     tests = gather_tests(TESTS_DIR)
-    submissions = [(s, RESULTS_DIR, tests) for s in SUBMISSIONS_DIR.iterdir() if SOURCE_FILE_NAME in str(s)]
+    submissions = [(s, RESULTS_DIR, tests) for s in SUBMISSIONS_DIR.iterdir() if SOURCE_FILE_NAME in str(s).lower()]
     os.makedirs("results", exist_ok=True)
     total_class_points = sum(map(run_tests_on_submission, submissions))
     class_average = total_class_points / (len(submissions) or 1)
@@ -52,7 +52,7 @@ def main():
 def clean_directory(directory: Path):
     for path in directory.iterdir():
         ext = path.suffix
-        if any(ext == s for s in TEMP_FILE_SUFFIXES) or SOURCE_FILE_NAME in path.name:
+        if any(ext == s for s in TEMP_FILE_SUFFIXES) or SOURCE_FILE_NAME in path.name.lower():
             path.unlink()
 
 
