@@ -1,12 +1,17 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 requires = ['sh']
 
 setup(
-    name="autograder",
-    packages=['autograder'],
+    name="assignment-autograder",
+    packages=find_packages(),
     install_requires=requires,
+    package_data={'autograder.test_helpers': ['test_helper.c', 'TestHelper.java']},
+    include_package_data=True,
+    entry_points={
+        'console_scripts': ['autograder=autograder.__main__:main']
+    },
 
     # metadata to display on PyPI
     author="Stanislav Zmiev",
