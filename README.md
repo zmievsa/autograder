@@ -1,6 +1,7 @@
 # Installation (Linux-only)
 1) Run `python setup.py install`
 # Configuration
+* Currently, there is support for grading C, Java, and Python code
 * Create testcases in tests/testcases
 * Create their respective inputs and outputs in tests/input and tests/output
 * Change configuration at the top of grader.py
