@@ -149,9 +149,20 @@ class CTestCase(TestCase):
 
 
 class JavaTestCase(TestCase):
-    """ Please, ask students to remove their main as it could generate errors """
+    """ Please, ask students to remove their main as it can theoretically
+        generate errors.
+    """
     source_suffix = ".java"
     path_to_helper_module = GRADER_DIR / "test_helpers/TestHelper.java"
+    parallel_execution_supported = False
+
+    @classmethod
+    def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name: str):
+        """ Renames submission to allow javac compilation """
+        copied_submission = super().precompile_submission(submission, current_dir, submission.name)
+        precompiled_submission = copied_submission.parent / source_file_name
+        copied_submission.rename(precompiled_submission)
+        return precompiled_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
