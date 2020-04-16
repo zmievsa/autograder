@@ -140,47 +140,68 @@ class Grader:
     def _run_tests_on_submission(self, submission: Path):
         if self.generate_results:
             with open(self.results_dir / submission.name, "w") as f:
-                return self._run_tests_on_submission_with_log(submission, f.write)
+                grader_output = self._get_testcase_output(submission)
+                f.write(format_grader_output(grader_output))
         else:
-            return self._run_tests_on_submission_with_log(submission, lambda s: 0)
+            grader_output = self._get_testcase_output(submission, lambda s: 0)
+        return grader_output['student_score']
 
-    def _run_tests_on_submission_with_log(self, submission, log):
-        # TODO: Maybe make this function return a dict that can be
-        # used to format the final log file. This would make changing
-        # the log file format SUPER easy.
+
+    def _get_testcase_output(self, submission) -> dict:
+        """ Returns grading info as a dict """
         testcase_count = len(self.tests)
         if "_" in submission.name:
             student_name = submission.name[:submission.name.find("_")]
         else:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
-        log(f"{self.assignment_name} Test Results\n\n")
-        log("%-40s%s" % ("TestCase", "Result"))
-        log("\n================================================================")
         try:
             precompiled_submission = self.TestCaseType.precompile_submission(submission, self.current_dir, self.source_file_name)
         except sh.ErrorReturnCode_1 as e:
             stderr = get_stderr(e, "Failed to precompile")
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
-            log(f"\nYour file failed to compile{stderr.replace('Failed to precompile', '')}")
-            return 0
+            return {
+                'assignment_name': self.assignment_name,
+                'precompilation_error': stderr.replace('Failed to precompile', '')
+            }
         total_testcase_score = 0
+        testcase_results = []
         for test in self.tests:
             self.logger.info(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
             self.logger.info(message)
-            log("\n%-40s%s" % (test.name, message))
+            testcase_results.append((test.name, message))
             total_testcase_score += testcase_score
         student_score = total_testcase_score / testcase_count * self.total_score_to_100_ratio
         student_final_result = f"{round(student_score)}/{self.total_points_possible}"
         self.logger.info(f"Result: {student_final_result}\n")
-        log("\n================================================================\n")
-        log("Result: " + student_final_result)
-        log(KEY)
-        return student_score
+        return {
+            'assignment_name': self.assignment_name,
+            'testcase_results': testcase_results,
+            'formatted_student_score': student_final_result,
+            'student_score': student_score
+        }
 
 
 def get_testcase_type_by_suffix(suffix: str):
     for testcase_type in ALLOWED_LANGUAGES.values():
         if testcase_type.source_suffix == suffix:
             return testcase_type
+
+
+def format_grader_output(output: dict):
+    """ Replace this function with anything else if you want the output
+        to have a different style
+    """
+    s = f"{output['assignment_name']} Test Results\n\n"
+    s += "%-40s%s" % ("TestCase", "Result")
+    s += "\n================================================================"
+    if "precompilation_error" in output:
+        s += output['precompilation_error']
+        return s
+    for test_output in output['testcase_results']:
+        s += "\n%-40s%s" % test_output
+    s += "\n================================================================\n"
+    s += "Result: " + output['formatted_student_score']
+    s += KEY
+    return s
