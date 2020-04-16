@@ -2,7 +2,7 @@ import sys
 import argparse
 from pathlib import Path
 
-from autograder import grader
+from autograder.grader import Grader  # That's some awful naming
 
 
 def main(argv=None):
@@ -13,7 +13,7 @@ def main(argv=None):
                         help='Path to the directory that contains submissions and testcases')
     # TODO: Add --print and --clean args
     args = parser.parse_args(argv)
-    grader.main(Path.cwd() / args.submission_path)
+    Grader(Path.cwd() / args.submission_path).run()
 
 
 if __name__ == "__main__":

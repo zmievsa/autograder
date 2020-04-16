@@ -1,14 +1,20 @@
 from setuptools import setup, find_packages
+from pathlib import Path
 
 
 requires = ['sh']
 
+path_to_testhelpers = Path(__file__).parent / "autograder/test_helpers"
+paths_to_testhelpers = [str(p) for p in path_to_testhelpers.iterdir()]
+
 setup(
     name="assignment-autograder",
-    packages=find_packages(),
+    packages=["autograder"],
     install_requires=requires,
-    package_data={'autograder.test_helpers': ['test_helper.c', 'TestHelper.java']},
-    include_package_data=True,
+    data_files=[
+        ('autograder', ['autograder/default_config.ini']),
+        ('test_helpers', paths_to_testhelpers),
+    ],
     entry_points={
         'console_scripts': ['autograder=autograder.__main__:main']
     },

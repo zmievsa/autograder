@@ -29,10 +29,10 @@ class TestCase(ABC):
     COMPILATION_ARGUMENTS: tuple = tuple()
     executable_suffix = ".out"                  # Default suffix given to the executable
     path_to_helper_module: Path
-    def __init__(self, path: Path, tests_dir: Path, timeout: int, filter_function):
+    def __init__(self, path: Path, tests_dir: Path, timeout: int, filters):
         self.path = path
         self.timeout = timeout
-        self.filter_function = filter_function
+        self.filters = filters
         with open(tests_dir / f"output/{path.stem}.txt") as f:
             self.expected_output = self.format_output(f.read())
         with open(tests_dir / f"input/{path.stem}.txt") as f:
@@ -76,8 +76,10 @@ class TestCase(ABC):
         return self.path.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def format_output(self, output: str):
-        """ Removes whitespace and normalizes the output """
-        return "".join(filter(self.filter_function, "".join(output.lower().split())))
+        output = output.lower()
+        for filter_function in self.filters:
+            output = "".join(filter(filter_function, output))
+        return output
 
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
