@@ -41,6 +41,7 @@ class Grader:
         self.testcases_dir = self.tests_dir / "testcases"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
+        self._check_required_dirs_exist()
         self.temp_dir.mkdir(exist_ok=True)
         if generate_results:
             self.results_dir.mkdir(exist_ok=True)
@@ -62,6 +63,16 @@ class Grader:
 
     def cleanup(self):
         shutil.rmtree(self.temp_dir)
+    
+    def _check_required_dirs_exist(self):
+        REQUIRED_DIRS = (
+            self.tests_dir, self.testcases_dir,
+            self.tests_dir / "input", self.tests_dir / "output"
+        )
+        dir_not_found = "{} directory not found. It is required for the grader to function."
+        for directory in REQUIRED_DIRS:
+            if not directory.exists():
+                raise FileNotFoundError(dir_not_found.format(directory.name))
     
     def _configure_grading(self):
         cfg = self._read_config()
