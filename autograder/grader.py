@@ -34,15 +34,16 @@ TEMP_FILE_SUFFIXES = (".class", ".o", ".out")
 
 class Grader:
     # TODO: Add config reading from ini
-    def __init__(self, current_dir, print_=False):
-        self.print = print_
+    def __init__(self, current_dir, generate_results=False):
+        self.generate_results = generate_results
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
         self.temp_dir.mkdir(exist_ok=True)
-        self.results_dir.mkdir(exist_ok=True)
+        if generate_results:
+            self.results_dir.mkdir(exist_ok=True)
         self._configure_grading()
         self._configure_logging()
         self.tests = self._gather_testcases()
@@ -52,8 +53,6 @@ class Grader:
         ]
 
     def run(self):
-        if self.print:
-            return print_results(self.current_dir, self.min_print_score)
         old_dir = Path.cwd()
         os.chdir(self.temp_dir)
         total_class_points = sum(map(self._run_tests_on_submission, self.submissions))
@@ -117,6 +116,7 @@ class Grader:
         else:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
+        # TODO: Figure out a way to put --generate_results option here
         with open(self.results_dir / submission.name, "w") as f:
             f.write(f"{self.assignment_name} Test Results\n\n")
             f.write("%-40s%s" % ("TestCase", "Result"))
