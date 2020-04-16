@@ -1,4 +1,4 @@
-Input number from 1 to 9 (0 to exit): 
+Input number from 1 to 9 (0 to exit):
 Input number from 1 to 9 (0 to exit):
 Input number from 1 to 9 (0 to exit):
 Input number from 1 to 9 (0 to exit):
