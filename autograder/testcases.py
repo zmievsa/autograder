@@ -5,8 +5,9 @@ from pathlib import Path
 
 import sh
 
-import templater
-from util import CURRENT_DIR, TESTS_DIR, get_stderr
+from .util import get_stderr, format_template
+
+GRADER_DIR = Path(__file__).resolve().parent
 
 
 # These two cuties make it possible to give partial credit.
@@ -28,13 +29,13 @@ class TestCase(ABC):
     COMPILATION_ARGUMENTS: tuple = tuple()
     executable_suffix = ".out"                  # Default suffix given to the executable
     path_to_helper_module: Path
-    def __init__(self, path: Path, TESTS_DIR: Path, timeout: int, filter_function):
+    def __init__(self, path: Path, tests_dir: Path, timeout: int, filters):
         self.path = path
         self.timeout = timeout
-        self.filter_function = filter_function
-        with open(TESTS_DIR / f"output/{path.stem}.txt") as f:
+        self.filters = filters
+        with open(tests_dir / f"output/{path.stem}.txt") as f:
             self.expected_output = self.format_output(f.read())
-        with open(TESTS_DIR / f"input/{path.stem}.txt") as f:
+        with open(tests_dir / f"input/{path.stem}.txt") as f:
             self.input = StringIO(f.read().strip())
         
         # Only really works if test name is in snake_case
@@ -48,7 +49,7 @@ class TestCase(ABC):
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
-            return 0, get_stderr(e, "Failed to compile")
+            return 0, get_stderr(self.path.parent, e, "Failed to compile")
         with StringIO() as runtime_output:
             try:
                 result = test_executable(
@@ -75,15 +76,17 @@ class TestCase(ABC):
         return self.path.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def format_output(self, output: str):
-        """ Removes whitespace and normalizes the output """
-        return "".join(filter(self.filter_function, "".join(output.lower().split())))
+        output = output.lower()
+        for filter_function in self.filters:
+            output = "".join(filter(filter_function, output))
+        return output
 
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
         """ Copies student submission into currect_dir and either precompiles it and returns the path to
             the precompiled submission or to the copied submission if no precompilation is necesessary
         """
-        destination = current_dir / source_file_name
+        destination = current_dir / "temp" / source_file_name
         shutil.copy(submission, destination)
         return destination
 
@@ -98,7 +101,7 @@ class TestCase(ABC):
     def prepend_test_helper(self):
         """ Prepends all of the associated test_helper code to test code """
         with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
-            formatted_helper_file = templater.format_template(
+            formatted_helper_file = format_template(
                 helper_file.read(),
                 RESULTLESS_EXIT_CODE=RESULTLESS_EXIT_CODE,
                 RESULT_EXIT_CODE_SHIFT=RESULT_EXIT_CODE_SHIFT,
@@ -117,7 +120,7 @@ class TestCase(ABC):
 
 class CTestCase(TestCase):
     source_suffix = ".c"
-    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.c"
+    path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
 
     @classmethod
@@ -126,8 +129,13 @@ class CTestCase(TestCase):
             It is done to speed up total compilation time
         """
         copied_submission = super().precompile_submission(submission, current_dir, submission.name)
-        sh.gcc("-c", f"{copied_submission}", *cls.SUBMISSION_COMPILATION_ARGS)
-        return copied_submission.with_suffix(".o")
+        precompiled_submission = copied_submission.with_suffix(".o")
+        sh.gcc(
+            "-c", f"{copied_submission}",
+            "-o", precompiled_submission,
+            *cls.SUBMISSION_COMPILATION_ARGS
+        )
+        return precompiled_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         executable_path = self.make_executable_path(precompiled_submission)
@@ -141,9 +149,20 @@ class CTestCase(TestCase):
 
 
 class JavaTestCase(TestCase):
-    """ Please, ask students to remove their main as it could generate errors """
+    """ Please, ask students to remove their main as it can theoretically
+        generate errors.
+    """
     source_suffix = ".java"
-    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/TestHelper.java"
+    path_to_helper_module = GRADER_DIR / "test_helpers/TestHelper.java"
+    parallel_execution_supported = False
+
+    @classmethod
+    def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name: str):
+        """ Renames submission to allow javac compilation """
+        copied_submission = super().precompile_submission(submission, current_dir, submission.name)
+        precompiled_submission = copied_submission.parent / source_file_name
+        copied_submission.rename(precompiled_submission)
+        return precompiled_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         sh.javac(self.path, precompiled_submission.name)
@@ -155,7 +174,7 @@ class PythonTestCase(TestCase):
         Will only work if python is accessible via python3 alias for now
     """
     source_suffix = ".py"
-    path_to_helper_module = CURRENT_DIR / "tests/test_helpers/test_helper.py"
+    path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)

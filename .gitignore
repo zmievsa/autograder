@@ -4,3 +4,5 @@
 __pycache__
 assignment_*
 grader_output.txt
+build
+dist

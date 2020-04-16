@@ -1,12 +1,23 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+from pathlib import Path
 
 
 requires = ['sh']
 
+path_to_testhelpers = Path(__file__).parent / "autograder/test_helpers"
+paths_to_testhelpers = [str(p) for p in path_to_testhelpers.iterdir()]
+
 setup(
-    name="autograder",
-    packages=['autograder'],
+    name="assignment-autograder",
+    packages=["autograder"],
     install_requires=requires,
+    data_files=[
+        ('autograder', ['autograder/default_config.ini']),
+        ('test_helpers', paths_to_testhelpers),
+    ],
+    entry_points={
+        'console_scripts': ['autograder=autograder.__main__:main']
+    },
 
     # metadata to display on PyPI
     author="Stanislav Zmiev",
