@@ -2,10 +2,12 @@
 1) Run `pip3 install assignment-autograder`
 # Usage
 1) Create tests directory in the same directory as student submissions. It has to follow the same structure as one of the examples.
-2) Create input and output text files in their respective directories for each testcase.
-3) Create config.ini in tests. You can use autograder/default_config.ini as a reference. Also, you can find filter function list in the autograder/filters.py. If you don't add some configuration fields, grader will use the default fields from default config.
+2) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
-5) You can use --generate_results command line argument to generate a result file per student.
+## Advanced Usage
+* You can use --generate_results (or -g) command line argument to generate a result file per student. It will have the same name as student's original submission.
+* If you create config.ini in tests, you can customize grader's behavior. You can use autograder/default_config.ini as a reference. If you don't add some configuration fields, grader will use the default fields from default config.
+* You can specify filters as a comma separated list in config.ini. You can find filter function list in the autograder/filters.py. If you want to add your own filters, you will need to add them to filters.py
 ## Writing testcases
 * When writing testcases, assume that helper functions NO_RESULT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
 * Each helper function terminates the execution of the program and returns its respective exit code that signifies student's score for the testcase
