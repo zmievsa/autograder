@@ -72,7 +72,7 @@ class Grader:
         dir_not_found = "{} directory not found. It is required for the grader to function."
         for directory in REQUIRED_DIRS:
             if not directory.exists():
-                raise FileNotFoundError(dir_not_found.format(directory.name))
+                raise FileNotFoundError(dir_not_found.format(directory))
     
     def _configure_grading(self):
         cfg = self._read_config()
