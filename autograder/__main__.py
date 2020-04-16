@@ -28,7 +28,6 @@ def main(argv=None):
         Grader(current_dir, args.generate_results).run()
     else:
         print_results(current_dir, args.print)
-    
 
 
 if __name__ == "__main__":
