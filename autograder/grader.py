@@ -27,9 +27,8 @@ KEY = """
 \tCompiled with warnings: Your submission uses unchecked or unsafe operations
 \tCrashed due to signal SIGNAL_CODE: Your submission threw an uncaught exception.
 \tAll signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
-\tExceeded Time Limit: Your submission took longer than 60 seconds to run (probably an infinite loop)
+\tExceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
 """
-TEMP_FILE_SUFFIXES = (".class", ".o", ".out")
 
 
 class Grader:
@@ -47,10 +46,7 @@ class Grader:
         self._configure_grading()
         self._configure_logging()
         self.tests = self._gather_testcases()
-        self.submissions = [
-            s for s in current_dir.iterdir()
-            if self.source_file_name in str(s).lower()
-        ]
+        self.submissions = self._gather_submissions()
 
     def run(self):
         old_dir = Path.cwd()
@@ -75,7 +71,8 @@ class Grader:
         self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
         self.assignment_name = cfg['ASSIGNMENT_NAME']
         source = cfg['SOURCE_FILE_NAME']
-        if cfg.getboolean('LOWER_SOURCE_FILENAME'):
+        self.lower_source_filename = cfg.getboolean('LOWER_SOURCE_FILENAME')
+        if self.lower_source_filename:
             source = source.lower()
         self.source_file_name = source
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
@@ -109,36 +106,54 @@ class Grader:
             ))
         return tests
     
+    def _gather_submissions(self):
+        submissions = []
+        for submission in self.current_dir.iterdir():
+            submission_name = submission.name
+            if self.lower_source_filename:
+                submission_name = submission_name.lower()
+            if submission_name.endswith(self.source_file_name):
+                submissions.append(submission)
+        return submissions
+    
     def _run_tests_on_submission(self, submission: Path):
+        if self.generate_results:
+            with open(self.results_dir / submission.name, "w") as f:
+                return self._run_tests_on_submission_with_log(submission, f.write)
+        else:
+            return self._run_tests_on_submission_with_log(submission, lambda s: 0)
+
+    def _run_tests_on_submission_with_log(self, submission, log):
+        # TODO: Maybe make this function return a dict that can be
+        # used to format the final log file. This would make changing
+        # the log file format SUPER easy.
         testcase_count = len(self.tests)
         if "_" in submission.name:
             student_name = submission.name[:submission.name.find("_")]
         else:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
-        # TODO: Figure out a way to put --generate_results option here
-        with open(self.results_dir / submission.name, "w") as f:
-            f.write(f"{self.assignment_name} Test Results\n\n")
-            f.write("%-40s%s" % ("TestCase", "Result"))
-            f.write("\n================================================================")
-            try:
-                precompiled_submission = self.TestCaseType.precompile_submission(submission, self.current_dir, self.source_file_name)
-            except sh.ErrorReturnCode_1 as e:
-                stderr = get_stderr(e, "Failed to precompile")
-                self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
-                f.write(f"\nYour file failed to compile{stderr.replace('Failed to precompile', '')}")
-                return 0
-            total_testcase_score = 0
-            for test in self.tests:
-                self.logger.info(f"Running '{test.name}'")
-                testcase_score, message = test.run(precompiled_submission)
-                self.logger.info(message)
-                f.write("\n%-40s%s" % (test.name, message))
-                total_testcase_score += testcase_score
-            student_score = total_testcase_score / testcase_count * self.total_score_to_100_ratio
-            student_final_result = f"{round(student_score)}/{self.total_points_possible}"
-            self.logger.info(f"Result: {student_final_result}\n")
-            f.write("\n================================================================\n")
-            f.write("Result: " + student_final_result)
-            f.write(KEY)
-            return student_score
+        log(f"{self.assignment_name} Test Results\n\n")
+        log("%-40s%s" % ("TestCase", "Result"))
+        log("\n================================================================")
+        try:
+            precompiled_submission = self.TestCaseType.precompile_submission(submission, self.current_dir, self.source_file_name)
+        except sh.ErrorReturnCode_1 as e:
+            stderr = get_stderr(e, "Failed to precompile")
+            self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
+            log(f"\nYour file failed to compile{stderr.replace('Failed to precompile', '')}")
+            return 0
+        total_testcase_score = 0
+        for test in self.tests:
+            self.logger.info(f"Running '{test.name}'")
+            testcase_score, message = test.run(precompiled_submission)
+            self.logger.info(message)
+            log("\n%-40s%s" % (test.name, message))
+            total_testcase_score += testcase_score
+        student_score = total_testcase_score / testcase_count * self.total_score_to_100_ratio
+        student_final_result = f"{round(student_score)}/{self.total_points_possible}"
+        self.logger.info(f"Result: {student_final_result}\n")
+        log("\n================================================================\n")
+        log("Result: " + student_final_result)
+        log(KEY)
+        return student_score
