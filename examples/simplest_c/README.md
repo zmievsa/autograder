@@ -1,4 +1,4 @@
-* This is the example of the simplest directory structure possible with autograder and clarifies the main features:
+* This example shows the the simplest directory structure possible with autograder and clarifies the main features:
 * Input and output directories and files are optional.
   * If your testcase does not use input or check output, you don't need to make input and output files for it.
   * If none of your testcases use input and/or output, you can completely omit the respective directories.
