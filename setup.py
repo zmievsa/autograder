@@ -10,6 +10,7 @@ paths_to_testhelpers = [str(p) for p in path_to_testhelpers.iterdir()]
 setup(
     name="assignment-autograder",
     packages=["autograder"],
+    version="2.0.0",
     install_requires=requires,
     data_files=[
         ('autograder', ['autograder/default_config.ini']),
@@ -21,6 +22,7 @@ setup(
 
     # metadata to display on PyPI
     author="Stanislav Zmiev",
+    author_email="szmiev2000@gmail.com",
     description="Automates programming assignment grading",
     license="MIT",
     project_urls={"Source Code": "https://github.com/Ovsyanka83/autograder"},
