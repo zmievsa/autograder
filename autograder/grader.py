@@ -13,7 +13,7 @@ from . import testcases
 from .util import get_stderr, print_results
 from .filters import ALLOWED_FILTERS
 
-
+DEFAULT_SOURCE_FILE_STEM = "Homework"
 PATH_TO_DEFAULT_CONFIG = Path(__file__).parent / "default_config.ini"
 ALLOWED_LANGUAGES = {
     "c": testcases.CTestCase,
@@ -38,6 +38,7 @@ class Grader:
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
+        self.testcases_dir = self.tests_dir / "testcases"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
         self.temp_dir.mkdir(exist_ok=True)
@@ -68,15 +69,19 @@ class Grader:
         self.total_points_possible = cfg.getint('TOTAL_POINTS_POSSIBLE')
         self.total_score_to_100_ratio = self.total_points_possible / 100
         language = cfg['PROGRAMMING_LANGUAGE']
-        self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
+        if language == "AUTO":
+            self.TestCaseType = self._figure_out_testcase_type()
+        else:
+            self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
         self.assignment_name = cfg['ASSIGNMENT_NAME']
         source = cfg['SOURCE_FILE_NAME']
+        if source == "AUTO":
+            source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
         self.lower_source_filename = cfg.getboolean('LOWER_SOURCE_FILENAME')
         if self.lower_source_filename:
             source = source.lower()
         self.source_file_name = source
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
-        
     
     def _read_config(self) -> configparser.ConfigParser:
         default_parser = configparser.ConfigParser()
@@ -85,6 +90,15 @@ class Grader:
         user_parser.read_dict(default_parser)
         user_parser.read(self.tests_dir / "config.ini")
         return user_parser['CONFIG']
+    
+    def _figure_out_testcase_type(self):
+        for testcase in self.testcases_dir.iterdir():
+            testcase_type = get_testcase_type_by_suffix(testcase.suffix)
+            if testcase_type is not None:
+                return testcase_type
+        raise FileNotFoundError(
+            f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}"
+        )
 
     def _configure_logging(self):
         self.logger = logging.getLogger("Grader")
@@ -94,7 +108,7 @@ class Grader:
     
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []
-        for test in (self.tests_dir / "testcases").iterdir():
+        for test in (self.testcases_dir).iterdir():
             if not (test.is_file() and self.TestCaseType.source_suffix in test.name):
                 continue
             shutil.copy(test, self.temp_dir)
@@ -112,7 +126,7 @@ class Grader:
             submission_name = submission.name
             if self.lower_source_filename:
                 submission_name = submission_name.lower()
-            if submission_name.endswith(self.source_file_name):
+            if self.source_file_name in submission_name:
                 submissions.append(submission)
         return submissions
     
@@ -157,3 +171,9 @@ class Grader:
         log("Result: " + student_final_result)
         log(KEY)
         return student_score
+
+
+def get_testcase_type_by_suffix(suffix: str):
+    for testcase_type in ALLOWED_LANGUAGES.values():
+        if testcase_type.source_suffix == suffix:
+            return testcase_type

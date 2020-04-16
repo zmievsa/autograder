@@ -27,7 +27,8 @@ MIN_RESULT = ALLOWED_EXIT_CODES[1]
 class TestCase(ABC):
     SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()  # Extra args you'd like to use during compilation
     COMPILATION_ARGUMENTS: tuple = tuple()
-    executable_suffix = ".out"                  # Default suffix given to the executable
+    source_suffix = ".source_suffix"
+    executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
     def __init__(self, path: Path, tests_dir: Path, timeout: int, filters):
         self.path = path
@@ -120,6 +121,7 @@ class TestCase(ABC):
 
 class CTestCase(TestCase):
     source_suffix = ".c"
+    executable_suffix = ".out"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
 
@@ -153,6 +155,7 @@ class JavaTestCase(TestCase):
         generate errors.
     """
     source_suffix = ".java"
+    executable_suffix = ""
     path_to_helper_module = GRADER_DIR / "test_helpers/TestHelper.java"
     parallel_execution_supported = False
 
@@ -174,6 +177,7 @@ class PythonTestCase(TestCase):
         Will only work if python is accessible via python3 alias for now
     """
     source_suffix = ".py"
+    executable_suffix = source_suffix
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
