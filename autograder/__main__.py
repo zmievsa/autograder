@@ -14,13 +14,13 @@ def main(argv=None):
         type=Path, nargs="?", default=Path.cwd(),
         help='Path to directory that contains student submissions'
     )
-    parser.add_argument('-p', '--print',
-        type=float, nargs="?", default=None, const=100, metavar="min_score",
-        help='Use after already graded to print assignments with score >= min_score'
-    )
     parser.add_argument('-g', '--generate_results',
         action="store_true",
         help='Generate results directory with a result file per student'
+    )
+    parser.add_argument('-p', '--print',
+        type=float, nargs="?", default=None, const=100, metavar="min_score",
+        help='Use after already graded to print assignments with score >= min_score'
     )
     args = parser.parse_args(argv)
     current_dir = Path.cwd() / args.submission_path
