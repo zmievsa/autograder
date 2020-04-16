@@ -23,7 +23,7 @@ def main(argv=None):
         help='Use after already graded to print assignments with score >= min_score'
     )
     args = parser.parse_args(argv)
-    current_dir = Path.cwd() / args.submission_path
+    current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
         Grader(current_dir, args.generate_results).run()
     else:
