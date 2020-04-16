@@ -34,10 +34,18 @@ class TestCase(ABC):
         self.path = path
         self.timeout = timeout
         self.filters = filters
-        with open(tests_dir / f"output/{path.stem}.txt") as f:
-            self.expected_output = self.format_output(f.read())
-        with open(tests_dir / f"input/{path.stem}.txt") as f:
-            self.input = StringIO(f.read().strip())
+        output_dir = tests_dir / f"output/{path.stem}.txt"
+        if output_dir.exists():
+            with output_dir.open() as f:
+                self.expected_output = self.format_output(f.read())
+        else:
+            self.expected_output = StringIO("")
+        input_dir = tests_dir / f"input/{path.stem}.txt"
+        if input_dir.exists():
+            with input_dir.open() as f:
+                self.input = StringIO(f.read().strip())
+        else:
+            self.input = StringIO("")
         
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
