@@ -32,15 +32,14 @@ KEY = """
 
 
 class Grader:
-    def __init__(self, current_dir, generate_results=False):
+    def __init__(self, current_dir, generate_results=False, testcase_dir_name="testcases"):
         self.generate_results = generate_results
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
-        self.testcases_dir = self.tests_dir / "testcases"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
-        self._check_required_dirs_exist()
+        self._choose_directory_structure(testcase_dir_name)
         self.temp_dir.mkdir(exist_ok=True)
         if generate_results:
             self.results_dir.mkdir(exist_ok=True)
@@ -63,8 +62,12 @@ class Grader:
     def cleanup(self):
         shutil.rmtree(self.temp_dir)
     
-    def _check_required_dirs_exist(self):
-        REQUIRED_DIRS = (self.tests_dir, self.testcases_dir)
+    def _choose_directory_structure(self, testcase_dir_name):
+        if not (self.tests_dir / testcase_dir_name).exists() and \
+            (self.current_dir / testcase_dir_name).exists():
+            self.tests_dir = self.current_dir
+        self.testcases_dir = self.tests_dir / testcase_dir_name
+        REQUIRED_DIRS = (self.testcases_dir,)
         dir_not_found = "{} directory not found. It is required for the grader to function."
         for directory in REQUIRED_DIRS:
             if not directory.exists():
@@ -84,6 +87,9 @@ class Grader:
         source = cfg['SOURCE_FILE_NAME']
         if source == "AUTO":
             source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
+            self.auto_source_file_name_enabled = True
+        else:
+            self.auto_source_file_name_enabled = False
         self.lower_source_filename = cfg.getboolean('LOWER_SOURCE_FILENAME')
         if self.lower_source_filename:
             source = source.lower()
@@ -133,7 +139,10 @@ class Grader:
             submission_name = submission.name
             if self.lower_source_filename:
                 submission_name = submission_name.lower()
-            if self.source_file_name in submission_name:
+            if self.auto_source_file_name_enabled:
+                if submission.suffix == self.TestCaseType.source_suffix:
+                    submissions.append(submission)
+            elif self.source_file_name in submission_name:
                 submissions.append(submission)
         return submissions
     
@@ -143,7 +152,7 @@ class Grader:
                 grader_output = self._get_testcase_output(submission)
                 f.write(format_grader_output(grader_output))
         else:
-            grader_output = self._get_testcase_output(submission, lambda s: 0)
+            grader_output = self._get_testcase_output(submission)
         return grader_output['student_score']
 
 
