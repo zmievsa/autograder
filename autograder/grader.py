@@ -32,7 +32,6 @@ KEY = """
 
 
 class Grader:
-    # TODO: Add config reading from ini
     def __init__(self, current_dir, generate_results=False):
         self.generate_results = generate_results
         self.current_dir = current_dir
@@ -65,10 +64,7 @@ class Grader:
         shutil.rmtree(self.temp_dir)
     
     def _check_required_dirs_exist(self):
-        REQUIRED_DIRS = (
-            self.tests_dir, self.testcases_dir,
-            self.tests_dir / "input", self.tests_dir / "output"
-        )
+        REQUIRED_DIRS = (self.tests_dir, self.testcases_dir)
         dir_not_found = "{} directory not found. It is required for the grader to function."
         for directory in REQUIRED_DIRS:
             if not directory.exists():
