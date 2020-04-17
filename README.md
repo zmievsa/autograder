@@ -15,7 +15,9 @@
 * If you create config.ini in tests, you can customize grader's behavior. You can use autograder/default_config.ini as a reference. If you don't add some configuration fields, grader will use the default fields from default config.
 * You can specify filters as a comma separated list in config.ini. You can find filter function list in the autograder/filters.py. If you want to add your own filters, you will need to add them to autograder/filters.py
 ## Writing testcases
-* When writing testcases, assume that helper functions NO_RESULT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
+* Write a main that follows the same structure as the respective example. The main should usually call student's code and check its result (when working with output, you usually don't check the result, and simply allow grader to handle that)
+* Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
+* Assume that helper functions NO_RESULT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
 * Each helper function terminates the execution of the program and returns its respective exit code that signifies student's score for the testcase
 * Each testcase is graded out of 100%, which means that you can fully control how much partial credit is given
 * ### Helper functions
