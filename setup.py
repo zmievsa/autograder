@@ -23,7 +23,7 @@ setup(
     # metadata to display on PyPI
     author="Stanislav Zmiev",
     author_email="szmiev2000@gmail.com",
-    description="Automates programming assignment grading",
+    description="Automatic assignment grading for instructor use in programming courses",
     license="MIT",
     project_urls={"Source Code": "https://github.com/Ovsyanka83/autograder"},
     classifiers=[
