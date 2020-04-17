@@ -1,5 +1,6 @@
-# Installation (Linux-only)
-1) Run `pip3 install assignment-autograder`
+# Installation (Linux-only) (Python >= 3.6)
+* Run `pip3 install assignment-autograder`
+* If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Quickstart
 * Currently, there is support for grading C, Java, and Python code
 * Go to examples/ and look at simplest_c for the simplest usage scenario
