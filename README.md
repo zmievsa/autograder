@@ -10,6 +10,7 @@
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Advanced Usage
 * You can use --generate_results (or -g) command line argument to generate a result file per student. It will have the same name as student's original submission.
+* There are other command line arguments available. Simply run `autograder -h` to see them.
 * If you create config.ini in tests, you can customize grader's behavior. You can use autograder/default_config.ini as a reference. If you don't add some configuration fields, grader will use the default fields from default config.
 * You can specify filters as a comma separated list in config.ini. You can find filter function list in the autograder/filters.py. If you want to add your own filters, you will need to add them to autograder/filters.py
 ## Writing testcases
