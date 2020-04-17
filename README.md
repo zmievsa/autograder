@@ -1,6 +1,7 @@
 # Installation (Linux-only)
 1) Run `pip3 install assignment-autograder`
 # Quickstart
+* Currently, there is support for grading C, Java, and Python code
 * Go to examples/ and look at simplest_c for the simplest usage scenario
 * More complex scenarios are described below and in other directories in examples/
 # Usage
@@ -22,7 +23,6 @@
     * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
     * Note: when grading java code, we don't use helper functions directly. Instead, we call them from TestHelper class which, you can assume, is predefined for your testcases
 # Implementation details
-* Currently, there is support for grading C, Java, and Python code
 * Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used for student scores. In the latest version of this readme, I used 0, 3-103 where 0 means NO_RESULT and 3-103 stand for respective student scores minus 3. The shift by 3 is used to prevent the use of standard exit codes
 * If you want to add a new language for grading, you have to create a subclass of TestCase in autograder/testcases.py following the pattern of other subclasses and a respective test helper module in autograder/tests/test_helpers directory, then import the subclass into autograder/grader.py, and add it to ALLOWED_LANGUAGES dictionary
 * At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use FILTER_FUNCTION(s) defined in autograder/grader.py instead
