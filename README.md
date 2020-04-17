@@ -6,7 +6,8 @@
 * More complex scenarios are described below and in other directories in examples/
 # Usage
 1) Create tests directory in the same directory as student submissions. It has to follow the same structure as one of the examples.
-2) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
+2) Write testcases as described below. You can use examples/ as reference.
+3) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Advanced Usage
 * You can use --generate_results (or -g) command line argument to generate a result file per student. It will have the same name as student's original submission.
