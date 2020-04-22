@@ -1,5 +1,5 @@
 # Assume that student_submission module is imported and can be used freely
-# Also assume that PASS(), RESULT(res), FAIL(), and NO_RESULT() already exist
+# Also assume that PASS(), RESULT(res), FAIL(), and CHECK_OUTPUT() already exist
 
 def main():
     res = student_submission.numberSaver()
