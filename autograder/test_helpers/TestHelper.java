@@ -1,3 +1,5 @@
+// This class becomes the member class of the testcase, thus restricting
+// the student from accessing helper array and helper methods
 private static class TestHelper {
     private static int RESULT_EXIT_CODES[] = new int[] {{% RESULT_EXIT_CODES %}};
     public static void CHECK_OUTPUT() {

@@ -2,6 +2,9 @@ import shutil
 from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
+import py_compile
+import string
+import random
 
 import sh
 
@@ -19,10 +22,11 @@ class TestCase(ABC):
     path_to_helper_module: Path
     exit_code_handler: ExitCodeHandler = ExitCodeHandler()
 
-    def __init__(self, path: Path, tests_dir: Path, timeout: int, filters):
+    def __init__(self, path: Path, tests_dir: Path, timeout: int, filters, precompile_testcase=False):
         self.path = path
         self.timeout = timeout
         self.filters = filters
+        self.need_precompile_testcase = precompile_testcase
         output_dir = tests_dir / f"output/{path.stem}.txt"
         if output_dir.exists():
             with output_dir.open() as f:
@@ -40,6 +44,8 @@ class TestCase(ABC):
         self.name = path.stem.replace("_", " ").capitalize()
 
         self.prepend_test_helper()
+        if precompile_testcase:
+            self.precompile_testcase()
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
@@ -101,6 +107,13 @@ class TestCase(ABC):
         shutil.copy(submission, destination)
         return destination
 
+    def precompile_testcase(self):
+        """ Replaces the original testcase file with its compiled version,
+            thus making reading its contents as plaintext harder.
+            Useful in preventing cheating.
+        """
+        pass
+
     @abstractmethod
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         """ Either precompiles student submission and returns the path to
@@ -146,6 +159,17 @@ class CTestCase(TestCase):
         )
         return precompiled_submission
 
+    def precompile_testcase(self):
+        """ Not only hides the source code but also speeds up compilation,
+            because we compile each testcase exactly once.
+        """
+        sh.gcc(
+            "-c", self.path,
+            "-o", self.path.with_suffix('.o')
+        )
+        self.path.unlink()
+        self.path = self.path.with_suffix('.o')
+
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         executable_path = self.make_executable_path(precompiled_submission)
         sh.gcc(
@@ -159,7 +183,9 @@ class CTestCase(TestCase):
 
 class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it can theoretically
-        generate errors (not sure how though)
+        generate errors (not sure how though).
+        Java doesn't support precompilation yet. Read precompile_testcase()
+        for more info.
     """
     source_suffix = ".java"
     executable_suffix = ""
@@ -174,9 +200,32 @@ class JavaTestCase(TestCase):
         copied_submission.rename(precompiled_submission)
         return precompiled_submission
 
+    def precompile_testcase(self):
+        """ Sadly, java doesn't allow to compile files before their dependencies
+            have compiled.
+            Instead, we hide test names. It is not super safe but better than nothing.
+            We could, instead, encrypt each test file and decrypt at compilation.
+        """
+        self.original_path = self.path
+        new_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=15))
+        new_path = self.path.with_name(new_name)
+        self.path.rename(new_path)
+        self.path = self.path.with_name(new_name)
+
+        # This method didn't work but might prove useful in the future
+        # sh.javac(self.path, "-implicit:none")
+        # self.path.unlink()
+
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
-        sh.javac(self.path, precompiled_submission.name)
-        return lambda *args, **kwargs: sh.java(self.path.stem, *args, **kwargs)
+        if self.need_precompile_testcase:
+            self.path.rename(self.original_path)
+            path = self.original_path
+        else:
+            path = self.path
+        sh.javac(path, precompiled_submission.name)
+        if self.need_precompile_testcase:
+            path.rename(self.path)
+        return lambda *args, **kwargs: sh.java(path.stem, *args, **kwargs)
 
     def prepend_test_helper(self):
         """ Puts private TestHelper at the end of testcase class.
@@ -215,7 +264,7 @@ class JavaTestCase(TestCase):
 
 class PythonTestCase(TestCase):
     """ A proof of concept of how easy it is to add new languages.
-        Will only work if python is accessible via python3 alias for now
+        Will only work if python is accessible via python3 alias for now.
     """
     source_suffix = ".py"
     executable_suffix = source_suffix
@@ -223,3 +272,11 @@ class PythonTestCase(TestCase):
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)
+
+    def precompile_testcase(self):
+        """ Makes us use the bytecode version of the testcase instead of plaintext
+            version, thus making it harder to read the contents of the testcase.
+            Useful in preventing cheating.
+            NO CALLS TO THIS METHOD HAVE BEEN IMPLEMENTED YET
+        """
+        py_compile.compile(file=self.path, cfile=self.path)
