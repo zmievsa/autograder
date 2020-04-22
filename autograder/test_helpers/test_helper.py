@@ -4,8 +4,8 @@ import importlib
 student_submission = importlib.import_module(sys.argv[1])
 
 
-def NO_RESULT():
-    exit({% RESULTLESS_EXIT_CODE %})
+def CHECK_OUTPUT():
+    exit({% CHECK_OUTPUT_EXIT_CODE %})
 
 def RESULT(r):
     exit(r + ({% RESULT_EXIT_CODE_SHIFT %}))

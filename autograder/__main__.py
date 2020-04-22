@@ -7,6 +7,7 @@ from autograder.util import print_results
 
 
 def main(argv=None):
+    """ Returns the average score of the students """
     if argv is None:
         argv = sys.argv[1:]
     parser = argparse.ArgumentParser()
@@ -25,9 +26,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
-        Grader(current_dir, args.generate_results).run()
+        return Grader(current_dir, args.generate_results).run()
     else:
         print_results(current_dir, args.print)
+        return -1
 
 
 if __name__ == "__main__":

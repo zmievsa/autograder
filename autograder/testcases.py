@@ -10,16 +10,16 @@ from .util import get_stderr, format_template
 GRADER_DIR = Path(__file__).resolve().parent
 
 
-# These two cuties make it possible to give partial credit.
+# These cuties make it possible to give partial credit.
 # Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used
 # for anything besides their assigned meaning (1 is usually any exception).
 # This is the reason we use exit codes [3, ..., 103], so to calculate student
 # score (0 - 100), just add 3 to your calculated score.
 # IMPORTANT: CHECKING OUTPUT AND RESULT NEED TO BE DONE SEPARATELY
-# IF THE TEST CASE CHECKS OUTPUT, IT NEEDS TO RETURN THE RESULTLESS_EXIT_CODE
-RESULTLESS_EXIT_CODE = 0
+# IF THE TEST CASE CHECKS OUTPUT, IT NEEDS TO RETURN THE CHECK_OUTPUT_EXIT_CODE
+CHECK_OUTPUT_EXIT_CODE = 0
 RESULT_EXIT_CODE_SHIFT = 3  # All exit codes that convey student score are shifted by this
-ALLOWED_EXIT_CODES = (RESULTLESS_EXIT_CODE, *range(0 + RESULT_EXIT_CODE_SHIFT, 101 + RESULT_EXIT_CODE_SHIFT))
+ALLOWED_EXIT_CODES = (CHECK_OUTPUT_EXIT_CODE, *range(0 + RESULT_EXIT_CODE_SHIFT, 101 + RESULT_EXIT_CODE_SHIFT))
 MAX_RESULT = ALLOWED_EXIT_CODES[-1]
 MIN_RESULT = ALLOWED_EXIT_CODES[1]
 
@@ -72,8 +72,12 @@ class TestCase(ABC):
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
                 return 0, f"Crashed due to signal {e.exit_code}"
-            if result.exit_code != RESULTLESS_EXIT_CODE:
-                score = result.exit_code - RESULT_EXIT_CODE_SHIFT
+            if result.exit_code != CHECK_OUTPUT_EXIT_CODE:
+                if result.exit_code in ALLOWED_EXIT_CODES:
+                    score = result.exit_code - RESULT_EXIT_CODE_SHIFT
+                else:
+                    # This most likely means that the student used built-in exit function himself
+                    return 0, f"An invalid exit code '{result.exit_code}' has been supplied"
                 return score, f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
             elif self.format_output(runtime_output.getvalue()) == self.expected_output:
                 return 100, "100/100"
@@ -112,7 +116,7 @@ class TestCase(ABC):
         with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
             formatted_helper_file = format_template(
                 helper_file.read(),
-                RESULTLESS_EXIT_CODE=RESULTLESS_EXIT_CODE,
+                CHECK_OUTPUT_EXIT_CODE=CHECK_OUTPUT_EXIT_CODE,
                 RESULT_EXIT_CODE_SHIFT=RESULT_EXIT_CODE_SHIFT,
                 MAX_RESULT=MAX_RESULT,
                 MIN_RESULT=MIN_RESULT

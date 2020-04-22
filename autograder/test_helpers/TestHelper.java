@@ -1,6 +1,6 @@
 class TestHelper {
-    public static void NO_RESULT() {
-        System.exit({% RESULTLESS_EXIT_CODE %});
+    public static void CHECK_OUTPUT() {
+        System.exit({% CHECK_OUTPUT_EXIT_CODE %});
     }
     public static void RESULT(int result) {
         System.exit(result + ({% RESULT_EXIT_CODE_SHIFT %}));
