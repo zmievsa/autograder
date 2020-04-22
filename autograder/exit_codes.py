@@ -17,7 +17,7 @@ EXIT_CODE_COUNT_FOR_RESULTS = 101
 ALLOWED_EXIT_CODE_COUNT = EXIT_CODE_COUNT_FOR_RESULTS + 1  # 1 for CHECK_OUTPUT
 
 
-class ExitCodeEvent(Enum):
+class ExitCodeEventType(Enum):
     SYSTEM_ERROR = 0
     RESULT = 1
     CHECK_OUTPUT = 2
@@ -25,8 +25,8 @@ class ExitCodeEvent(Enum):
 
 
 @dataclass
-class ResultFromExitCode:
-    event: ExitCodeEvent
+class ExitCodeEvent:
+    type: ExitCodeEventType
     # To prevent dumb mistakes. If a developer misuses the value,
     # the obvious error will most likely occur.
     value: int = -float("inf")  # type: ignore
@@ -35,22 +35,22 @@ class ResultFromExitCode:
 class ExitCodeHandler:
     # TODO: Document how I function
     def __init__(self):
-        self.allowed_exit_codes = self.generate_allowed_exit_codes()
+        self.allowed_exit_codes = self._generate_allowed_exit_codes()
         self.result_exit_codes = self.allowed_exit_codes[:-1]
         self.check_output_exit_code = self.allowed_exit_codes[-1]
 
-    def scan(self, exit_code: int) -> ResultFromExitCode:
+    def scan(self, exit_code: int) -> ExitCodeEvent:
         if exit_code in self.allowed_exit_codes:
             if exit_code == self.check_output_exit_code:
-                return ResultFromExitCode(ExitCodeEvent.CHECK_OUTPUT)
+                return ExitCodeEvent(ExitCodeEventType.CHECK_OUTPUT)
             else:
                 associated_value = self.allowed_exit_codes.index(exit_code)
-                return ResultFromExitCode(ExitCodeEvent.RESULT, associated_value)
+                return ExitCodeEvent(ExitCodeEventType.RESULT, associated_value)
         elif exit_code in SYSTEM_RESERVED_EXIT_CODES:
-            return ResultFromExitCode(ExitCodeEvent.SYSTEM_ERROR)
+            return ExitCodeEvent(ExitCodeEventType.SYSTEM_ERROR)
         # It means that it IS used by grader but not chosen as a value
         elif exit_code in ALL_USED_EXIT_CODES:
-            return ResultFromExitCode(ExitCodeEvent.CHEAT_ATTEMPT)
+            return ExitCodeEvent(ExitCodeEventType.CHEAT_ATTEMPT)
         else:
             raise ValueError(f"Exit code '{exit_code}' is not possible.")
 
@@ -63,7 +63,7 @@ class ExitCodeHandler:
         }
 
     @staticmethod
-    def generate_allowed_exit_codes():
+    def _generate_allowed_exit_codes():
         used_exit_codes = ALL_USED_EXIT_CODES.copy()
         random.shuffle(used_exit_codes)
         return used_exit_codes[:ALLOWED_EXIT_CODE_COUNT]
