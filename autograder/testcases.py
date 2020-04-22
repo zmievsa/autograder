@@ -160,9 +160,6 @@ class CTestCase(TestCase):
         return precompiled_submission
 
     def precompile_testcase(self):
-        """ Not only hides the source code but also speeds up compilation,
-            because we compile each testcase exactly once.
-        """
         sh.gcc(
             "-c", self.path,
             "-o", self.path.with_suffix('.o')
