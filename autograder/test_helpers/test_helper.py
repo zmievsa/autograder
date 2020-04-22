@@ -4,14 +4,16 @@ import importlib
 student_submission = importlib.import_module(sys.argv[1])
 
 
+RESULT_EXIT_CODES = [{% RESULT_EXIT_CODES %}]
+
 def CHECK_OUTPUT():
     exit({% CHECK_OUTPUT_EXIT_CODE %})
 
 def RESULT(r):
-    exit(r + ({% RESULT_EXIT_CODE_SHIFT %}))
+    exit(RESULT_EXIT_CODES[r])
 
 def PASS():
-    exit({% MAX_RESULT %})
+    RESULT(100)
 
 def FAIL():
-    exit({% MIN_RESULT %})
+    RESULT(0)

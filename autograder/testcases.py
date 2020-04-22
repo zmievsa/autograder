@@ -6,22 +6,9 @@ from pathlib import Path
 import sh
 
 from .util import get_stderr, format_template
+from .exit_codes import ExitCodeEventType, ExitCodeHandler
 
 GRADER_DIR = Path(__file__).resolve().parent
-
-
-# These cuties make it possible to give partial credit.
-# Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used
-# for anything besides their assigned meaning (1 is usually any exception).
-# This is the reason we use exit codes [3, ..., 103], so to calculate student
-# score (0 - 100), just add 3 to your calculated score.
-# IMPORTANT: CHECKING OUTPUT AND RESULT NEED TO BE DONE SEPARATELY
-# IF THE TEST CASE CHECKS OUTPUT, IT NEEDS TO RETURN THE CHECK_OUTPUT_EXIT_CODE
-CHECK_OUTPUT_EXIT_CODE = 0
-RESULT_EXIT_CODE_SHIFT = 3  # All exit codes that convey student score are shifted by this
-ALLOWED_EXIT_CODES = (CHECK_OUTPUT_EXIT_CODE, *range(0 + RESULT_EXIT_CODE_SHIFT, 101 + RESULT_EXIT_CODE_SHIFT))
-MAX_RESULT = ALLOWED_EXIT_CODES[-1]
-MIN_RESULT = ALLOWED_EXIT_CODES[1]
 
 
 class TestCase(ABC):
@@ -30,6 +17,8 @@ class TestCase(ABC):
     source_suffix = ".source_suffix"
     executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
+    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+
     def __init__(self, path: Path, tests_dir: Path, timeout: int, filters):
         self.path = path
         self.timeout = timeout
@@ -46,10 +35,10 @@ class TestCase(ABC):
                 self.input = StringIO(f.read().strip())
         else:
             self.input = StringIO("")
-        
+
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
-        
+
         self.prepend_test_helper()
 
     def run(self, precompiled_submission: Path):
@@ -65,24 +54,33 @@ class TestCase(ABC):
                     _in=self.input,
                     _out=runtime_output,
                     _timeout=self.timeout,
-                    _ok_code=ALLOWED_EXIT_CODES
+                    _ok_code=self.exit_code_handler.allowed_exit_codes
                 )
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
                 return 0, f"Crashed due to signal {e.exit_code}"
-            if result.exit_code != CHECK_OUTPUT_EXIT_CODE:
-                if result.exit_code in ALLOWED_EXIT_CODES:
-                    score = result.exit_code - RESULT_EXIT_CODE_SHIFT
+            event = self.exit_code_handler.scan(result.exit_code)
+            if event.type == ExitCodeEventType.CHECK_OUTPUT:
+                if self.format_output(runtime_output.getvalue()) == self.expected_output:
+                    return 100, "100/100"
                 else:
-                    # This most likely means that the student used built-in exit function himself
-                    return 0, f"An invalid exit code '{result.exit_code}' has been supplied"
-                return score, f"{score}/100" + (" (Wrong answer)" if score == 0 else "")
-            elif self.format_output(runtime_output.getvalue()) == self.expected_output:
-                return 100, "100/100"
-            else:
-                return 0, "0/100 (Wrong answer)"
+                    return 0, "0/100 (Wrong answer)"
+            elif event.type == ExitCodeEventType.RESULT:
+                score = event.value
+                message = f"{score}/100"
+                if score == 0:
+                    message += " (Wrong answer)"
+                return score, message
+            elif event.type == ExitCodeEventType.CHEAT_ATTEMPT:
+                # This  means that either the student used built-in exit function himself
+                # or some testcase helper is broken, or a testcase exits itself without
+                # the use of helper functions.
+                return 0, f"An invalid exit code '{result.exit_code}' has been supplied"
+            elif event.type == ExitCodeEventType.SYSTEM_ERROR:
+                # We should already handle this case in try, except block
+                pass
 
     def make_executable_path(self, submission: Path):
         """ By combining test name and student name, it makes a unique path """
@@ -116,10 +114,7 @@ class TestCase(ABC):
         with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
             formatted_helper_file = format_template(
                 helper_file.read(),
-                CHECK_OUTPUT_EXIT_CODE=CHECK_OUTPUT_EXIT_CODE,
-                RESULT_EXIT_CODE_SHIFT=RESULT_EXIT_CODE_SHIFT,
-                MAX_RESULT=MAX_RESULT,
-                MIN_RESULT=MIN_RESULT
+                **self.exit_code_handler.get_formatted_exit_codes()
             )
             content = f.read()
             final_content = formatted_helper_file + "\n" + content
@@ -164,7 +159,7 @@ class CTestCase(TestCase):
 
 class JavaTestCase(TestCase):
     """ Please, ask students to remove their main as it can theoretically
-        generate errors.
+        generate errors (not sure how though)
     """
     source_suffix = ".java"
     executable_suffix = ""
@@ -183,9 +178,43 @@ class JavaTestCase(TestCase):
         sh.javac(self.path, precompiled_submission.name)
         return lambda *args, **kwargs: sh.java(self.path.stem, *args, **kwargs)
 
+    def prepend_test_helper(self):
+        """ Puts private TestHelper at the end of testcase class.
+            This is quite a crude way to do it but it is the easiest
+            I found so far.
+        """
+        with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
+            formatted_helper_class = format_template(
+                helper_file.read(),
+                **self.exit_code_handler.get_formatted_exit_codes()
+            )
+            content = f.read()
+            final_content = self._add_at_the_end_of_public_class(formatted_helper_class, content)
+        with open(self.path, "w") as f:
+            f.write(final_content)
+
+    def _add_at_the_end_of_public_class(self, helper_class: str, java_file: str):
+        # TODO: Refactor a bit for shorter lines
+        main_class_index = java_file.find("public")
+        file_starting_from_main_class = java_file[main_class_index:]
+        closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
+        return java_file[:main_class_index] + file_starting_from_main_class[:closing_brace_index] + "\n" + helper_class + "\n" + "}" + java_file[closing_brace_index + 1:]
+
+    def _find_closing_brace(self, s: str):
+        bracecount = 0
+        for i in range(len(s)):
+            if s[i] == "{":
+                bracecount += 1
+            elif s[i] == "}":
+                bracecount -= 1
+                if bracecount == 0:
+                    return i
+        else:
+            raise ValueError(f"Braces in testcase '{self.name}' don't match.")
+
 
 class PythonTestCase(TestCase):
-    """ A proof of concept of how easy it is to add new languages
+    """ A proof of concept of how easy it is to add new languages.
         Will only work if python is accessible via python3 alias for now
     """
     source_suffix = ".py"
