@@ -269,9 +269,4 @@ class PythonTestCase(TestCase):
         return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)
 
     def precompile_testcase(self):
-        """ Makes us use the bytecode version of the testcase instead of plaintext
-            version, thus making it harder to read the contents of the testcase.
-            Useful in preventing cheating.
-            NO CALLS TO THIS METHOD HAVE BEEN IMPLEMENTED YET
-        """
         py_compile.compile(file=self.path, cfile=self.path)
