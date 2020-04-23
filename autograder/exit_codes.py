@@ -33,7 +33,15 @@ class ExitCodeEvent:
 
 
 class ExitCodeHandler:
-    # TODO: Document how I function
+    """ Randomizes exit codes allowed in the program to prevent
+        cheating by using built-in exit(). If we use all available
+        exit codes, we are going to get a ~5% chance of getting 90%
+        or above if a student tries to cheat.
+
+        Indexes of allowed_exit_codes are the actual results (scores
+        or a value that means 'CHECK_OUTPUT') that correspond to
+        randomized exit codes.
+    """
     def __init__(self):
         self.allowed_exit_codes = self._generate_allowed_exit_codes()
         self.result_exit_codes = self.allowed_exit_codes[:-1]

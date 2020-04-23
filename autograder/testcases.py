@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import Path
 import py_compile
 
-import sh
+import sh  # type: ignore
 
 from .util import get_stderr, format_template, generate_random_string
 from .exit_codes import ExitCodeEventType, ExitCodeHandler
@@ -13,14 +13,22 @@ GRADER_DIR = Path(__file__).resolve().parent
 
 
 class TestCase(ABC):
-    SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()  # Extra args you'd like to use during compilation
+    # Extra args you'd like to use during compilation
+    SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()
     COMPILATION_ARGUMENTS: tuple = tuple()
     source_suffix = ".source_suffix"
     executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
     exit_code_handler: ExitCodeHandler = ExitCodeHandler()
 
-    def __init__(self, path: Path, tests_dir: Path, timeout: int, filters, precompile_testcase=False):
+    def __init__(
+        self,
+        path: Path,
+        tests_dir: Path,
+        timeout: int,
+        filters,
+        precompile_testcase=False
+    ):
         self.path = path
         self.timeout = timeout
         self.filters = filters
@@ -98,8 +106,9 @@ class TestCase(ABC):
 
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
-        """ Copies student submission into currect_dir and either precompiles it and returns the path to
-            the precompiled submission or to the copied submission if no precompilation is necesessary
+        """ Copies student submission into currect_dir and either precompiles
+            it and returns the path to the precompiled submission or to the
+            copied submission if no precompilation is necesessary
         """
         destination = current_dir / "temp" / source_file_name
         shutil.copy(submission, destination)
@@ -238,11 +247,16 @@ class JavaTestCase(TestCase):
             f.write(final_content)
 
     def _add_at_the_end_of_public_class(self, helper_class: str, java_file: str):
-        # TODO: Refactor a bit for shorter lines
+        # TODO: Figure out a better way to do this
         main_class_index = java_file.find("public")
         file_starting_from_main_class = java_file[main_class_index:]
         closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
-        return java_file[:main_class_index] + file_starting_from_main_class[:closing_brace_index] + "\n" + helper_class + "\n" + "}" + java_file[closing_brace_index + 1:]
+        return ''.join([
+            java_file[:main_class_index],
+            file_starting_from_main_class[:closing_brace_index],
+            "\n" + helper_class + "\n" + "}",
+            java_file[closing_brace_index + 1:]
+        ])
 
     def _find_closing_brace(self, s: str):
         bracecount = 0
@@ -266,7 +280,12 @@ class PythonTestCase(TestCase):
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
-        return lambda *args, **kwargs: sh.python3(self.path, precompiled_submission.stem, *args, **kwargs)
+        return lambda *args, **kwargs: sh.python3(
+            self.path,
+            precompiled_submission.stem,
+            *args,
+            **kwargs
+        )
 
     def precompile_testcase(self):
         py_compile.compile(file=self.path, cfile=self.path)

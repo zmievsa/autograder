@@ -1,6 +1,6 @@
 from pathlib import Path
 import re
-import sh
+import sh  # type: ignore
 import string
 import random
 

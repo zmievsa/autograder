@@ -6,7 +6,7 @@ from typing import List
 import logging
 import configparser
 
-import sh
+import sh  # type: ignore
 
 from . import testcases
 from .util import get_stderr
@@ -162,7 +162,6 @@ class Grader:
             grader_output = self._get_testcase_output(submission)
         return grader_output['student_score']
 
-
     def _get_testcase_output(self, submission) -> dict:
         """ Returns grading info as a dict """
         testcase_count = len(self.tests)
@@ -172,7 +171,9 @@ class Grader:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
         try:
-            precompiled_submission = self.TestCaseType.precompile_submission(submission, self.current_dir, self.source_file_name)
+            precompiled_submission = self.TestCaseType.precompile_submission(
+                submission, self.current_dir, self.source_file_name
+            )
         except sh.ErrorReturnCode_1 as e:
             stderr = get_stderr(self.current_dir, e, "Failed to precompile")
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
