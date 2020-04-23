@@ -1,6 +1,5 @@
 import random
 from enum import Enum
-from dataclasses import dataclass
 from typing import Dict
 
 
@@ -24,12 +23,18 @@ class ExitCodeEventType(Enum):
     CHEAT_ATTEMPT = 3
 
 
-@dataclass
 class ExitCodeEvent:
     type: ExitCodeEventType
-    # To prevent dumb mistakes. If a developer misuses the value,
-    # the obvious error will most likely occur.
+    
     value: int = -float("inf")  # type: ignore
+
+    def __init__(self, type, value=-float("inf")):
+        """ We set it to -infinity to prevent dumb mistakes.
+            If a developer misuses the value, the obvious error
+            will most likely occur.
+        """
+        self.type = type
+        self.value = value
 
 
 class ExitCodeHandler:
