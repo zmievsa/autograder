@@ -1,8 +1,18 @@
+This utility aims to provide a simple, yet highly configurable way to autograde programming assignments
+# Features
+* Most features are demonstrated in examples/ directory
+* Easy to grade (simply running `autograder` on a directory with assignments and testcases)
+* Easy-to-write testcases
+* TestCase grade based on student's output in stdout
+* A per-testcase grade can be any number out of 100 points
+* Support for grading C, Java, and Python code
+* A result file can be generated for each student using `autograder --generate_results`
+* You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and filters for checking output
+* Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (randomized result exit codes and --precompile_testcases option). You can read more on this in implementation details section.
 # Installation (Linux-only) (Python >= 3.6)
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Quickstart
-* Currently, there is support for grading C, Java, and Python code
 * Go to examples/ and look at simplest_c for the simplest usage scenario
 * More complex scenarios are described below and in other directories in examples/
 # Usage
@@ -26,9 +36,27 @@
     * RESULT(int r) returns student's score r back to the grader
     * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
     * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
+# Command line help
+`usage: autograder [-h] [-g] [-p [min_score]] [--precompile_testcases]
+                  [submission_path]
+
+positional arguments:
+  submission_path       Path to directory that contains student submissions
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -g, --generate_results
+                        Generate results directory with a result file per
+                        student
+  -p [min_score], --print [min_score]
+                        Use after already graded to print assignments with
+                        score >= min_score
+  --precompile_testcases
+                        Precompile testcases to hide their files from student
+                        (Java support is minimal)`
 # Implementation details
-* Exit codes  1 - 2, 126 - 165, and 255 have special meaning and should NOT be used for student scores. In the latest version of this readme, I used 0, 3-103 where 0 means CHECK_OUTPUT and 3-103 stand for respective student scores minus 3. The shift by 3 is used to prevent the use of standard exit codes
+* I used exit codes to specify student grades. Currently, I pick all exit codes that are not used by the system, randomize them, and cut off the ones I don't need. Then I use the first 101 exit codes for the results, and one more for checking output. So a student has no way of knowing which exit codes correspond to which results. The chance of trying out a number and getting anything above a 90 is about 5%. If you are worried that students will simply read the correct exit codes from the testcase file, you can use `--precompile_submissions` to make only the testcase bytecode available.
 * If you want to add a new language for grading, you have to create a subclass of TestCase in autograder/testcases.py following the pattern of other subclasses and a respective test helper module in autograder/tests/test_helpers directory, then import the subclass into autograder/grader.py, and add it to ALLOWED_LANGUAGES dictionary
 * At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use FILTER_FUNCTION(s) defined in autograder/grader.py instead
-* If you don't prototype student functions in your C testcases, you will run into undefined behavior. 
+* If you don't prototype student functions you want to test in your C testcases, you will run into undefined behavior. 
 * Multiprocessing was a feature in the past but it has so many drawbacks that it was deemed unnecessary for the task
