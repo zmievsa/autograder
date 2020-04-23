@@ -1,16 +1,15 @@
 import os
 import sys
 import shutil
-from io import StringIO
 from pathlib import Path
 from typing import List
 import logging
 import configparser
 
-import sh
+import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, print_results
+from .util import get_stderr
 from .filters import ALLOWED_FILTERS
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -32,13 +31,20 @@ KEY = """
 
 
 class Grader:
-    def __init__(self, current_dir, generate_results=False, testcase_dir_name="testcases"):
+    def __init__(
+        self,
+        current_dir,
+        generate_results=False,
+        testcase_dir_name="testcases",
+        precompile_testcases=False
+    ):
         self.generate_results = generate_results
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
+        self.precompile_testcases = precompile_testcases
         self._choose_directory_structure(testcase_dir_name)
         self.temp_dir.mkdir(exist_ok=True)
         if generate_results:
@@ -61,18 +67,18 @@ class Grader:
 
     def cleanup(self):
         shutil.rmtree(self.temp_dir)
-    
+
     def _choose_directory_structure(self, testcase_dir_name):
-        if not (self.tests_dir / testcase_dir_name).exists() and \
-            (self.current_dir / testcase_dir_name).exists():
-            self.tests_dir = self.current_dir
+        if not (self.tests_dir / testcase_dir_name).exists():
+            if (self.current_dir / testcase_dir_name).exists():
+                self.tests_dir = self.current_dir
         self.testcases_dir = self.tests_dir / testcase_dir_name
         REQUIRED_DIRS = (self.testcases_dir,)
         dir_not_found = "{} directory not found. It is required for the grader to function."
         for directory in REQUIRED_DIRS:
             if not directory.exists():
                 raise FileNotFoundError(dir_not_found.format(directory))
-    
+
     def _configure_grading(self):
         cfg = self._read_config()
         self.timeout = cfg.getint('TIMEOUT')
@@ -95,15 +101,15 @@ class Grader:
             source = source.lower()
         self.source_file_name = source
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
-    
-    def _read_config(self) -> configparser.ConfigParser:
+
+    def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
         default_parser.read(PATH_TO_DEFAULT_CONFIG)
         user_parser = configparser.ConfigParser()
         user_parser.read_dict(default_parser)
         user_parser.read(self.tests_dir / "config.ini")
         return user_parser['CONFIG']
-    
+
     def _figure_out_testcase_type(self):
         for testcase in self.testcases_dir.iterdir():
             testcase_type = get_testcase_type_by_suffix(testcase.suffix)
@@ -118,7 +124,7 @@ class Grader:
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
-    
+
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []
         for test in (self.testcases_dir).iterdir():
@@ -129,10 +135,11 @@ class Grader:
                 self.temp_dir / test.name,
                 self.tests_dir,
                 self.timeout,
-                self.filters
+                self.filters,
+                self.precompile_testcases
             ))
         return tests
-    
+
     def _gather_submissions(self):
         submissions = []
         for submission in self.current_dir.iterdir():
@@ -145,7 +152,7 @@ class Grader:
             elif self.source_file_name in submission_name:
                 submissions.append(submission)
         return submissions
-    
+
     def _run_tests_on_submission(self, submission: Path):
         if self.generate_results:
             with open(self.results_dir / submission.name, "w") as f:
@@ -154,7 +161,6 @@ class Grader:
         else:
             grader_output = self._get_testcase_output(submission)
         return grader_output['student_score']
-
 
     def _get_testcase_output(self, submission) -> dict:
         """ Returns grading info as a dict """
@@ -165,9 +171,11 @@ class Grader:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
         try:
-            precompiled_submission = self.TestCaseType.precompile_submission(submission, self.current_dir, self.source_file_name)
+            precompiled_submission = self.TestCaseType.precompile_submission(
+                submission, self.current_dir, self.source_file_name
+            )
         except sh.ErrorReturnCode_1 as e:
-            stderr = get_stderr(e, "Failed to precompile")
+            stderr = get_stderr(self.current_dir, e, "Failed to precompile")
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
             return {
                 'assignment_name': self.assignment_name,
