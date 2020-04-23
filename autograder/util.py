@@ -1,6 +1,8 @@
 from pathlib import Path
 import re
 import sh
+import string
+import random
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")
@@ -35,3 +37,7 @@ def print_results(current_dir, min_score: int, *args, **kwargs):
             score = int(match.group(1))
             if score >= min_score:
                 print(output + "\n", *args, **kwargs)
+
+
+def generate_random_string(length):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))

@@ -3,12 +3,10 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
 import py_compile
-import string
-import random
 
 import sh
 
-from .util import get_stderr, format_template
+from .util import get_stderr, format_template, generate_random_string
 from .exit_codes import ExitCodeEventType, ExitCodeHandler
 
 GRADER_DIR = Path(__file__).resolve().parent
@@ -204,7 +202,7 @@ class JavaTestCase(TestCase):
             We could, instead, encrypt each test file and decrypt at compilation.
         """
         self.original_path = self.path
-        new_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=15))
+        new_name = generate_random_string(15)
         new_path = self.path.with_name(new_name)
         self.path.rename(new_path)
         self.path = self.path.with_name(new_name)
