@@ -10,7 +10,7 @@ paths_to_testhelpers = [str(p) for p in path_to_testhelpers.iterdir()]
 setup(
     name="assignment-autograder",
     packages=["autograder"],
-    version="2.3.1",
+    version="2.4.0",
     install_requires=requires,
     package_data={
         "autograder": [
