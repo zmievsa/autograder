@@ -37,7 +37,8 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
     * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
     * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 # Command line help
-`usage: autograder [-h] [-g] [-p [min_score]] [--precompile_testcases]
+```
+usage: autograder [-h] [-g] [-p [min_score]] [--precompile_testcases]
                   [submission_path]
 
 positional arguments:
@@ -53,7 +54,8 @@ optional arguments:
                         score >= min_score
   --precompile_testcases
                         Precompile testcases to hide their files from student
-                        (Java support is minimal)`
+                        (Java support is minimal)
+```
 # Implementation details
 * I used exit codes to specify student grades. Currently, I pick all exit codes that are not used by the system, randomize them, and cut off the ones I don't need. Then I use the first 101 exit codes for the results, and one more for checking output. So a student has no way of knowing which exit codes correspond to which results. The chance of trying out a number and getting anything above a 90 is about 5%. If you are worried that students will simply read the correct exit codes from the testcase file, you can use `--precompile_submissions` to make only the testcase bytecode available.
 * If you want to add a new language for grading, you have to create a subclass of TestCase in autograder/testcases.py following the pattern of other subclasses and a respective test helper module in autograder/tests/test_helpers directory, then import the subclass into autograder/grader.py, and add it to ALLOWED_LANGUAGES dictionary
