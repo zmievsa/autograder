@@ -36,7 +36,8 @@ class Grader:
         current_dir,
         generate_results=False,
         testcase_dir_name="testcases",
-        precompile_testcases=False
+        precompile_testcases=False,
+        no_output=False,
     ):
         self.generate_results = generate_results
         self.current_dir = current_dir
@@ -45,6 +46,7 @@ class Grader:
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
         self.precompile_testcases = precompile_testcases
+        self.no_output = no_output
         self._choose_directory_structure(testcase_dir_name)
         self.temp_dir.mkdir(exist_ok=True)
         if generate_results:
@@ -122,12 +124,13 @@ class Grader:
     def _configure_logging(self):
         self.logger = logging.getLogger("Grader")
         self.logger.setLevel(logging.INFO)
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
-        self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
+        if not self.no_output:
+            self.logger.addHandler(logging.StreamHandler(sys.stdout))
+            self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
 
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []
-        for test in (self.testcases_dir).iterdir():
+        for test in self.testcases_dir.iterdir():
             if not (test.is_file() and self.TestCaseType.source_suffix in test.name):
                 continue
             shutil.copy(test, self.temp_dir)
