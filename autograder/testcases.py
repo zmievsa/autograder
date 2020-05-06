@@ -16,10 +16,12 @@ class TestCase(ABC):
     # Extra args you'd like to use during compilation
     SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()
     COMPILATION_ARGUMENTS: tuple = tuple()
+
     source_suffix = ".source_suffix"
     executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
     exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+    weight: float
 
     def __init__(
         self,
@@ -27,12 +29,15 @@ class TestCase(ABC):
         tests_dir: Path,
         timeout: int,
         filters,
-        precompile_testcase=False
+        precompile_testcase=False,
+        weight=1
     ):
         self.path = path
         self.timeout = timeout
         self.filters = filters
         self.need_precompile_testcase = precompile_testcase
+        self.weight = weight
+        self.max_score = int(weight * 100)
         output_dir = tests_dir / f"output/{path.stem}.txt"
         if output_dir.exists():
             with output_dir.open() as f:
@@ -55,6 +60,11 @@ class TestCase(ABC):
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
+        result, message = self._weightless_run(precompiled_submission)
+        return result * self.weight, message
+
+    def _weightless_run(self, precompiled_submission: Path):
+        """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
         try:
             test_executable = self.compile_testcase(precompiled_submission)
@@ -76,12 +86,12 @@ class TestCase(ABC):
             event = self.exit_code_handler.scan(result.exit_code)
             if event.type == ExitCodeEventType.CHECK_OUTPUT:
                 if self.format_output(runtime_output.getvalue()) == self.expected_output:
-                    return 100, "100/100"
+                    return 100, f"100/{self.max_score}"
                 else:
-                    return 0, "0/100 (Wrong answer)"
+                    return 0, f"0/{self.max_score} (Wrong answer)"
             elif event.type == ExitCodeEventType.RESULT:
                 score = event.value
-                message = f"{score}/100"
+                message = f"{score}/{self.max_score}"
                 if score == 0:
                     message += " (Wrong answer)"
                 return score, message
@@ -131,14 +141,14 @@ class TestCase(ABC):
 
     def prepend_test_helper(self):
         """ Prepends all of the associated test_helper code to test code """
-        with open(self.path) as f, open(self.path_to_helper_module) as helper_file:
+        with self.path.open() as f, self.path_to_helper_module.open() as helper_file:
             formatted_helper_file = format_template(
                 helper_file.read(),
                 **self.exit_code_handler.get_formatted_exit_codes()
             )
             content = f.read()
             final_content = formatted_helper_file + "\n" + content
-        with open(self.path, "w") as f:
+        with self.path.open("w") as f:
             f.write(final_content)
 
     def cleanup(self):
