@@ -75,23 +75,28 @@ class Grader:
             if (self.current_dir / testcase_dir_name).exists():
                 self.tests_dir = self.current_dir
         self.testcases_dir = self.tests_dir / testcase_dir_name
-        REQUIRED_DIRS = (self.testcases_dir,)
+        required_dirs = (self.testcases_dir,)
         dir_not_found = "{} directory not found. It is required for the grader to function."
-        for directory in REQUIRED_DIRS:
+        for directory in required_dirs:
             if not directory.exists():
                 raise FileNotFoundError(dir_not_found.format(directory))
 
     def _configure_grading(self):
         cfg = self._read_config()
+
         self.timeout = cfg.getint('TIMEOUT')
+
         self.total_points_possible = cfg.getint('TOTAL_POINTS_POSSIBLE')
         self.total_score_to_100_ratio = self.total_points_possible / 100
+
         language = cfg['PROGRAMMING_LANGUAGE']
         if language == "AUTO":
             self.TestCaseType = self._figure_out_testcase_type()
         else:
             self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
+
         self.assignment_name = cfg['ASSIGNMENT_NAME']
+
         source = cfg['SOURCE_FILE_NAME']
         if source == "AUTO":
             source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
@@ -102,7 +107,9 @@ class Grader:
         if self.lower_source_filename:
             source = source.lower()
         self.source_file_name = source
+
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
+        self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
 
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
@@ -128,6 +135,15 @@ class Grader:
             f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}"
         )
 
+    @staticmethod
+    def _parse_testcase_weights(raw_weights: str):
+        weights = {}
+        for raw_weight in raw_weights.split(","):
+            if raw_weight:
+                testcase_name, weight = raw_weight.strip().split(":")
+                weights[testcase_name.strip()] = float(weight)
+        return weights
+
     def _configure_logging(self):
         self.logger = logging.getLogger("Grader")
         self.logger.setLevel(logging.INFO)
@@ -137,7 +153,9 @@ class Grader:
 
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []
+        default_weight = self.testcase_weights.get("ALL", 1)
         for test in self.testcases_dir.iterdir():
+            weight = self.testcase_weights.get(test.name, default_weight)
             if not (test.is_file() and self.TestCaseType.source_suffix in test.name):
                 continue
             shutil.copy(test, self.temp_dir)
@@ -146,7 +164,8 @@ class Grader:
                 self.tests_dir,
                 self.timeout,
                 self.filters,
-                self.precompile_testcases
+                self.precompile_testcases,
+                weight
             ))
         return tests
 
@@ -199,14 +218,15 @@ class Grader:
             self.logger.info(message)
             testcase_results.append((test.name, message))
             total_testcase_score += testcase_score
-        student_score = total_testcase_score / testcase_count * self.total_score_to_100_ratio
-        student_final_result = f"{round(student_score)}/{self.total_points_possible}"
+        raw_student_score = total_testcase_score / sum(t.weight for t in self.tests)
+        normalized_student_score = raw_student_score * self.total_score_to_100_ratio
+        student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
         self.logger.info(f"Result: {student_final_result}\n")
         return {
             'assignment_name': self.assignment_name,
             'testcase_results': testcase_results,
             'formatted_student_score': student_final_result,
-            'student_score': student_score
+            'student_score': normalized_student_score
         }
 
 
