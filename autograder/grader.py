@@ -107,9 +107,16 @@ class Grader:
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
         default_parser.read(PATH_TO_DEFAULT_CONFIG)
+
+        path_to_user_config = self.tests_dir / "config.ini"
         user_parser = configparser.ConfigParser()
         user_parser.read_dict(default_parser)
-        user_parser.read(self.tests_dir / "config.ini")
+        user_parser.read(path_to_user_config)
+
+        # Generation of default config in user directory to simplify configuration
+        if not (self.tests_dir / "config.ini").exists():
+            shutil.copy(PATH_TO_DEFAULT_CONFIG, path_to_user_config)
+
         return user_parser['CONFIG']
 
     def _figure_out_testcase_type(self):
