@@ -6,7 +6,7 @@ import py_compile
 
 import sh  # type: ignore
 
-from .util import get_stderr, format_template, generate_random_string
+from .util import get_stderr, format_template, generate_random_string, ArgList
 from .exit_codes import ExitCodeEventType, ExitCodeHandler
 
 GRADER_DIR = Path(__file__).resolve().parent
@@ -14,27 +14,23 @@ GRADER_DIR = Path(__file__).resolve().parent
 
 class TestCase(ABC):
     # Extra args you'd like to use during compilation
-    SUBMISSION_COMPILATION_ARGUMENTS: tuple = tuple()
-    COMPILATION_ARGUMENTS: tuple = tuple()
-
     source_suffix = ".source_suffix"
     executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
-    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
-    weight: float
-
     def __init__(
         self,
         path: Path,
         tests_dir: Path,
         timeout: int,
         filters,
+        argument_lists: dict,
         precompile_testcase=False,
         weight=1
     ):
         self.path = path
         self.timeout = timeout
         self.filters = filters
+        self.argument_lists = argument_lists
         self.need_precompile_testcase = precompile_testcase
         self.weight = weight
         self.max_score = int(weight * 100)
@@ -57,6 +53,9 @@ class TestCase(ABC):
         self.prepend_test_helper()
         if precompile_testcase:
             self.precompile_testcase()
+    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+
+    weight: float
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
@@ -179,7 +178,8 @@ class CTestCase(TestCase):
     def precompile_testcase(self):
         sh.gcc(
             "-c", self.path,
-            "-o", self.path.with_suffix('.o')
+            "-o", self.path.with_suffix('.o'),
+            *self.argument_lists[ArgList.testcase_precompilation],
         )
         self.path.unlink()
         self.path = self.path.with_suffix('.o')
@@ -190,7 +190,8 @@ class CTestCase(TestCase):
             "-o",
             executable_path,
             self.path,
-            precompiled_submission.name
+            precompiled_submission.name,
+            *self.argument_lists[ArgList.testcase_compilation]
         )
         return sh.Command(executable_path)
 
@@ -293,9 +294,10 @@ class PythonTestCase(TestCase):
         return lambda *args, **kwargs: sh.python3(
             self.path,
             precompiled_submission.stem,
-            *args,
-            **kwargs
+            *self.argument_lists[ArgList.testcase_compilation],
+            **kwargs,
+
         )
 
     def precompile_testcase(self):
-        py_compile.compile(file=self.path, cfile=self.path)
+        py_compile.compile(file=self.path, cfile=self.path, *self.argument_lists[ArgList.testcase_precompilation])

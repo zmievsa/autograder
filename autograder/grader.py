@@ -9,7 +9,7 @@ import configparser
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr
+from .util import get_stderr, ArgList, ARGUMENT_LIST_NAMES
 from .filters import ALLOWED_FILTERS
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -111,6 +111,41 @@ class Grader:
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
         self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
 
+        self.timeout = cfg.getint('TIMEOUT')
+
+        self.total_points_possible = cfg.getint('TOTAL_POINTS_POSSIBLE')
+        self.total_score_to_100_ratio = self.total_points_possible / 100
+
+        language = cfg['PROGRAMMING_LANGUAGE']
+        if language == "AUTO":
+            self.TestCaseType = self._figure_out_testcase_type()
+        else:
+            self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
+
+        self.assignment_name = cfg['ASSIGNMENT_NAME']
+
+        source = cfg['SOURCE_FILE_NAME']
+        if source == "AUTO":
+            source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
+            self.auto_source_file_name_enabled = True
+        else:
+            self.auto_source_file_name_enabled = False
+        self.lower_source_filename = cfg.getboolean('LOWER_SOURCE_FILENAME')
+        if self.lower_source_filename:
+            source = source.lower()
+        self.source_file_name = source
+
+        self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
+        self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
+
+        self.argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
+        for arg_list_index, arg_list_name in ARGUMENT_LIST_NAMES.items():
+            args = cfg[arg_list_name].split(",")
+            for arg in args:
+                if arg.strip():
+                    testcase_name, arg_value = arg.split(":")
+                    self.argument_lists[arg_list_index][testcase_name.strip()] = arg_value.strip()
+
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
         default_parser.read(PATH_TO_DEFAULT_CONFIG)
@@ -158,16 +193,30 @@ class Grader:
             weight = self.testcase_weights.get(test.name, default_weight)
             if not (test.is_file() and self.TestCaseType.source_suffix in test.name):
                 continue
+            arglist = self._generate_arglists(test)
             shutil.copy(test, self.temp_dir)
             tests.append(self.TestCaseType(
                 self.temp_dir / test.name,
                 self.tests_dir,
                 self.timeout,
                 self.filters,
+                arglist,
                 self.precompile_testcases,
-                weight
-            ))
+                weight,
+                ))
         return tests
+
+    def _generate_arglists(self, test: Path):
+        arglist = {}
+        for arglist_index, arglists_per_testcase in self.argument_lists.items():
+            if test.name in arglists_per_testcase:
+                arglist[arglist_index] = arglists_per_testcase[test.name]
+            elif "ALL" in arglists_per_testcase:
+                arglist[arglist_index] = arglists_per_testcase["ALL"]
+            else:
+                arglist[arglist_index] = tuple()
+        return arglist
+
 
     def _gather_submissions(self):
         submissions = []
@@ -193,7 +242,6 @@ class Grader:
 
     def _get_testcase_output(self, submission) -> dict:
         """ Returns grading info as a dict """
-        testcase_count = len(self.tests)
         if "_" in submission.name:
             student_name = submission.name[:submission.name.find("_")]
         else:
