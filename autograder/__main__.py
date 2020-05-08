@@ -31,14 +31,24 @@ def main(argv=None):
         action="store_true",
         help="Do not output any code to the console"
     )
+    parser.add_argument('--generate_config',
+        action="store_true",
+        help="Generate a default config file in the <submission_path>"
+
+        )
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
-        return Grader(
+        grader = Grader(
             current_dir,
             args.generate_results,
             precompile_testcases=args.precompile_testcases,
-            no_output=args.no_output).run()
+            no_output=args.no_output
+        )
+        if args.generate_config:
+            grader.generate_config()
+        else:
+            return grader.run()
     else:
         print_results(current_dir, args.print)
         return -1

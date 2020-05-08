@@ -9,11 +9,10 @@ import configparser
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, ARGUMENT_LIST_NAMES
+from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG
 from .filters import ALLOWED_FILTERS
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
-PATH_TO_DEFAULT_CONFIG = Path(__file__).parent / "default_config.ini"
 ALLOWED_LANGUAGES = {
     "c": testcases.CTestCase,
     "java": testcases.JavaTestCase,
@@ -64,8 +63,13 @@ class Grader:
         self.logger.info(f"\nAverage score: {round(class_average)}/{self.total_points_possible}")
         self.logger.info(KEY)
         self.cleanup()
-        os.chdir(old_dir)
+        os.chdir(str(old_dir))
         return class_average
+
+    def generate_config(self):
+        config = self.tests_dir / "config.ini"
+        if not config.exists():
+            shutil.copy(str(PATH_TO_DEFAULT_CONFIG), str(config))
 
     def cleanup(self):
         shutil.rmtree(self.temp_dir)
@@ -156,10 +160,6 @@ class Grader:
         user_parser.read_dict(default_parser)
         user_parser.read(path_to_user_config)
 
-        # Generation of default config in user directory to simplify configuration
-        if not (self.tests_dir / "config.ini").exists():
-            shutil.copy(PATH_TO_DEFAULT_CONFIG, path_to_user_config)
-
         return user_parser['CONFIG']
 
     def _figure_out_testcase_type(self):
@@ -217,7 +217,6 @@ class Grader:
             else:
                 arglist[arglist_index] = tuple()
         return arglist
-
 
     def _gather_submissions(self):
         submissions = []

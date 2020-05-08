@@ -4,6 +4,9 @@ import sh  # type: ignore
 import string
 import random
 from enum import Enum
+import shutil
+
+PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
 
 
 class ArgList(Enum):
@@ -19,9 +22,6 @@ ARGUMENT_LIST_NAMES = {
     ArgList.testcase_precompilation: "TESTCASE_PRECOMPILATION_ARGS",
     ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS"
 }
-
-
-
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")

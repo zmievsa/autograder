@@ -13,10 +13,10 @@ GRADER_DIR = Path(__file__).resolve().parent
 
 
 class TestCase(ABC):
-    # Extra args you'd like to use during compilation
     source_suffix = ".source_suffix"
     executable_suffix = ".executable_suffix"
     path_to_helper_module: Path
+
     def __init__(
         self,
         path: Path,
@@ -120,7 +120,7 @@ class TestCase(ABC):
             copied submission if no precompilation is necesessary
         """
         destination = current_dir / "temp" / source_file_name
-        shutil.copy(submission, destination)
+        shutil.copy(str(submission), str(destination))
         return destination
 
     def precompile_testcase(self):
