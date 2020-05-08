@@ -240,7 +240,7 @@ class JavaTestCase(TestCase):
         sh.javac(path, precompiled_submission.name)
         if self.need_precompile_testcase:
             path.rename(self.path)
-        return lambda *args, **kwargs: sh.java(path.stem, *args, **kwargs)
+        return lambda *args, **kwargs: sh.java(path.stem, *self.argument_lists[ArgList.testcase_compilation])
 
     def prepend_test_helper(self):
         """ Puts private TestHelper at the end of testcase class.
@@ -297,13 +297,12 @@ class PythonTestCase(TestCase):
             precompiled_submission.stem,
             *self.argument_lists[ArgList.testcase_compilation],
             **kwargs,
-
         )
 
     def precompile_testcase(self):
         kwargs = {}
         if "-O" in self.argument_lists[ArgList.testcase_precompilation]:
             kwargs["optimize"] = 1
-        elif "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
+        if "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
             kwargs["optimize"] = 2
         py_compile.compile(file=self.path, cfile=self.path, **kwargs)
