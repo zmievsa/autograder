@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from pathlib import Path
 
 import autograder
 from time import sleep
@@ -54,6 +55,10 @@ def main():
             FAIL(f"TEST {test_dir} raised '{e}')")
 
     test_extra_cli_args()
+
+    # Cleanup
+    Path("examples/simplest_c/config.ini").unlink()
+
 
 
 def test_extra_cli_args():
