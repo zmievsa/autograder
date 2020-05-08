@@ -291,6 +291,7 @@ class PythonTestCase(TestCase):
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
+        # Argument lists do not seem to work here
         return lambda *args, **kwargs: sh.python3(
             self.path,
             precompiled_submission.stem,
@@ -300,4 +301,9 @@ class PythonTestCase(TestCase):
         )
 
     def precompile_testcase(self):
-        py_compile.compile(file=self.path, cfile=self.path, *self.argument_lists[ArgList.testcase_precompilation])
+        kwargs = {}
+        if "-O" in self.argument_lists[ArgList.testcase_precompilation]:
+            kwargs["optimize"] = 1
+        elif "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
+            kwargs["optimize"] = 2
+        py_compile.compile(file=self.path, cfile=self.path, **kwargs)
