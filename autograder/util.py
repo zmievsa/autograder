@@ -3,6 +3,25 @@ import re
 import sh  # type: ignore
 import string
 import random
+from enum import Enum
+
+
+class ArgList(Enum):
+    submission_precompilation = 0
+    submission_compilation = 1
+    testcase_precompilation = 2
+    testcase_compilation = 3
+
+
+ARGUMENT_LIST_NAMES = {
+    ArgList.submission_precompilation: "SUBMISSION_PRECOMPILATION_ARGS",
+    ArgList.submission_compilation: "SUBMISSION_COMPILATION_ARGS",
+    ArgList.testcase_precompilation: "TESTCASE_PRECOMPILATION_ARGS",
+    ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS"
+}
+
+
+
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")
