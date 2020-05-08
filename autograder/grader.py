@@ -9,7 +9,7 @@ import configparser
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, ArgList, ARGUMENT_LIST_NAMES
+from .util import get_stderr, ARGUMENT_LIST_NAMES
 from .filters import ALLOWED_FILTERS
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -138,13 +138,14 @@ class Grader:
         self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
         self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
 
+        # TODO: Name me better. The name is seriously bad
         self.argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
         for arg_list_index, arg_list_name in ARGUMENT_LIST_NAMES.items():
             args = cfg[arg_list_name].split(",")
             for arg in args:
                 if arg.strip():
                     testcase_name, arg_value = arg.split(":")
-                    self.argument_lists[arg_list_index][testcase_name.strip()] = arg_value.strip()
+                    self.argument_lists[arg_list_index][testcase_name.strip()] = arg_value.strip().split(" ")
 
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
