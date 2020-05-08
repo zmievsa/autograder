@@ -240,7 +240,9 @@ class JavaTestCase(TestCase):
         sh.javac(path, precompiled_submission.name)
         if self.need_precompile_testcase:
             path.rename(self.path)
-        return lambda *args, **kwargs: sh.java(path.stem, *self.argument_lists[ArgList.testcase_compilation])
+        return lambda *args, **kwargs: sh.java(
+            path.stem, *args, *self.argument_lists[ArgList.testcase_compilation], **kwargs
+        )
 
     def prepend_test_helper(self):
         """ Puts private TestHelper at the end of testcase class.
