@@ -54,6 +54,7 @@ class Grader:
         self._configure_logging()
         self.tests = self._gather_testcases()
         self.submissions = self._gather_submissions()
+        self._copy_extra_files_to_temp(self.tests_dir / "extra")
 
     def run(self):
         old_dir = Path.cwd()
@@ -230,6 +231,11 @@ class Grader:
             elif self.source_file_name in submission_name:
                 submissions.append(submission)
         return submissions
+
+    def _copy_extra_files_to_temp(self, extra_file_dir: Path):
+        if extra_file_dir.exists():
+            for path in extra_file_dir.iterdir():
+                shutil.copy(str(path), str(self.temp_dir))
 
     def _run_tests_on_submission(self, submission: Path):
         if self.generate_results:

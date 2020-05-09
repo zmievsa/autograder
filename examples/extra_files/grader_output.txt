@@ -1,12 +1,10 @@
-Grading oatmealstanislav
-Running 'Test result'
+Grading submission.py
+Running 'Test addition'
 100/100
-Running 'Test output'
-0/50 (Wrong answer)
-Result: 67/100
+Result: 100/100
 
 
-Average score: 67/100
+Average score: 100/100
 
 
 Key:
