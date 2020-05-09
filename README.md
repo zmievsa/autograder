@@ -3,12 +3,13 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * Most features are demonstrated in examples/ directory
 * Easy to grade (simply running `autograder` on a directory with assignments and testcases)
 * Easy-to-write testcases
-* TestCase grade based on student's output in stdout
+* Testcase grade can be based on student's output in stdout
 * A per-testcase grade can be any number out of 100 points
 * Support for grading C, Java, and Python code
 * A result file can be generated for each student using `autograder --generate_results`
 * You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and filters for checking output
 * Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (randomized result exit codes and --precompile_testcases option). You can read more on this in implementation details section.
+* You can pass arguments to language compilers during testcase precompilation and compilation using config.ini
 # Installation (Linux-only) (Python >= 3.6)
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
