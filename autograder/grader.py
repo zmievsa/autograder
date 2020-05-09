@@ -262,7 +262,8 @@ class Grader:
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
             return {
                 'assignment_name': self.assignment_name,
-                'precompilation_error': stderr.replace('Failed to precompile', '')
+                'precompilation_error': stderr.replace('Failed to precompile', ''),
+                'student_score': 0
             }
         total_testcase_score = 0
         testcase_results = []
