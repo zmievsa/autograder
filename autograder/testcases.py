@@ -85,12 +85,12 @@ class TestCase(ABC):
             event = self.exit_code_handler.scan(result.exit_code)
             if event.type == ExitCodeEventType.CHECK_OUTPUT:
                 if self.format_output(runtime_output.getvalue()) == self.expected_output:
-                    return 100, f"100/{self.max_score}"
+                    return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
                     return 0, f"0/{self.max_score} (Wrong answer)"
             elif event.type == ExitCodeEventType.RESULT:
                 score = event.value
-                message = f"{score}/{self.max_score}"
+                message = f"{int(score * self.weight)}/{self.max_score}"
                 if score == 0:
                     message += " (Wrong answer)"
                 return score, message
