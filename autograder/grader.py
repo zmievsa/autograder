@@ -9,8 +9,7 @@ import configparser
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError
-from .filters import ALLOWED_FILTERS
+from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError, import_from_path
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
 ALLOWED_LANGUAGES = {
@@ -36,7 +35,7 @@ class Grader:
             current_dir,
             testcase_dir_name="testcases",
             no_output=False,
-            submissions=None
+            submissions=None,
     ):
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
@@ -48,6 +47,7 @@ class Grader:
         self.temp_dir.mkdir(exist_ok=True)
         self._configure_grading()
         self._configure_logging()
+        self.filters = self._import_formatters(self.tests_dir / "output_formatters.py")
         self.tests = self._gather_testcases()
         self.submissions = self._gather_submissions(submissions)
         self._copy_extra_files_to_temp(self.tests_dir / "extra")
@@ -115,7 +115,6 @@ class Grader:
             source = source.lower()
         self.source_file_name = source
 
-        self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
         self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
 
         # TODO: Name me better. The name is seriously bad
@@ -194,7 +193,9 @@ class Grader:
                 arglist,
                 self.precompile_testcases,
                 weight,
-                ))
+                self.per_char_formatting_disabled,
+                self.full_output_formatting_disabled
+            ))
         return tests
 
     def _generate_arglists(self, test: Path):
@@ -230,6 +231,28 @@ class Grader:
         if extra_file_dir.exists():
             for path in extra_file_dir.iterdir():
                 shutil.copy(str(path), str(self.temp_dir))
+
+    def _import_formatters(self, path_to_output_formatters: Path):
+        if path_to_output_formatters.exists():
+            module = import_from_path("output_formatters", path_to_output_formatters)
+            if hasattr(module, "per_char_formatter") and hasattr(module, "full_output_formatter"):
+                self.per_char_formatting_disabled = False
+                self.full_output_formatting_disabled = False
+            elif not hasattr(module, "per_char_formatter") and not hasattr(module, "full_output_formatter"):
+                raise AutograderError("Formatter file does not contain the required functions.")
+            elif hasattr(module, "per_char_formatter"):
+                self.per_char_formatting_disabled = False
+                self.full_output_formatting_disabled = True
+            elif hasattr(module, "per_char_formatter"):
+                self.full_output_formatting_disabled = False
+                self.per_char_formatting_disabled = True
+            return module
+        else:
+            self.per_char_formatting_disabled = True
+            self.full_output_formatting_disabled = True
+            return None
+
+
 
     def _run_tests_on_submission(self, submission: Path):
         if self.generate_results:

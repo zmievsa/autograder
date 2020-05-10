@@ -25,7 +25,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 ## Advanced Usage
 * There are other command line arguments available. Simply run `autograder -h` to see them.
 * If you create config.ini in tests, you can customize grader's behavior. Use `autograder --generate_config` to generate a default config if your directory is already set up. If you remove some configuration fields, grader will use the default fields from default config.
-* You can specify filters as a comma separated list in config.ini. You can find filter function list in the autograder/filters.py. If you want to add your own filters, you will need to add them to autograder/filters.py
+* To check output, you can specify output formatters in a file output_formatters.py in the directory with your testcase folder. They will format output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, you can look at autograder/default_formatters.py
 ## Writing testcases
 * Write a main that follows the same structure as the respective example. The main should usually call student's code and check its result (when working with output, you usually don't check the result, and simply allow grader to handle that)
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.

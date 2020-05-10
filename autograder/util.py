@@ -4,7 +4,9 @@ import sh  # type: ignore
 import string
 import random
 from enum import Enum
-import shutil
+import importlib.util
+import sys
+
 
 PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
 
@@ -64,3 +66,11 @@ def print_results(current_dir, min_score: int, *args, **kwargs):
 
 def generate_random_string(length):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
+def import_from_path(module_name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module

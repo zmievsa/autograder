@@ -16,25 +16,34 @@ class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
     path_to_helper_module: Path
+    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+    weight: float
+    per_char_formatting_disabled: bool
+    full_output_formatting_disabled: bool
 
     def __init__(
         self,
         path: Path,
         tests_dir: Path,
         timeout: int,
-        filters,
+        formatters,
         argument_lists: dict,
-        precompile_testcase=False,
-        weight=1
+        precompile_testcase,
+        weight,
+        per_char_formatting_disabled,
+        full_output_formatting_disabled
+
     ):
         self.path = path
         self.timeout = timeout
-        self.filters = filters
+        self.formatters = formatters
         self.argument_lists = argument_lists
         self.need_precompile_testcase = precompile_testcase
         self.weight = weight
         self.max_score = int(weight * 100)
         output_dir = tests_dir / f"output/{path.stem}.txt"
+        self.per_char_formatting_disabled = per_char_formatting_disabled
+        self.full_output_formatting_disabled = full_output_formatting_disabled
         if output_dir.exists():
             with output_dir.open() as f:
                 self.expected_output = self.format_output(f.read())
@@ -53,9 +62,7 @@ class TestCase(ABC):
         self.prepend_test_helper()
         if precompile_testcase:
             self.precompile_testcase()
-    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
 
-    weight: float
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
@@ -110,10 +117,15 @@ class TestCase(ABC):
         return self.path.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def format_output(self, output: str):
-        output = output.lower()
-        for filter_function in self.filters:
-            output = "".join(filter(filter_function, output))
-        return output
+        formatted_output = output
+        if not self.full_output_formatting_disabled:
+            formatted_output = self.formatters.full_output_formatter(formatted_output)
+        if not self.per_char_formatting_disabled:
+            final_output = ""
+            for c in formatted_output:
+                final_output += self.formatters.per_char_formatter(c)
+            formatted_output = final_output
+        return formatted_output
 
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
