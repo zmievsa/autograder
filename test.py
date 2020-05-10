@@ -9,7 +9,10 @@ TEST_DIRS = {
     "simplest_c": 100,
     "c": 100,
     "java": 100,
-    "python": 100
+    "python": 100,
+    "multiple_languages": 100,
+    "extra_files": 100,
+    "fibonacci_c": 58,
 }
 
 
@@ -33,19 +36,16 @@ def FAIL(message):
 
 
 def run_silenced_grader(*args):
-    # save_stdout = sys.stdout
-    # sys.stdout = io.StringIO()
     result = autograder.__main__.main(["--no_output"] + list(args))
-    # sys.stdout = save_stdout
     return result
 
 
 def main():
     for test_dir, expected_result in TEST_DIRS.items():
         try:
-            real_result = run_silenced_grader(f"examples/{test_dir}")
+            real_result = int(run_silenced_grader(f"examples/{test_dir}"))
             msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
-            if expected_result == real_result:
+            if int(expected_result) == real_result:
                 PASS(msg)
             else:
                 FAIL(msg)
