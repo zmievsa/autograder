@@ -165,7 +165,14 @@ class Grader:
         self.logger.setLevel(logging.INFO)
         if not self.no_output:
             self.logger.addHandler(logging.StreamHandler(sys.stdout))
-            self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
+            if self.path_to_output_summary.exists():
+                ans = input("Output summary file already exists. Would you like to override it? (Yes/No)")
+                if ans.lower().startswith("y"):
+                    self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
+                else:
+                    print("If you don't want to remove the summary, simply use the --no_output command line option."
+                          "which will remove all stdout and file output except for --generate_results directory.")
+                    exit(0)
 
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []

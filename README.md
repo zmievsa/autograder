@@ -10,6 +10,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and filters for checking output
 * Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (randomized result exit codes and --precompile_testcases option). You can read more on this in implementation details section.
 * You can pass arguments to language compilers during testcase (or submission) precompilation and compilation using config.ini
+* You can grade submissions in multiple programming languages at once, as long as there are testcases written in each language
 # Installation (Linux-only) (Python >= 3.6)
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
