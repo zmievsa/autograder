@@ -5,7 +5,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * Easy-to-write testcases
 * Testcase grade can be based on student's output in stdout
 * A per-testcase grade can be any number out of 100 points
-* Support for grading C, Java, and Python code
+* Support for grading C, C++, Java, and Python code
 * A result file can be generated for each student using `autograder --generate_results`
 * You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and filters for checking output
 * Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (randomized result exit codes and --precompile_testcases option). You can read more on this in implementation details section.

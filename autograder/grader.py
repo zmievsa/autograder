@@ -16,7 +16,8 @@ DEFAULT_SOURCE_FILE_STEM = "Homework"
 ALLOWED_LANGUAGES = {
     "c": testcases.CTestCase,
     "java": testcases.JavaTestCase,
-    "python": testcases.PythonTestCase
+    "python": testcases.PythonTestCase,
+    "c++": testcases.CPPTestCase
 }
 # Constants
 KEY = """

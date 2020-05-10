@@ -9,6 +9,7 @@ from time import sleep
 TEST_DIRS = {
     "simplest_c": 100,
     "c": 100,
+    "c++": 100,
     "java": 100,
     "python": 100,
     "multiple_languages": 100,
@@ -64,7 +65,7 @@ def test_extra_cli_args():
     with old_config_path.open("w") as f:
         f.write(old_config + "\nPRECOMPILE_TESTCASES = false\n")
     result = run_silenced_grader(str(testing_dir))
-    s = f"Test extra_cli_args without args returned {result} total score"
+    s = f"CHECKING TEST extra_cli_args without args to equal 0. Real result: {int(result)}"
     if result == 0:
         PASS(s)
     else:
@@ -72,7 +73,7 @@ def test_extra_cli_args():
     with old_config_path.open("w") as f:
         f.write(old_config)
     result = run_silenced_grader(str(testing_dir))
-    s = f"Test extra_cli_args with args returned {result} total score"
+    s = f"CHECKING TEST extra_cli_args with args to equal 100. Real result: {int(result)}"
     if result == 100:
         PASS(s)
     else:

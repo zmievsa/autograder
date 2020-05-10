@@ -161,6 +161,7 @@ class CTestCase(TestCase):
     executable_suffix = ".out"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
+    compiler = sh.gcc
 
     @classmethod
     def precompile_submission(cls, submission, current_dir, source_file_name):
@@ -169,7 +170,7 @@ class CTestCase(TestCase):
         """
         copied_submission = super().precompile_submission(submission, current_dir, submission.name)
         precompiled_submission = copied_submission.with_suffix(".o")
-        sh.gcc(
+        cls.compiler(
             "-c", f"{copied_submission}",
             "-o", precompiled_submission,
             *cls.SUBMISSION_COMPILATION_ARGS
@@ -177,7 +178,7 @@ class CTestCase(TestCase):
         return precompiled_submission
 
     def precompile_testcase(self):
-        sh.gcc(
+        self.compiler(
             "-c", self.path,
             "-o", self.path.with_suffix('.o'),
             *self.argument_lists[ArgList.testcase_precompilation],
@@ -187,7 +188,7 @@ class CTestCase(TestCase):
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
         executable_path = self.make_executable_path(precompiled_submission)
-        sh.gcc(
+        self.compiler(
             "-o",
             executable_path,
             self.path,
@@ -195,6 +196,12 @@ class CTestCase(TestCase):
             *self.argument_lists[ArgList.testcase_compilation]
         )
         return sh.Command(executable_path)
+
+
+class CPPTestCase(CTestCase):
+    source_suffix = ".cpp"
+    # path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.cpp"
+    compiler = sh.Command("g++")
 
 
 class JavaTestCase(TestCase):
