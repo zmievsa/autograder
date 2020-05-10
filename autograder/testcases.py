@@ -7,7 +7,7 @@ import py_compile
 import sh  # type: ignore
 
 from .util import get_stderr, format_template, generate_random_string, ArgList
-from .exit_codes import ExitCodeEventType, ExitCodeHandler
+from .exit_codes import ExitCodeEventType, ExitCodeHandler, ALL_USED_EXIT_CODES
 
 GRADER_DIR = Path(__file__).resolve().parent
 
@@ -75,13 +75,13 @@ class TestCase(ABC):
                     _in=self.input,
                     _out=runtime_output,
                     _timeout=self.timeout,
-                    _ok_code=self.exit_code_handler.allowed_exit_codes
+                    _ok_code=ALL_USED_EXIT_CODES
                 )
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}"
+                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
             # print(">>> Testcase output: " + runtime_output.getvalue())
             event = self.exit_code_handler.scan(result.exit_code)
             if event.type == ExitCodeEventType.CHECK_OUTPUT:
@@ -99,7 +99,8 @@ class TestCase(ABC):
                 # This  means that either the student used built-in exit function himself
                 # or some testcase helper is broken, or a testcase exits itself without
                 # the use of helper functions.
-                return 0, f"An invalid exit code '{result.exit_code}' has been supplied"
+                return 0, f"An invalid exit code '{result.exit_code}' has been supplied.\n" \
+                           "It could indicate the student cheating or testcases being written incorrectly."
             elif event.type == ExitCodeEventType.SYSTEM_ERROR:
                 # We should already handle this case in try, except block
                 pass
