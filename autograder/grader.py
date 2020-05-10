@@ -31,10 +31,11 @@ KEY = """
 
 class Grader:
     def __init__(
-        self,
-        current_dir,
-        testcase_dir_name="testcases",
-        no_output=False,
+            self,
+            current_dir,
+            testcase_dir_name="testcases",
+            no_output=False,
+            submissions=None
     ):
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
@@ -47,7 +48,7 @@ class Grader:
         self._configure_grading()
         self._configure_logging()
         self.tests = self._gather_testcases()
-        self.submissions = self._gather_submissions()
+        self.submissions = self._gather_submissions(submissions)
         self._copy_extra_files_to_temp(self.tests_dir / "extra")
         if self.generate_results:
             self.results_dir.mkdir(exist_ok=True)
@@ -164,7 +165,7 @@ class Grader:
         if not self.no_output:
             self.logger.addHandler(logging.StreamHandler(sys.stdout))
             if self.path_to_output_summary.exists():
-                ans = input("Output summary file already exists. Would you like to override it? (Yes/No)")
+                ans = input("Output summary file already exists. Would you like to override it? (Yes/No) ")
                 if ans.lower().startswith("y"):
                     self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
                 else:
@@ -193,7 +194,7 @@ class Grader:
                 arglist,
                 self.precompile_testcases,
                 weight,
-            ))
+                ))
         return tests
 
     def _generate_arglists(self, test: Path):
@@ -207,9 +208,12 @@ class Grader:
                 arglist[arglist_index] = tuple()
         return arglist
 
-    def _gather_submissions(self):
+    def _gather_submissions(self, submissions_to_grade):
+        submissions_to_grade = set(submissions_to_grade)
         submissions = []
         for submission in self.current_dir.iterdir():
+            if submissions_to_grade and submission.name not in submissions_to_grade:
+                continue
             submission_name = submission.name
             if self.lower_source_filename:
                 submission_name = submission_name.lower()

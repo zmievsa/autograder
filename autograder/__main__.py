@@ -27,12 +27,17 @@ def main(argv=None):
         action="store_true",
         help="Generate a default config file in the <submission_path>"
     )
+    parser.add_argument('-s', '--submissions',
+                        action="store", nargs="*", metavar="<submission_name>", default=[],
+                        help="Only grade submissions with specified file names (without full path)"
+    )
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
         grader = Grader(
             current_dir,
-            no_output=args.no_output
+            no_output=args.no_output,
+            submissions=args.submissions,
         )
         if args.generate_config:
             grader.generate_config()
