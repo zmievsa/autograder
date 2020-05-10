@@ -2,8 +2,7 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test result                             100/100
-Test output                             50/50
+Check result with assert                100/100
 ================================================================
 Result: 100/100
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # I should really use pytest for this...
+from pathlib import Path
 
 import autograder
 from time import sleep
@@ -56,14 +57,21 @@ def main():
 
 
 def test_extra_cli_args():
-    result = run_silenced_grader("examples/extra_cli_args")
+    testing_dir = Path("examples/extra_cli_args")
+    old_config_path = testing_dir / "config.ini"
+    with old_config_path.open() as f:
+        old_config = f.read()
+    with old_config_path.open("w") as f:
+        f.write(old_config + "\nPRECOMPILE_TESTCASES = false\n")
+    result = run_silenced_grader(str(testing_dir))
     s = f"Test extra_cli_args without args returned {result} total score"
     if result == 0:
         PASS(s)
     else:
         FAIL(s)
-    sleep(1)  # To prevent two calls executing in parallel
-    result = run_silenced_grader("examples/extra_cli_args", "--precompile_testcases")
+    with old_config_path.open("w") as f:
+        f.write(old_config)
+    result = run_silenced_grader(str(testing_dir))
     s = f"Test extra_cli_args with args returned {result} total score"
     if result == 100:
         PASS(s)

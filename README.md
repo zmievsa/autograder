@@ -40,8 +40,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
     * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 # Command line help
 ```
-usage: autograder [-h] [-g] [-p [min_score]] [--precompile_testcases]
-                  [--no_output]
+usage: autograder [-h] [-p [min_score]] [--no_output] [--generate_config]
                   [submission_path]
 
 positional arguments:
@@ -49,16 +48,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -g, --generate_results
-                        Generate results directory with a result file per
-                        student
   -p [min_score], --print [min_score]
                         Use after already graded to print assignments with
                         score >= min_score
-  --precompile_testcases
-                        Precompile testcases to hide their files from student
-                        (Java support is minimal)
-  --no_output           Do not output any results to the console or the output file
+  --no_output           Do not output any code to the console
+  --generate_config     Generate a default config file in the
+                        <submission_path>
 ```
 # Implementation details
 * I used exit codes to specify student grades. Currently, I pick all exit codes that are not used by the system, randomize them, and cut off the ones I don't need. Then I use the first 101 exit codes for the results, and one more for checking output. So a student has no way of knowing which exit codes correspond to which results. The chance of trying out a number and getting anything above a 90 is about 5%. If you are worried that students will simply read the correct exit codes from the testcase file, you can use `--precompile_submissions` to make only the testcase bytecode available.

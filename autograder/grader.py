@@ -33,28 +33,24 @@ class Grader:
     def __init__(
         self,
         current_dir,
-        generate_results=False,
         testcase_dir_name="testcases",
-        precompile_testcases=False,
         no_output=False,
     ):
-        self.generate_results = generate_results
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
-        self.precompile_testcases = precompile_testcases
         self.no_output = no_output
         self._choose_directory_structure(testcase_dir_name)
         self.temp_dir.mkdir(exist_ok=True)
-        if generate_results:
-            self.results_dir.mkdir(exist_ok=True)
         self._configure_grading()
         self._configure_logging()
         self.tests = self._gather_testcases()
         self.submissions = self._gather_submissions()
         self._copy_extra_files_to_temp(self.tests_dir / "extra")
+        if self.generate_results:
+            self.results_dir.mkdir(exist_ok=True)
 
     def run(self):
         old_dir = Path.cwd()
@@ -90,6 +86,8 @@ class Grader:
         cfg = self._read_config()
 
         self.timeout = cfg.getint('TIMEOUT')
+        self.generate_results = cfg.getboolean('GENERATE_RESULTS')
+        self.precompile_testcases = cfg.getboolean('PRECOMPILE_TESTCASES')
 
         self.total_points_possible = cfg.getint('TOTAL_POINTS_POSSIBLE')
         self.total_score_to_100_ratio = self.total_points_possible / 100
