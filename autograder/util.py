@@ -9,6 +9,10 @@ import shutil
 PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
 
 
+class AutograderError(Exception):
+    pass
+
+
 class ArgList(Enum):
     submission_precompilation = 0
     submission_compilation = 1

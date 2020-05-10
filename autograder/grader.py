@@ -9,7 +9,7 @@ import configparser
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG
+from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError
 from .filters import ALLOWED_FILTERS
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -79,10 +79,11 @@ class Grader:
                 self.tests_dir = self.current_dir
         self.testcases_dir = self.tests_dir / testcase_dir_name
         required_dirs = (self.testcases_dir,)
-        dir_not_found = "{} directory not found. It is required for the grader to function."
+        dir_not_found = "{} directory not found. It is required for the grader to function.\n" \
+                        "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
         for directory in required_dirs:
             if not directory.exists():
-                raise FileNotFoundError(dir_not_found.format(directory))
+                raise AutograderError(dir_not_found.format(directory))
 
     def _configure_grading(self):
         cfg = self._read_config()
@@ -147,9 +148,7 @@ class Grader:
         if testcase_types:
             return testcase_types
         else:
-            raise FileNotFoundError(
-                f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}"
-            )
+            raise AutograderError(f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}")
 
     @staticmethod
     def _parse_testcase_weights(raw_weights: str):

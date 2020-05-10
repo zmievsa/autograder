@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 from autograder.grader import Grader  # That's some awful naming
-from autograder.util import print_results
+from autograder.util import print_results, AutograderError
 
 
 def main(argv=None):
@@ -34,15 +34,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
-        grader = Grader(
-            current_dir,
-            no_output=args.no_output,
-            submissions=args.submissions,
-        )
-        if args.generate_config:
-            grader.generate_config()
-        else:
-            return grader.run()
+        try:
+            grader = Grader(
+                current_dir,
+                no_output=args.no_output,
+                submissions=args.submissions,
+            )
+            if args.generate_config:
+                grader.generate_config()
+            else:
+                return grader.run()
+        except AutograderError as e:
+            print(e)
     else:
         print_results(current_dir, args.print)
         return -1

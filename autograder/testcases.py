@@ -6,7 +6,7 @@ import py_compile
 
 import sh  # type: ignore
 
-from .util import get_stderr, format_template, generate_random_string, ArgList
+from .util import get_stderr, format_template, generate_random_string, ArgList, AutograderError
 from .exit_codes import ExitCodeEventType, ExitCodeHandler, ALL_USED_EXIT_CODES
 
 GRADER_DIR = Path(__file__).resolve().parent
@@ -290,7 +290,7 @@ class JavaTestCase(TestCase):
                 if bracecount == 0:
                     return i
         else:
-            raise ValueError(f"Braces in testcase '{self.name}' don't match.")
+            raise AutograderError(f"Braces in testcase '{self.name}' don't match.")
 
 
 class PythonTestCase(TestCase):
