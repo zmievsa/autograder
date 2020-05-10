@@ -1,7 +1,10 @@
-Grading oatmealstanislav
-Running 'Test output'
-50/50
-Running 'Test result'
+Grading submission.c
+Running 'Check result'
+100/100
+Result: 100/100
+
+Grading submission.py
+Running 'Check result'
 100/100
 Result: 100/100
 

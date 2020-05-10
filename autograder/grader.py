@@ -96,42 +96,16 @@ class Grader:
 
         language = cfg['PROGRAMMING_LANGUAGE']
         if language == "AUTO":
-            self.TestCaseType = self._figure_out_testcase_type()
+            self.testcase_types = self._figure_out_testcase_types()
         else:
-            self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
+            testcase_type = ALLOWED_LANGUAGES[language.lower().strip()]
+            self.testcase_types = {testcase_type.source_suffix: testcase_type}
 
         self.assignment_name = cfg['ASSIGNMENT_NAME']
 
         source = cfg['SOURCE_FILE_NAME']
         if source == "AUTO":
-            source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
-            self.auto_source_file_name_enabled = True
-        else:
-            self.auto_source_file_name_enabled = False
-        self.lower_source_filename = cfg.getboolean('LOWER_SOURCE_FILENAME')
-        if self.lower_source_filename:
-            source = source.lower()
-        self.source_file_name = source
-
-        self.filters = [ALLOWED_FILTERS[f.strip()] for f in cfg['FILTERS'].split(",") if f]
-        self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
-
-        self.timeout = cfg.getint('TIMEOUT')
-
-        self.total_points_possible = cfg.getint('TOTAL_POINTS_POSSIBLE')
-        self.total_score_to_100_ratio = self.total_points_possible / 100
-
-        language = cfg['PROGRAMMING_LANGUAGE']
-        if language == "AUTO":
-            self.TestCaseType = self._figure_out_testcase_type()
-        else:
-            self.TestCaseType = ALLOWED_LANGUAGES[language.lower().strip()]
-
-        self.assignment_name = cfg['ASSIGNMENT_NAME']
-
-        source = cfg['SOURCE_FILE_NAME']
-        if source == "AUTO":
-            source = DEFAULT_SOURCE_FILE_STEM + self.TestCaseType.source_suffix
+            source = DEFAULT_SOURCE_FILE_STEM
             self.auto_source_file_name_enabled = True
         else:
             self.auto_source_file_name_enabled = False
@@ -163,14 +137,19 @@ class Grader:
 
         return user_parser['CONFIG']
 
-    def _figure_out_testcase_type(self):
+    def _figure_out_testcase_types(self) -> dict:
+        testcase_types = {}
         for testcase in self.testcases_dir.iterdir():
             testcase_type = get_testcase_type_by_suffix(testcase.suffix)
             if testcase_type is not None:
-                return testcase_type
-        raise FileNotFoundError(
-            f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}"
-        )
+                testcase_types[testcase_type.source_suffix] = testcase_type
+
+        if testcase_types:
+            return testcase_types
+        else:
+            raise FileNotFoundError(
+                f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}"
+            )
 
     @staticmethod
     def _parse_testcase_weights(raw_weights: str):
@@ -193,11 +172,15 @@ class Grader:
         default_weight = self.testcase_weights.get("ALL", 1)
         for test in self.testcases_dir.iterdir():
             weight = self.testcase_weights.get(test.name, default_weight)
-            if not (test.is_file() and self.TestCaseType.source_suffix in test.name):
+            testcase_type = self.testcase_types.get(test.suffix, None)
+            if not test.is_file():
+                continue
+            if testcase_type is None:
+                self.logger.info(f"No appropriate language for {test} found.")
                 continue
             arglist = self._generate_arglists(test)
             shutil.copy(test, self.temp_dir)
-            tests.append(self.TestCaseType(
+            tests.append(testcase_type(
                 self.temp_dir / test.name,
                 self.tests_dir,
                 self.timeout,
@@ -205,7 +188,7 @@ class Grader:
                 arglist,
                 self.precompile_testcases,
                 weight,
-                ))
+            ))
         return tests
 
     def _generate_arglists(self, test: Path):
@@ -225,11 +208,13 @@ class Grader:
             submission_name = submission.name
             if self.lower_source_filename:
                 submission_name = submission_name.lower()
-            if self.auto_source_file_name_enabled:
-                if submission.suffix == self.TestCaseType.source_suffix:
+            if submission.suffix in self.testcase_types:
+                if self.auto_source_file_name_enabled:
                     submissions.append(submission)
-            elif self.source_file_name in submission_name:
-                submissions.append(submission)
+                elif self.source_file_name in submission_name:
+                    submissions.append(submission)
+                else:
+                    self.logger.info(f"{submission} does not contain the required suffix. Skipping it.")
         return submissions
 
     def _copy_extra_files_to_temp(self, extra_file_dir: Path):
@@ -254,8 +239,11 @@ class Grader:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
         try:
-            precompiled_submission = self.TestCaseType.precompile_submission(
-                submission, self.current_dir, self.source_file_name
+            # TODO: Move half of this into precompile_submission or something
+            testcase_type = self.testcase_types[submission.suffix]
+            source_file_path = Path(self.source_file_name).with_suffix(testcase_type.source_suffix)
+            precompiled_submission = testcase_type.precompile_submission(
+                submission, self.current_dir, source_file_path
             )
         except sh.ErrorReturnCode_1 as e:
             stderr = get_stderr(self.current_dir, e, "Failed to precompile")
@@ -267,13 +255,15 @@ class Grader:
             }
         total_testcase_score = 0
         testcase_results = []
+        allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
         for test in self.tests:
-            self.logger.info(f"Running '{test.name}'")
-            testcase_score, message = test.run(precompiled_submission)
-            self.logger.info(message)
-            testcase_results.append((test.name, message))
-            total_testcase_score += testcase_score
-        raw_student_score = total_testcase_score / sum(t.weight for t in self.tests)
+            if test.source_suffix == submission.suffix:
+                self.logger.info(f"Running '{test.name}'")
+                testcase_score, message = test.run(precompiled_submission)
+                self.logger.info(message)
+                testcase_results.append((test.name, message))
+                total_testcase_score += testcase_score
+        raw_student_score = total_testcase_score / sum(t.weight for t in allowed_tests)
         normalized_student_score = raw_student_score * self.total_score_to_100_ratio
         student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
         self.logger.info(f"Result: {student_final_result}\n")

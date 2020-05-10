@@ -1,4 +1,9 @@
+unsigned long long fibonacci(int n);
+
 int main() {
-    fibonacci(83);
-    PASS();
+    unsigned long long r = fibonacci(46);
+    if (r == 1836311903)
+        PASS();
+    else
+        FAIL();
 }

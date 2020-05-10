@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+unsigned long long fibonacci(int n);
+
 int main() {
     unsigned long long r1, r2, r3, r4;
     r1 = fibonacci(0);

@@ -13,8 +13,8 @@ GRADER_DIR = Path(__file__).resolve().parent
 
 
 class TestCase(ABC):
-    source_suffix = ".source_suffix"
-    executable_suffix = ".executable_suffix"
+    source_suffix = ".source_suffix"  # dummy value
+    executable_suffix = ".executable_suffix"  # dummy value
     path_to_helper_module: Path
 
     def __init__(
@@ -81,7 +81,8 @@ class TestCase(ABC):
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                return 0, f"Crashed due to signal {e.exit_code}"
+                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}"
+            # print(">>> Testcase output: " + runtime_output.getvalue())
             event = self.exit_code_handler.scan(result.exit_code)
             if event.type == ExitCodeEventType.CHECK_OUTPUT:
                 if self.format_output(runtime_output.getvalue()) == self.expected_output:

@@ -1,3 +1,4 @@
+/home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required suffix. Skipping it.
 Grading failing
 Failed to precompile:
 .../temp/failing_student_homework.c: In function ‘fibonacci’:

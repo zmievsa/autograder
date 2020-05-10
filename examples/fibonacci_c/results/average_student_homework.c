@@ -1,13 +1,12 @@
-Grading oatmealstanislav
-Running 'Test output'
-50/50
-Running 'Test result'
-100/100
-Result: 100/100
+Homework Test Results
 
-
-Average score: 100/100
-
+TestCase                                Result
+================================================================
+Test result                             100/100
+Test time                               Exceeded Time Limit
+Test output                             50/50
+================================================================
+Result: 75/100
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error
@@ -15,4 +14,3 @@ Key:
 	Crashed due to signal SIGNAL_CODE: Your submission threw an uncaught exception.
 	All signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
 	Exceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
-

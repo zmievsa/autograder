@@ -18,3 +18,7 @@ void fibonacci_from_input() {
     scanf("%d", &n);
     fibonacci(n);
 }
+
+int main() {
+    fibonacci(45);
+}
