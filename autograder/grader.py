@@ -115,7 +115,9 @@ class Grader:
             source = source.lower()
         self.source_file_name = source
 
-        self.testcase_weights = self._parse_testcase_weights(cfg["TESTCASE_WEIGHTS"])
+        self.testcase_weights = self._parse_testcase_weights(cfg['TESTCASE_WEIGHTS'])
+
+        self.dont_expose_testcases = cfg.getboolean('DONT_EXPOSE_TESTCASES')
 
         # TODO: Name me better. The name is seriously bad
         self.argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
@@ -194,7 +196,8 @@ class Grader:
                 self.precompile_testcases,
                 weight,
                 self.per_char_formatting_disabled,
-                self.full_output_formatting_disabled
+                self.full_output_formatting_disabled,
+                self.dont_expose_testcases
             ))
         return tests
 

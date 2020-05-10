@@ -31,8 +31,8 @@ class TestCase(ABC):
         precompile_testcase,
         weight,
         per_char_formatting_disabled,
-        full_output_formatting_disabled
-
+        full_output_formatting_disabled,
+        dont_expose_testcase
     ):
         self.path = path
         self.timeout = timeout
@@ -63,19 +63,30 @@ class TestCase(ABC):
         if precompile_testcase:
             self.precompile_testcase()
 
+        self.dont_expose_testcase = dont_expose_testcase
+        # This is done to hide the contents of testcases and exit codes to the student
+        if dont_expose_testcase:
+            with self.path.open("rb") as f:
+                self.source_contents = f.read()
+            self.path.unlink()
 
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
         result, message = self._weightless_run(precompiled_submission)
+        self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
 
     def _weightless_run(self, precompiled_submission: Path):
         """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
+        if self.dont_expose_testcase:
+            with self.path.open("wb") as f:
+                f.write(self.source_contents)
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(self.path.parent, e, "Failed to compile")
+        self.delete_source_file()
         with StringIO() as runtime_output:
             try:
                 result = test_executable(
@@ -164,6 +175,13 @@ class TestCase(ABC):
         with self.path.open("w") as f:
             f.write(final_content)
 
+    def delete_executable_files(self, precompiled_submission):
+        pass
+
+    def delete_source_file(self):
+        if self.dont_expose_testcase:
+            self.path.unlink()
+
     def cleanup(self):
         self.input.close()
         self.path.unlink()
@@ -210,6 +228,10 @@ class CTestCase(TestCase):
         )
         return sh.Command(executable_path)
 
+    def delete_executable_files(self, precompiled_submission):
+        if self.dont_expose_testcase:
+            self.make_executable_path(precompiled_submission).unlink()
+
 
 class CPPTestCase(CTestCase):
     source_suffix = ".cpp"
@@ -236,34 +258,15 @@ class JavaTestCase(TestCase):
         copied_submission.rename(precompiled_submission)
         return precompiled_submission
 
-    def precompile_testcase(self):
-        """ Sadly, java doesn't allow to compile files before their dependencies
-            have compiled.
-            Instead, we hide test names. It is not super safe but better than nothing.
-            We could, instead, encrypt each test file and decrypt at compilation.
-        """
-        self.original_path = self.path
-        new_name = generate_random_string(15)
-        new_path = self.path.with_name(new_name)
-        self.path.rename(new_path)
-        self.path = self.path.with_name(new_name)
-
-        # This method didn't work but might prove useful in the future
-        # sh.javac(self.path, "-implicit:none")
-        # self.path.unlink()
-
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
-        if self.need_precompile_testcase:
-            self.path.rename(self.original_path)
-            path = self.original_path
-        else:
-            path = self.path
-        sh.javac(path, precompiled_submission.name)
-        if self.need_precompile_testcase:
-            path.rename(self.path)
+        sh.javac(self.path, precompiled_submission.name)
         return lambda *args, **kwargs: sh.java(
-            path.stem, *args, *self.argument_lists[ArgList.testcase_compilation], **kwargs
+            self.path.stem, *args, *self.argument_lists[ArgList.testcase_compilation], **kwargs
         )
+
+    def delete_executable_files(self, precompiled_submission):
+        precompiled_submission.with_suffix(".class").unlink()
+        str(self.path.with_suffix("")) + "$" + "TestHelper.class"
 
     def prepend_test_helper(self):
         """ Puts private TestHelper at the end of testcase class.
@@ -310,7 +313,7 @@ class PythonTestCase(TestCase):
         Will only work if python is accessible via python3 alias for now.
     """
     source_suffix = ".py"
-    executable_suffix = source_suffix
+    executable_suffix = ".pyc"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
 
     def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
@@ -328,4 +331,10 @@ class PythonTestCase(TestCase):
             kwargs["optimize"] = 1
         if "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
             kwargs["optimize"] = 2
-        py_compile.compile(file=self.path, cfile=self.path, **kwargs)
+        executable_path = self.path.with_suffix(self.executable_suffix)
+        py_compile.compile(file=self.path, cfile=executable_path, **kwargs)
+        self.path.unlink()
+        self.path = executable_path
+
+    def delete_source_file(self):
+        pass
