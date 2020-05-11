@@ -273,6 +273,7 @@ class Grader:
         else:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
+        precompiled_submission = None
         try:
             # TODO: Move half of this into precompile_submission or something
             testcase_type = self.testcase_types[submission.suffix]
@@ -283,6 +284,8 @@ class Grader:
         except sh.ErrorReturnCode_1 as e:
             stderr = get_stderr(self.current_dir, e, "Failed to precompile")
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
+            if precompiled_submission is not None:
+                precompiled_submission.unlink()
             return {
                 'assignment_name': self.assignment_name,
                 'precompilation_error': stderr.replace('Failed to precompile', ''),
@@ -302,6 +305,7 @@ class Grader:
         normalized_student_score = raw_student_score * self.total_score_to_100_ratio
         student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
         self.logger.info(f"Result: {student_final_result}\n")
+        precompiled_submission.unlink()
         return {
             'assignment_name': self.assignment_name,
             'testcase_results': testcase_results,
