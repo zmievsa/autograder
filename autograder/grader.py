@@ -10,6 +10,10 @@ import sh  # type: ignore
 
 from . import testcases
 from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError, import_from_path
+from stat import S_IRUSR, S_IRGRP, S_IROTH, S_IXUSR, S_IWUSR
+
+READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
+READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
 ALLOWED_LANGUAGES = {
@@ -79,6 +83,8 @@ class Grader:
             shutil.copy(str(PATH_TO_DEFAULT_CONFIG), str(config))
 
     def cleanup(self):
+        for path in self.temp_dir.iterdir():
+            os.chmod(path, READ_EXECUTE_WRITE_PERMISSION)
         shutil.rmtree(self.temp_dir)
 
     def _configure_grading(self):
@@ -240,7 +246,9 @@ class Grader:
     def _copy_extra_files_to_temp(self, extra_file_dir: Path):
         if extra_file_dir.exists():
             for path in extra_file_dir.iterdir():
-                shutil.copy(str(path), str(self.temp_dir))
+                new_path = self.temp_dir / path.name
+                shutil.copy(str(path), str(new_path))
+                os.chmod(new_path, READ_EXECUTE_PERMISSION)
 
     def _import_formatters(self, path_to_output_formatters: Path):
         if path_to_output_formatters.exists():
