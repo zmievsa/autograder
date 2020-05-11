@@ -15,15 +15,13 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Quickstart
-* Go to examples/ and look at simplest_c for the simplest usage scenario
-* More complex scenarios are described below and in other directories in examples/
+* Run 'autograder path/to/directory/you'd/like/to/grade --guide'
 # Usage
 1) Create tests directory in the same directory as student submissions. It has to follow the same structure as one of the examples.
 2) Write testcases as described below. You can use examples/ as reference.
 3) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Advanced Usage
-* There are other command line arguments available. Simply run `autograder -h` to see them.
 * If you create config.ini in tests, you can customize grader's behavior. Use `autograder --generate_config` to generate a default config if your directory is already set up. If you remove some configuration fields, grader will use the default fields from default config.
 * To check output, you can specify output formatters in a file output_formatters.py in the directory with your testcase folder. They will format output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, you can look at autograder/default_formatters.py
 ## Writing testcases
@@ -34,12 +32,13 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * Each testcase is graded out of 100%, which means that you can fully control how much partial credit is given
 * ### Helper functions
     * CHECK_OUTPUT() indicates that we do not check student's return values for the testcase and that we only care about their output (stdout).
-    * RESULT(int r) returns student's score r back to the grader
+    * RESULT(int r) returns student's score r back to the grader (0 - 100)
     * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
     * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 # Command line help
 ```
 usage: autograder [-h] [-p [min_score]] [--no_output] [--generate_config]
+                  [-s [<submission_name> [<submission_name> ...]]] [-g]
                   [submission_path]
 
 positional arguments:
@@ -53,6 +52,10 @@ optional arguments:
   --no_output           Do not output any code to the console
   --generate_config     Generate a default config file in the
                         <submission_path>
+  -s [<submission_name> [<submission_name> ...]], --submissions [<submission_name> [<submission_name> ...]]
+                        Only grade submissions with specified file names
+                        (without full path)
+  -g, --guide           Guide you through setting up a grading environment
 ```
 # Implementation details
 * I used exit codes to specify student grades. Currently, I pick all exit codes that are not used by the system, randomize them, and cut off the ones I don't need. Then I use the first 101 exit codes for the results, and one more for checking output. So a student has no way of knowing which exit codes correspond to which results. The chance of trying out a number and getting anything above a 90 is about 5%. If you are worried that students will simply read the correct exit codes from the testcase file, you can use `--precompile_submissions` to make only the testcase bytecode available.
