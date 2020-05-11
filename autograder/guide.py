@@ -1,5 +1,6 @@
 from .grader import Grader, ALLOWED_LANGUAGES
 from pathlib import Path
+import shutil
 
 
 def create_dir(path: Path):
@@ -7,7 +8,7 @@ def create_dir(path: Path):
         print(f"{path.name} directory does not exist. Creating...")
         path.mkdir()
     else:
-        print(f"Found {path.name} directory.")
+        print(f"Found {path.name} directory")
 
 
 def main(path: Path, grader: Grader):
@@ -25,8 +26,20 @@ def main(path: Path, grader: Grader):
     create_dir(grader.tests_dir / "output")
     config_path = grader.tests_dir / "config.ini"
     if not config_path.exists():
-        print(f"Config file not found in {grader.tests_dir}. Creating a default config...")
+        print(f"config.ini not found in {grader.tests_dir}. Creating a default config...")
         grader.generate_config()
+    else:
+        print("Found config.ini")
+    output_formatters_path = grader.tests_dir / "output_formatters.py"
+    if not output_formatters_path.exists():
+        print(f"{output_formatters_path.name} not found. Creating a default file...")
+        shutil.copy(
+            str(Path(__file__).parent / "default_formatters.py"),
+            str(grader.tests_dir / "output_formatters.py")
+        )
+    else:
+        print("Found output_formatters.py")
+
     ans = input("You are now ready to start working with autograder.\n"
                 "Would you like me to give you the link to the example testcases? (Yes/No) ")
     if ans.lower().startswith("y"):
