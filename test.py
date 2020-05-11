@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# I should really use pytest for this...
 from pathlib import Path
 
 import autograder
@@ -58,8 +57,8 @@ def main():
 
 
 def test_extra_cli_args():
-    testing_dir = Path("examples/extra_cli_args")
-    old_config_path = testing_dir / "config.ini"
+    testing_dir = Path("examples/extra_cli_args/")
+    old_config_path = testing_dir / "tests/config.ini"
     with old_config_path.open() as f:
         old_config = f.read()
     with old_config_path.open("w") as f:

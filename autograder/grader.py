@@ -33,28 +33,36 @@ class Grader:
     def __init__(
             self,
             current_dir,
-            testcase_dir_name="testcases",
             no_output=False,
             submissions=None,
     ):
         self.current_dir = current_dir
         self.temp_dir = current_dir / "temp"
         self.tests_dir = current_dir / "tests"
+        self.testcases_dir = self.tests_dir / "testcases"
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
         self.no_output = no_output
-        self._choose_directory_structure(testcase_dir_name)
+        self.submissions = submissions
+        self.filters = None
+        self.tests = None
+
+    def run(self):
         self.temp_dir.mkdir(exist_ok=True)
+        required_dirs = (self.testcases_dir,)
+        dir_not_found = "{} directory not found. It is required for the grader to function.\n" \
+                        "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
+        for directory in required_dirs:
+            if not directory.exists():
+                raise AutograderError(dir_not_found.format(directory))
         self._configure_grading()
         self._configure_logging()
         self.filters = self._import_formatters(self.tests_dir / "output_formatters.py")
         self.tests = self._gather_testcases()
-        self.submissions = self._gather_submissions(submissions)
+        self.submissions = self._gather_submissions(self.submissions)
         self._copy_extra_files_to_temp(self.tests_dir / "extra")
         if self.generate_results:
             self.results_dir.mkdir(exist_ok=True)
-
-    def run(self):
         old_dir = Path.cwd()
         os.chdir(self.temp_dir)
         total_class_points = sum(map(self._run_tests_on_submission, self.submissions))
@@ -72,18 +80,6 @@ class Grader:
 
     def cleanup(self):
         shutil.rmtree(self.temp_dir)
-
-    def _choose_directory_structure(self, testcase_dir_name):
-        if not (self.tests_dir / testcase_dir_name).exists():
-            if (self.current_dir / testcase_dir_name).exists():
-                self.tests_dir = self.current_dir
-        self.testcases_dir = self.tests_dir / testcase_dir_name
-        required_dirs = (self.testcases_dir,)
-        dir_not_found = "{} directory not found. It is required for the grader to function.\n" \
-                        "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
-        for directory in required_dirs:
-            if not directory.exists():
-                raise AutograderError(dir_not_found.format(directory))
 
     def _configure_grading(self):
         cfg = self._read_config()

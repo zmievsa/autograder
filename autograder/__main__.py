@@ -4,6 +4,7 @@ from pathlib import Path
 
 from autograder.grader import Grader  # That's some awful naming
 from autograder.util import print_results, AutograderError
+import autograder.guide
 
 
 def main(argv=None):
@@ -31,6 +32,10 @@ def main(argv=None):
                         action="store", nargs="*", metavar="<submission_name>", default=[],
                         help="Only grade submissions with specified file names (without full path)"
     )
+    parser.add_argument('-g', '--guide',
+                        action="store_true",
+                        help="Guide you through setting up a grading environment"
+    )
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.print is None:
@@ -42,6 +47,8 @@ def main(argv=None):
             )
             if args.generate_config:
                 grader.generate_config()
+            elif args.guide:
+                autograder.guide.main(current_dir, grader)
             else:
                 return grader.run()
         except AutograderError as e:
