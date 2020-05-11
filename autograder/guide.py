@@ -24,6 +24,7 @@ def main(path: Path, grader: Grader):
     create_dir(grader.testcases_dir)
     create_dir(grader.tests_dir / "input")
     create_dir(grader.tests_dir / "output")
+    create_dir(grader.tests_dir / "extra")
     config_path = grader.tests_dir / "config.ini"
     if not config_path.exists():
         print(f"config.ini not found in {grader.tests_dir}. Creating a default config...")
@@ -59,6 +60,7 @@ def main(path: Path, grader: Grader):
     print("If you want to see command line options, use 'autograder -h'")
     print(f"You can put the stdin inputs to your testcases into {path / 'tests/input'}")
     print(f"You can put the expected outputs to your testcases into {path / 'tests/output'}")
+    print(f"Yu can put the extra files to be available for each testcase into {path / 'tests/extra'}")
     print(f"You can configure grading by editing {path / 'tests/config.ini'}")
     print("You can find readme at https://github.com/Ovsyanka83/autograder")
 
