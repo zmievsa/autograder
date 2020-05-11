@@ -1,7 +1,7 @@
 This utility aims to provide a simple, yet highly configurable way to autograde programming assignments
 # Features
 * Most features are demonstrated in examples/ directory
-* Easy to grade (simply running `autograder` on a directory with assignments and testcases)
+* Easy to grade (simply running `autograder` on a directo#filesry with assignments and testcases)
 * Easy-to-write testcases
 * Testcase grade can be based on student's output in stdout
 * A per-testcase grade can be any number out of 100 points

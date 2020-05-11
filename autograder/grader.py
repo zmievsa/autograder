@@ -84,7 +84,7 @@ class Grader:
     def _configure_grading(self):
         cfg = self._read_config()
 
-        self.timeout = cfg.getint('TIMEOUT')
+        self.timeouts = self._parse_timeouts(cfg['TIMEOUT'])
         self.generate_results = cfg.getboolean('GENERATE_RESULTS')
         self.precompile_testcases = cfg.getboolean('PRECOMPILE_TESTCASES')
 
@@ -156,6 +156,15 @@ class Grader:
                 weights[testcase_name.strip()] = float(weight)
         return weights
 
+    @staticmethod
+    def _parse_timeouts(raw_timeouts: str):
+        timeouts = {}
+        for raw_timeout in raw_timeouts.split(","):
+            if raw_timeout:
+                testcase_name, timeout = raw_timeout.strip().split(":")
+                timeouts[testcase_name.strip()] = float(timeout)
+        return timeouts
+
     def _configure_logging(self):
         self.logger = logging.getLogger("Grader")
         self.logger.setLevel(logging.INFO)
@@ -173,8 +182,10 @@ class Grader:
     def _gather_testcases(self) -> List[testcases.TestCase]:
         tests = []
         default_weight = self.testcase_weights.get("ALL", 1)
+        default_timeout = self.timeouts.get("ALL", 1)
         for test in self.testcases_dir.iterdir():
             weight = self.testcase_weights.get(test.name, default_weight)
+            timeout = self.timeouts.get(test.name, default_timeout)
             testcase_type = self.testcase_types.get(test.suffix, None)
             if not test.is_file():
                 continue
@@ -186,7 +197,7 @@ class Grader:
             tests.append(testcase_type(
                 self.temp_dir / test.name,
                 self.tests_dir,
-                self.timeout,
+                timeout,
                 self.filters,
                 arglist,
                 self.precompile_testcases,
