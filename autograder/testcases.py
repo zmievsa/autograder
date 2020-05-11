@@ -6,7 +6,7 @@ import py_compile
 
 import sh  # type: ignore
 
-from .util import get_stderr, format_template, generate_random_string, ArgList, AutograderError
+from .util import get_stderr, format_template, ArgList, AutograderError
 from .exit_codes import ExitCodeEventType, ExitCodeHandler, ALL_USED_EXIT_CODES
 
 GRADER_DIR = Path(__file__).resolve().parent
