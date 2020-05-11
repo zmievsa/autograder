@@ -52,7 +52,9 @@ class Grader:
         self.tests = None
 
     def run(self):
-        self.temp_dir.mkdir(exist_ok=True)
+        if self.temp_dir.exists():
+            self.cleanup()
+        self.temp_dir.mkdir()
         required_dirs = (self.testcases_dir,)
         dir_not_found = "{} directory not found. It is required for the grader to function.\n" \
                         "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
