@@ -92,7 +92,7 @@ class Grader:
     def _configure_grading(self):
         cfg = self._read_config()
 
-        self.timeouts = self._parse_timeouts(cfg['TIMEOUT'])
+        self.timeouts = parse_config_list(cfg['TIMEOUT'], float)
         self.generate_results = cfg.getboolean('GENERATE_RESULTS')
         self.precompile_testcases = cfg.getboolean('PRECOMPILE_TESTCASES')
 
@@ -119,22 +119,16 @@ class Grader:
             source = source.lower()
         self.source_file_name = source
 
-        self.testcase_weights = self._parse_testcase_weights(cfg['TESTCASE_WEIGHTS'])
+        self.testcase_weights = parse_config_list(cfg['TESTCASE_WEIGHTS'], float)
 
         self.dont_expose_testcases = cfg.getboolean('DONT_EXPOSE_TESTCASES')
 
         # TODO: Name me better. The name is seriously bad
-        self.argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
-        for arg_list_index, arg_list_name in ARGUMENT_LIST_NAMES.items():
-            args = cfg[arg_list_name].split(",")
-            for arg in args:
-                if arg.strip():
-                    testcase_name, arg_value = arg.split(":")
-                    self.argument_lists[arg_list_index][testcase_name.strip()] = arg_value.strip().split(" ")
+        self.argument_lists = self._parse_arglists(cfg)
 
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
-        default_parser.read(PATH_TO_DEFAULT_CONFIG)
+        default_parser.read(str(PATH_TO_DEFAULT_CONFIG))
 
         path_to_user_config = self.tests_dir / "config.ini"
         user_parser = configparser.ConfigParser()
@@ -156,22 +150,13 @@ class Grader:
             raise AutograderError(f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}")
 
     @staticmethod
-    def _parse_testcase_weights(raw_weights: str):
-        weights = {}
-        for raw_weight in raw_weights.split(","):
-            if raw_weight:
-                testcase_name, weight = raw_weight.strip().split(":")
-                weights[testcase_name.strip()] = float(weight)
-        return weights
-
-    @staticmethod
-    def _parse_timeouts(raw_timeouts: str):
-        timeouts = {}
-        for raw_timeout in raw_timeouts.split(","):
-            if raw_timeout:
-                testcase_name, timeout = raw_timeout.strip().split(":")
-                timeouts[testcase_name.strip()] = float(timeout)
-        return timeouts
+    def _parse_arglists(cfg):
+        argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
+        for arg_list_index, arg_list_name in ARGUMENT_LIST_NAMES.items():
+            arg_list = parse_config_list(cfg[arg_list_name], str)
+            for testcase_name, args in arg_list.items():
+                argument_lists[arg_list_index][testcase_name] = args.strip().split(" ")
+        return argument_lists
 
     def _configure_logging(self):
         self.logger = logging.getLogger("Grader")
@@ -272,8 +257,6 @@ class Grader:
             self.full_output_formatting_disabled = True
             return None
 
-
-
     def _run_tests_on_submission(self, submission: Path):
         if self.generate_results:
             with open(self.results_dir / submission.name, "w") as f:
@@ -353,3 +336,15 @@ def format_grader_output(output: dict):
     s += "Result: " + output['formatted_student_score']
     s += KEY
     return s
+
+
+def parse_config_list(config_line: str, value_type):
+    """ Reads in a config line in the format: 'file_name:value, file_name:value, ALL:value '
+        ALL sets the default value for all other entries
+    """
+    config_entries = {}
+    for config_entry in config_line.split(","):
+        if config_entry.strip():
+            testcase_name, value = config_entry.strip().split(":")
+            config_entries[testcase_name.strip()] = value_type(value)
+    return config_entries
