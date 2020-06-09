@@ -1,11 +1,15 @@
-from setuptools import setup  # type: ignore
+from setuptools import setup
+from pathlib import Path
+
 
 requires = ['sh']
+with (Path(__file__).parent / 'README.md').open(encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name="assignment-autograder",
     packages=["autograder"],
-    version="2.6.0",
+    version="2.7.0",
     install_requires=requires,
     package_data={
         "autograder": [
@@ -21,6 +25,8 @@ setup(
     author="Stanislav Zmiev",
     author_email="szmiev2000@gmail.com",
     description="Automatic assignment grading for instructor use in programming courses",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     license="MIT",
     project_urls={"Source Code": "https://github.com/Ovsyanka83/autograder"},
     classifiers=[
