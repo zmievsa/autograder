@@ -4,7 +4,7 @@ from pathlib import Path
 
 from autograder.grader import Grader  # That's some awful naming
 from autograder.util import print_results, AutograderError
-import autograder.guide
+from autograder.__version__ import __version__
 
 
 def main(argv=None):
@@ -12,6 +12,10 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--version',
+        action='store_true',
+        help='show the version number'
+    )
     parser.add_argument('submission_path',
         type=Path, nargs="?", default=Path.cwd(),
         help='Path to directory that contains student submissions'
@@ -38,6 +42,9 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
+    if args.version:
+        print(__version__)
+        exit(0)
     if args.print is None:
         try:
             grader = Grader(

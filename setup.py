@@ -3,13 +3,17 @@ from pathlib import Path
 
 
 requires = ['sh']
-with (Path(__file__).parent / 'README.md').open(encoding='utf-8') as f:
+here = Path(__file__).parent
+about = {}
+with (here / 'autograder' / '__version__.py').open('utf-8') as f:
+    exec(f.read(), about)
+with (here / 'README.md').open(encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name="assignment-autograder",
+    name=about['__title__'],
     packages=["autograder"],
-    version="2.7.0",
+    version=about['__version__'],
     install_requires=requires,
     package_data={
         "autograder": [
@@ -22,12 +26,12 @@ setup(
     },
 
     # metadata to display on PyPI
-    author="Stanislav Zmiev",
-    author_email="szmiev2000@gmail.com",
-    description="Automatic assignment grading for instructor use in programming courses",
+    author=about['__author__'],
+    author_email=about['__author_email__'],
+    description=about['__description__'],
     long_description=long_description,
     long_description_content_type='text/markdown',
-    license="MIT",
+    license=about['__licence__'],
     project_urls={"Source Code": "https://github.com/Ovsyanka83/autograder"},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
