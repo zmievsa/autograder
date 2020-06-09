@@ -1,4 +1,5 @@
-This utility aims to provide a simple, yet highly configurable way to autograde programming assignments
+This utility aims to provide a simple, yet highly configurable way to autograde programming assignments.
+
 I consider it to be finished. From now on, I will only be adding extra grading languages if necessary and fixing bugs if any are reported.
 # Features
 * Most features are demonstrated in examples/ directory
