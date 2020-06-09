@@ -5,7 +5,7 @@ from pathlib import Path
 requires = ['sh']
 here = Path(__file__).parent
 about = {}
-with (here / 'autograder' / '__version__.py').open('utf-8') as f:
+with (here / 'autograder' / '__version__.py').open(encoding='utf-8') as f:
     exec(f.read(), about)
 with (here / 'README.md').open(encoding='utf-8') as f:
     long_description = f.read()
@@ -31,7 +31,7 @@ setup(
     description=about['__description__'],
     long_description=long_description,
     long_description_content_type='text/markdown',
-    license=about['__licence__'],
+    license=about['__license__'],
     project_urls={"Source Code": "https://github.com/Ovsyanka83/autograder"},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
