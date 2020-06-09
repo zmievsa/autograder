@@ -22,7 +22,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 3) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Advanced Usage
-* If you create config.ini in tests, you can customize grader's behavior. Use `autograder --generate_config` to generate a default config if your directory is already set up. If you remove some configuration fields, grader will use the default fields from default config.
+* If you create config.ini in tests, you can customize grader's behavior. Use `autograder --generate_config` to generate a default config if your directory is already set up. If you remove some configuration fields, grader will use the respective fields from default config.
 * To check output, you can specify output formatters in a file output_formatters.py in the directory with your testcase folder. They will format output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, you can look at autograder/default_formatters.py
 ## Writing testcases
 * Write a main that follows the same structure as the respective example. The main should usually call student's code and check its result (when working with output, you usually don't check the result, and simply allow grader to handle that)
