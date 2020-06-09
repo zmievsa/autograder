@@ -124,7 +124,7 @@ class Grader:
         self.dont_expose_testcases = cfg.getboolean('DONT_EXPOSE_TESTCASES')
 
         # TODO: Name me better. The name is seriously bad
-        self.argument_lists = self._parse_arglists(cfg)
+        self.cli_argument_lists = self._parse_arglists(cfg)
 
     def _read_config(self) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
@@ -203,7 +203,7 @@ class Grader:
 
     def _generate_arglists(self, test: Path):
         arglist = {}
-        for arglist_index, arglists_per_testcase in self.argument_lists.items():
+        for arglist_index, arglists_per_testcase in self.cli_argument_lists.items():
             if test.name in arglists_per_testcase:
                 arglist[arglist_index] = arglists_per_testcase[test.name]
             elif "ALL" in arglists_per_testcase:

@@ -284,7 +284,9 @@ class JavaTestCase(TestCase):
             f.write(final_content)
 
     def _add_at_the_end_of_public_class(self, helper_class: str, java_file: str):
-        # TODO: Figure out a better way to do this
+        # TODO: Figure out a better way to do this.
+        # This way is rather crude and can be prone to errors,
+        # but java does not really leave us any other way to do it.
         main_class_index = java_file.find("public")
         file_starting_from_main_class = java_file[main_class_index:]
         closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
