@@ -15,7 +15,7 @@ This utility aims to provide a simple, yet highly configurable way to autograde 
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Quickstart
-* Run 'autograder path/to/directory/you'd/like/to/grade --guide'
+* Run `autograder path/to/directory/you'd/like/to/grade --guide`. The guide will create all of the necessary configurations and directories for grading.
 # Usage
 1) Create tests directory in the same directory as student submissions. It has to follow the same structure as one of the examples.
 2) Write testcases as described below. You can use examples/ as reference.
