@@ -89,6 +89,8 @@ class TestCase(ABC):
         self.delete_source_file()
         with StringIO() as runtime_output:
             try:
+                # Useful during testing
+                # input("Waiting...")
                 result = test_executable(
                     _in=self.input,
                     _out=runtime_output,
@@ -201,11 +203,14 @@ class CTestCase(TestCase):
         """
         copied_submission = super().precompile_submission(submission, current_dir, submission.name)
         precompiled_submission = copied_submission.with_suffix(".o")
-        cls.compiler(
-            "-c", f"{copied_submission}",
-            "-o", precompiled_submission,
-            *cls.SUBMISSION_COMPILATION_ARGS
-        )
+        try:
+            cls.compiler(
+                "-c", f"{copied_submission}",
+                "-o", precompiled_submission,
+                *cls.SUBMISSION_COMPILATION_ARGS
+            )
+        finally:
+            copied_submission.unlink()
         return precompiled_submission
 
     def precompile_testcase(self):
