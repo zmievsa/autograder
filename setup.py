@@ -2,7 +2,7 @@ from setuptools import setup
 from pathlib import Path
 
 
-requires = ['sh']
+requires = ['sh==1.13.1']
 here = Path(__file__).parent
 about = {}
 with (here / 'autograder' / '__version__.py').open(encoding='utf-8') as f:
