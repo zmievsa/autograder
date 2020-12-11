@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+from typing import Any, Dict
 import sh  # type: ignore
 from enum import Enum
 import importlib.util
@@ -24,21 +25,22 @@ ARGUMENT_LIST_NAMES = {
     ArgList.submission_precompilation: "SUBMISSION_PRECOMPILATION_ARGS",
     ArgList.submission_compilation: "SUBMISSION_COMPILATION_ARGS",
     ArgList.testcase_precompilation: "TESTCASE_PRECOMPILATION_ARGS",
-    ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS"
+    ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS",
 }
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")
-template_matcher = re.compile("{% *([A-Za-z0-9_]+) *%}")
+template_matcher = re.compile("{ *% *([A-Za-z0-9_]+) *% *}")
 
 
-def format_template(template, **kwargs):
-    for match in template_matcher.finditer(template):
-        attr = match.group(1)
+def format_template(template: str, **kwargs: Dict[str, Any]):
+    # We use dict here to filter repeated matches
+    matches = {m.group(1): m.group(0) for m in template_matcher.finditer(template)}
+    for attr, matched_string in matches.items():
         value = kwargs.pop(attr, None)
         if value is None:
-            raise ValueError(f"Attribute {attr} not supplied")
-        template = template.replace(match.group(0), str(value))
+            raise ValueError(f"Attribute '{attr}' not supplied")
+        template = template.replace(matched_string, str(value))
     if len(kwargs):
         raise ValueError("Too many arguments supplied: " + ", ".join(kwargs.keys()))
     return template
@@ -47,7 +49,7 @@ def format_template(template, **kwargs):
 def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):
     # TODO: Make this code clearer.
     error_str = str(error)
-    formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR"):]
+    formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR") :]
     return formatted_error.strip().replace(str(current_dir), "...")
 
 
