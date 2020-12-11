@@ -5,8 +5,16 @@
 
 
 static int RESULT_EXIT_CODES[] = {{% RESULT_EXIT_CODES %}};
-// TODO: Change these into static functions for security (done in dev branch)
-#define CHECK_OUTPUT() exit({% CHECK_OUTPUT_EXIT_CODE %})
-#define RESULT(r) exit(RESULT_EXIT_CODES[r])
-#define PASS() RESULT(100)
-#define FAIL() RESULT(0)
+
+void CHECK_OUTPUT() {
+  exit({% CHECK_OUTPUT_EXIT_CODE %});
+}
+static void RESULT(int r) {
+  exit(RESULT_EXIT_CODES[r]);
+}
+static void PASS() {
+  RESULT(100);
+}
+static void FAIL() {
+  RESULT(0);
+}
