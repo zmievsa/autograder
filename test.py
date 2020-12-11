@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from pathlib import Path
+from contextlib import contextmanager
+from typing import Callable
 
 import autograder
 from time import sleep
@@ -14,18 +16,29 @@ TEST_DIRS = {
     "multiple_languages": 100,
     "extra_files": 100,
     "fibonacci_c": 58,
+    "cheating_attempt": 50,
 }
 
 
 class Bcolor:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+@contextmanager
+def ErrorHandler(dir_name, cleanup_handler: Callable = lambda *a, **kw: None):
+    try:
+        yield
+    except Exception as e:
+        FAIL(f"TEST {dir_name} raised '{e}')")
+    finally:
+        cleanup_handler(dir_name)
 
 
 def PASS(message):
@@ -43,15 +56,13 @@ def run_silenced_grader(*args):
 
 def main():
     for test_dir, expected_result in TEST_DIRS.items():
-        try:
+        with ErrorHandler(test_dir):
             real_result = int(run_silenced_grader(f"examples/{test_dir}"))
             msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
             if int(expected_result) == real_result:
                 PASS(msg)
             else:
                 FAIL(msg)
-        except Exception as e:
-            FAIL(f"TEST {test_dir} raised '{e}')")
 
     test_extra_cli_args()
 
@@ -63,20 +74,24 @@ def test_extra_cli_args():
         old_config = f.read()
     with old_config_path.open("w") as f:
         f.write(old_config + "\nPRECOMPILE_TESTCASES = false\n")
-    result = run_silenced_grader(str(testing_dir))
-    s = f"CHECKING TEST extra_cli_args without args to equal 0. Real result: {int(result)}"
-    if result == 0:
-        PASS(s)
-    else:
-        FAIL(s)
+    with ErrorHandler(testing_dir.name):
+        result = run_silenced_grader(str(testing_dir))
+        s = f"CHECKING TEST {testing_dir.name} without args to equal 0. Real result: {int(result)}"
+        if result == 0:
+            PASS(s)
+        else:
+            FAIL(s)
+
     with old_config_path.open("w") as f:
         f.write(old_config)
-    result = run_silenced_grader(str(testing_dir))
-    s = f"CHECKING TEST extra_cli_args with args to equal 100. Real result: {int(result)}"
-    if result == 100:
-        PASS(s)
-    else:
-        FAIL(s)
+
+    with ErrorHandler(testing_dir.name):
+        result = run_silenced_grader(str(testing_dir))
+        s = f"CHECKING TEST {testing_dir.name} with args to equal 100. Real result: {int(result)}"
+        if result == 100:
+            PASS(s)
+        else:
+            FAIL(s)
 
 
 if __name__ == "__main__":
