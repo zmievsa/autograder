@@ -7,14 +7,14 @@
 static int RESULT_EXIT_CODES[] = {{% RESULT_EXIT_CODES %}};
 
 void CHECK_OUTPUT() {
-  exit({% CHECK_OUTPUT_EXIT_CODE %})
+  exit({% CHECK_OUTPUT_EXIT_CODE %});
 }
 static void RESULT(int r) {
-  exit(RESULT_EXIT_CODES[r])
+  exit(RESULT_EXIT_CODES[r]);
 }
 static void PASS() {
-  RESULT(100)
+  RESULT(100);
 }
 static void FAIL() {
-  RESULT(0)
+  RESULT(0);
 }
