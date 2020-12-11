@@ -30,17 +30,16 @@ class TestCase(ABC):
         timeout: int,
         formatters,
         argument_lists: dict,
-        precompile_testcase,
+        anti_cheat_enabled,
         weight,
         per_char_formatting_disabled,
         full_output_formatting_disabled,
-        dont_expose_testcase,
     ):
         self.path = path
         self.timeout = timeout
         self.formatters = formatters
         self.argument_lists = argument_lists
-        self.need_precompile_testcase = precompile_testcase
+        self.anti_cheat_enabled = anti_cheat_enabled
         self.weight = weight
         self.max_score = int(weight * 100)
         output_dir = tests_dir / f"output/{path.stem}.txt"
@@ -64,12 +63,11 @@ class TestCase(ABC):
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()
-        if precompile_testcase:
+        if anti_cheat_enabled:
             self.precompile_testcase()
 
-        self.dont_expose_testcase = dont_expose_testcase
         # This is done to hide the contents of testcases and exit codes to the student
-        if dont_expose_testcase:
+        if anti_cheat_enabled:
             with self.path.open("rb") as f:
                 self.source_contents = f.read()
             self.path.unlink()
@@ -83,7 +81,7 @@ class TestCase(ABC):
     def _weightless_run(self, precompiled_submission: Path):
         """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
-        if self.dont_expose_testcase:
+        if self.anti_cheat_enabled:
             with self.path.open("wb") as f:
                 f.write(self.source_contents)
         try:
@@ -190,7 +188,7 @@ class TestCase(ABC):
         pass
 
     def delete_source_file(self):
-        if self.dont_expose_testcase:
+        if self.anti_cheat_enabled:
             self.path.unlink()
 
     def cleanup(self):
@@ -241,7 +239,7 @@ class CTestCase(TestCase):
         return sh.Command(executable_path)
 
     def delete_executable_files(self, precompiled_submission):
-        if self.dont_expose_testcase:
+        if self.anti_cheat_enabled:
             self.make_executable_path(precompiled_submission).unlink()
 
 

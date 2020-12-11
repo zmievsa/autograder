@@ -2,9 +2,17 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Check result with assert                100/100
+Check result with assert                Crashed due to signal 1:
+Traceback (most recent call last):
+  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/check_result_with_assert.py", line 41, in <module>
+    main()
+  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/check_result_with_assert.py", line 34, in main
+    assert result == 3
+AssertionError
+
+
 ================================================================
-Result: 100/100
+Result: 0/100
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error

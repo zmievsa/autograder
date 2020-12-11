@@ -73,11 +73,12 @@ def test_extra_cli_args():
     with old_config_path.open() as f:
         old_config = f.read()
     with old_config_path.open("w") as f:
-        f.write(old_config + "\nPRECOMPILE_TESTCASES = false\n")
+        f.write(old_config + "\nANTI_CHEAT = true\n")
+
     with ErrorHandler(testing_dir.name):
         result = run_silenced_grader(str(testing_dir))
-        s = f"CHECKING TEST {testing_dir.name} without args to equal 0. Real result: {int(result)}"
-        if result == 0:
+        s = f"CHECKING TEST {testing_dir.name} with args to equal 100. Real result: {int(result)}"
+        if result == 100:
             PASS(s)
         else:
             FAIL(s)
@@ -87,8 +88,8 @@ def test_extra_cli_args():
 
     with ErrorHandler(testing_dir.name):
         result = run_silenced_grader(str(testing_dir))
-        s = f"CHECKING TEST {testing_dir.name} with args to equal 100. Real result: {int(result)}"
-        if result == 100:
+        s = f"CHECKING TEST {testing_dir.name} without args to equal 0. Real result: {int(result)}"
+        if result == 0:
             PASS(s)
         else:
             FAIL(s)
