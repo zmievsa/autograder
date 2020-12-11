@@ -45,9 +45,10 @@ def format_template(template, **kwargs):
 
 
 def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):
-    error = str(error)
-    error_str = string + error[error.find("STDERR:") + len("STDERR"):]
-    return error_str.strip().replace(str(current_dir), "...")
+    # TODO: Make this code clearer.
+    error_str = str(error)
+    formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR"):]
+    return formatted_error.strip().replace(str(current_dir), "...")
 
 
 def print_results(current_dir, min_score: int, *args, **kwargs):
@@ -66,5 +67,6 @@ def import_from_path(module_name: str, path: Path):
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
+    # TODO: Loader has no attribute exec_module. What's up with that?
     spec.loader.exec_module(module)
     return module
