@@ -1,4 +1,4 @@
-# You can include source files in extra too!
+# You can include source files in extra too! Both student and testcase will be able to use it.
 
 
 def read_numbers(path):
