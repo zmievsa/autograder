@@ -4,13 +4,13 @@ import importlib
 student_submission = importlib.import_module(sys.argv[1])
 
 
-RESULT_EXIT_CODES = [{% RESULT_EXIT_CODES %}]
-
 def CHECK_OUTPUT():
-    exit({% CHECK_OUTPUT_EXIT_CODE %})
+    print("\n{ % VALIDATING_STRING % }", end="")
+    exit({ % CHECK_OUTPUT_EXIT_CODE % })
 
 def RESULT(r):
-    exit(RESULT_EXIT_CODES[r])
+    print("\n{ % VALIDATING_STRING % }", end="")
+    exit(r + { % RESULT_EXIT_CODE_OFFSET % })
 
 def PASS():
     RESULT(100)
@@ -24,4 +24,4 @@ if __name__ != "__main__":
     # It would also technically be a recursive import which would most likely
     # raise an exception but I put this here as a safeguard.
     print("CHEATING ATTEMPT")
-    FAIL()
+    exit({ % RESULT_EXIT_CODE_OFFSET % })
