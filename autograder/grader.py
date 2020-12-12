@@ -304,7 +304,7 @@ class Grader:
             testcase_type = self.testcase_types[submission.suffix]
             source_file_path = Path(self.source_file_name).with_suffix(testcase_type.source_suffix)
             precompiled_submission = testcase_type.precompile_submission(submission, self.current_dir, source_file_path)
-        except sh.ErrorReturnCode_1 as e:
+        except sh.ErrorReturnCode_1 as e:  # type: ignore
             stderr = get_stderr(self.current_dir, e, "Failed to precompile")
             self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
             if precompiled_submission is not None:

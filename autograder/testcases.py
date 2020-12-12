@@ -100,7 +100,8 @@ class TestCase(ABC):
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
+                exit_code = e.exit_code  # type: ignore
+                return 0, f"Crashed due to signal {exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
             # print(">>> Testcase output: " + runtime_output.getvalue())
             output, output_is_valid = validate_output(runtime_output.getvalue(), self.validating_string)
             event = self.exit_code_handler.scan(result.exit_code)
@@ -201,7 +202,7 @@ class CTestCase(TestCase):
     executable_suffix = ".out"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    compiler = sh.gcc
+    compiler = sh.gcc  # type: ignore
 
     @classmethod
     def precompile_submission(cls, submission, current_dir, source_file_name):
@@ -260,6 +261,8 @@ class JavaTestCase(TestCase):
     executable_suffix = ""
     path_to_helper_module = GRADER_DIR / "test_helpers/TestHelper.java"
     parallel_execution_supported = False
+    _compiler = sh.javac  # type: ignore
+    _virtual_machine = sh.java  # type: ignore
 
     @classmethod
     def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name: str):
@@ -270,8 +273,8 @@ class JavaTestCase(TestCase):
         return precompiled_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
-        sh.javac(self.path, precompiled_submission.name)
-        return lambda *args, **kwargs: sh.java(
+        self._compiler(self.path, precompiled_submission.name)
+        return lambda *args, **kwargs: self._virtual_machine(
             self.path.stem, *args, *self.argument_lists[ArgList.testcase_compilation], **kwargs
         )
 
@@ -327,10 +330,11 @@ class PythonTestCase(TestCase):
     source_suffix = ".py"
     executable_suffix = ".pyc"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
+    _interpreter = sh.python3  # type: ignore
 
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
         # Argument lists do not seem to work here
-        return lambda *args, **kwargs: sh.python3(
+        return lambda *args, **kwargs: self._interpreter(
             self.path,
             precompiled_submission.stem,
             *self.argument_lists[ArgList.testcase_compilation],
