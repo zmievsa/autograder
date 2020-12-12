@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 
 SYSTEM_RESERVED_EXIT_CODES = [
@@ -98,7 +98,7 @@ class ExitCodeHandler:
         self.result_exit_codes = RESULT_EXIT_CODES
         self.check_output_exit_code = CHECK_OUTPUT_EXIT_CODE
 
-    def scan(self, exit_code: int) -> ExitCodeEvent:
+    def scan(self, exit_code: Optional[int]) -> ExitCodeEvent:
         if exit_code == self.check_output_exit_code:
             return ExitCodeEvent(ExitCodeEventType.CHECK_OUTPUT)
         elif exit_code in self.result_exit_codes:
