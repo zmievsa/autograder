@@ -2,9 +2,9 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
+Test output                             50/50
 Test result                             100/100
 Test time                               Exceeded Time Limit
-Test output                             50/50
 ================================================================
 Result: 75/100
 

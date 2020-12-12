@@ -1,16 +1,16 @@
-import os
-import sys
-import shutil
-from pathlib import Path
-from typing import List
-import logging
 import configparser
+import logging
+import os
+import shutil
+import sys
+from pathlib import Path
+from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
+from typing import List, Optional
 
 import sh  # type: ignore
 
 from . import testcases
-from .util import get_stderr, ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError, import_from_path
-from stat import S_IRUSR, S_IRGRP, S_IROTH, S_IXUSR, S_IWUSR
+from .util import ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError, get_stderr, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
 READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
@@ -34,6 +34,19 @@ KEY = """
 
 
 class Grader:
+    current_dir: Path
+    temp_dir: Path
+    tests_dir: Path
+    testcases_dir: Path
+    results_dir: Path
+    path_to_output_summary: Path
+    no_output: bool
+    submissions: List[Path]
+    tests: List[testcases.TestCase]
+
+    # TODO: Check that the types are the ones sent from CLI and test.py
+    raw_submissions: Optional[List[Path]]
+
     def __init__(
         self,
         current_dir,
@@ -47,9 +60,8 @@ class Grader:
         self.results_dir = current_dir / "results"
         self.path_to_output_summary = current_dir / "grader_output.txt"
         self.no_output = no_output
-        self.submissions = submissions
         self.filters = None
-        self.tests = None
+        self.raw_submissions = submissions
 
     def run(self):
         if self.temp_dir.exists():
@@ -68,7 +80,7 @@ class Grader:
             self._configure_logging()
             self.filters = self._import_formatters(self.tests_dir / "output_formatters.py")
             self.tests = self._gather_testcases()
-            self.submissions = self._gather_submissions(self.submissions)
+            self.submissions = self._gather_submissions(self.raw_submissions)
             self._copy_extra_files_to_temp(self.tests_dir / "extra")
             if self.generate_results:
                 self.results_dir.mkdir(exist_ok=True)
@@ -177,6 +189,7 @@ class Grader:
                     exit(0)
 
     def _gather_testcases(self) -> List[testcases.TestCase]:
+        """ Returns sorted list of testcases from tests/testcases """
         tests = []
         default_weight = self.testcase_weights.get("ALL", 1)
         default_timeout = self.timeouts.get("ALL", 1)
@@ -204,6 +217,7 @@ class Grader:
                     self.full_output_formatting_disabled,
                 )
             )
+        tests.sort(key=lambda t: t.path.name)
         return tests
 
     def _generate_arglists(self, test: Path):
@@ -217,9 +231,10 @@ class Grader:
                 arglist[arglist_index] = tuple()
         return arglist
 
-    def _gather_submissions(self, submissions_to_grade):
+    def _gather_submissions(self, submissions_to_grade) -> List[Path]:
+        """ Returns sorted list of paths to submissions """
         submissions_to_grade = set(submissions_to_grade)
-        submissions = []
+        submissions: List[Path] = []
         for submission in self.current_dir.iterdir():
             if submissions_to_grade and submission.name not in submissions_to_grade:
                 continue
@@ -233,6 +248,7 @@ class Grader:
                     submissions.append(submission)
                 else:
                     self.logger.info(f"{submission} does not contain the required suffix. Skipping it.")
+        submissions.sort()
         return submissions
 
     def _copy_extra_files_to_temp(self, extra_file_dir: Path):
