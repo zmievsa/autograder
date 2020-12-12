@@ -1,5 +1,5 @@
 /home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required suffix. Skipping it.
-Grading average
+Grading average_student_homework.c
 Running 'Test output'
 50/50
 Running 'Test result'
@@ -8,7 +8,7 @@ Running 'Test time'
 Exceeded Time Limit
 Result: 75/100
 
-Grading failing
+Grading failing_student_homework.c
 Failed to precompile:
 .../temp/failing_student_homework.c: In function ‘fibonacci’:
 .../temp/failing_student_homework.c:2:15: error: ‘P’ undeclared (first use in this function)
@@ -24,7 +24,7 @@ Failed to precompile:
 /home/ovs... (228 more, please see e.stderr)
 Result: 0/100
 
-Grading perfect
+Grading perfect_student_homework.c
 Running 'Test output'
 50/50
 Running 'Test result'
