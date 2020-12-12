@@ -10,7 +10,14 @@ from typing import List, Optional
 import sh  # type: ignore
 
 from . import testcases
-from .util import ARGUMENT_LIST_NAMES, PATH_TO_DEFAULT_CONFIG, AutograderError, get_stderr, import_from_path
+from .util import (
+    ARGUMENT_LIST_NAMES,
+    PATH_TO_DEFAULT_CONFIG,
+    AutograderError,
+    get_stderr,
+    import_from_path,
+    STUDENT_NAME_MATCHER,
+)
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
 READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
@@ -293,8 +300,9 @@ class Grader:
 
     def _get_testcase_output(self, submission) -> dict:
         """ Returns grading info as a dict """
-        if "_" in submission.name:
-            student_name = submission.name[: submission.name.find("_")]
+        match = STUDENT_NAME_MATCHER.match(submission.stem)
+        if match is not None:
+            student_name = match["student_name"]
         else:
             student_name = submission.name
         self.logger.info(f"Grading {student_name}")
