@@ -1,6 +1,19 @@
 This utility aims to provide a simple, yet secure and highly configurable way to autograde programming assignments.
 
 I consider it to be finished. From now on, I will only be adding extra grading languages if necessary and fixing bugs if any are reported. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades) and fast.
+##### Table of Contents  
+[Features](#Features)   
+[Installation](#Installation)   
+[Quickstart](#Quickstart)   
+[Usage](#Usage)   
+[Advanced Usage](#Advanced-Usage)   
+[Writing testcases](#Writing-testcases)  
+[Helper functions](#Helper-functions)  
+[Command line help](#Command-line-help)  
+[Implementation details](#Implementation-details)  
+[Anti Cheating](#Anti-Cheating)  
+
+
 # Features
 * Most features are demonstrated in examples/ directory
 * Easy to grade (simply running `autograder` on a directory with assignments and testcases)
@@ -14,7 +27,8 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 * You can pass arguments to language compilers during testcase (or submission) precompilation and compilation using config.ini
 * You can grade submissions in multiple programming languages at once, as long as there are testcases written in each language
 * Most of these features are described in detail in autograder/default_config.ini, implementation details section below, and command line help section below
-# Installation (Linux-only) (Python >= 3.6)
+# Installation
+* Currently, Linux-only and Python >= 3.6. Any other operating system and python version has not been tested.
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Quickstart
@@ -33,11 +47,11 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 * Assume that helper functions CHECK_OUTPUT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
 * Each helper function terminates the execution of the program and returns its respective exit code that signifies student's score for the testcase
 * Each testcase is graded out of 100% and allows you to specify grades down to a single percent, which means that you can fully control how much partial credit is given
-* ### Helper functions
-    * CHECK_OUTPUT() indicates that we do not check student's return values for the testcase and that we only care about their output (stdout) that will be checked by the autograder automatically using student's stdout and the output files with the same name stem as the testcase. (beware: printing anything within your testcase will break this functionality)
-    * RESULT(int r) returns student's score r back to the grader (0 - 100)
-    * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
-    * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
+### Helper functions
+  * CHECK_OUTPUT() indicates that we do not check student's return values for the testcase and that we only care about their output (stdout) that will be checked by the autograder automatically using student's stdout and the output files with the same name stem as the testcase. (beware: printing anything within your testcase will break this functionality)
+  * RESULT(int r) returns student's score r back to the grader (0 - 100)
+  * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
+  * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 # Command line help
 ```
 usage: autograder [-h] [-p [min_score]] [--no_output] [--generate_config]
