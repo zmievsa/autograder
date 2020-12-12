@@ -1,4 +1,13 @@
 /home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required suffix. Skipping it.
+Grading average
+Running 'Test output'
+50/50
+Running 'Test result'
+100/100
+Running 'Test time'
+Exceeded Time Limit
+Result: 75/100
+
 Grading failing
 Failed to precompile:
 .../temp/failing_student_homework.c: In function ‘fibonacci’:
@@ -16,22 +25,13 @@ Failed to precompile:
 Result: 0/100
 
 Grading perfect
+Running 'Test output'
+50/50
 Running 'Test result'
 100/100
 Running 'Test time'
-50/50
-Running 'Test output'
 50/50
 Result: 100/100
-
-Grading average
-Running 'Test result'
-100/100
-Running 'Test time'
-Exceeded Time Limit
-Running 'Test output'
-50/50
-Result: 75/100
 
 
 Average score: 58/100

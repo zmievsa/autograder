@@ -1,4 +1,7 @@
-# This is a dummy example to show how extra args work
+# This is a dummy example to show how extra args work.
+# It will fail if testcase is not precompiled because assert will throw an error
+# but it will succeed if testcase is precompiled because config.ini contains a -O argument for this file
+# which silences assertions.
 
 
 def main():

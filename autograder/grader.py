@@ -187,6 +187,8 @@ class Grader:
                         "which will remove all stdout and file output except for --generate_results directory."
                     )
                     exit(0)
+            else:
+                self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
 
     def _gather_testcases(self) -> List[testcases.TestCase]:
         """ Returns sorted list of testcases from tests/testcases """
@@ -217,6 +219,7 @@ class Grader:
                     self.full_output_formatting_disabled,
                 )
             )
+        # Allows consistent output
         tests.sort(key=lambda t: t.path.name)
         return tests
 
@@ -248,6 +251,7 @@ class Grader:
                     submissions.append(submission)
                 else:
                     self.logger.info(f"{submission} does not contain the required suffix. Skipping it.")
+        # Allows consistent output
         submissions.sort()
         return submissions
 
