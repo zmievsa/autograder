@@ -1,4 +1,4 @@
-/home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required suffix. Skipping it.
+/home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required file extension. Skipping it.
 Grading average_student_homework.c
 Running 'Test output'
 50/50

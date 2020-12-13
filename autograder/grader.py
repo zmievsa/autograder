@@ -9,6 +9,7 @@ from typing import List, Optional
 
 import sh  # type: ignore
 
+from .grading_output import BufferOutputLogger, GradingOutputLogger, format_output_for_student_file, get_submission_name
 from . import testcases
 from .util import (
     ARGUMENT_LIST_NAMES,
@@ -16,7 +17,6 @@ from .util import (
     AutograderError,
     get_stderr,
     import_from_path,
-    STUDENT_NAME_MATCHER,
 )
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
@@ -29,15 +29,6 @@ ALLOWED_LANGUAGES = {
     "python": testcases.PythonTestCase,
     "c++": testcases.CPPTestCase,
 }
-# Constants
-KEY = """
-\nKey:
-\tFailed to Compile: Your submission did not compile due to a syntax or naming error
-\tCompiled with warnings: Your submission uses unchecked or unsafe operations
-\tCrashed due to signal SIGNAL_CODE: Your submission threw an uncaught exception.
-\tAll signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
-\tExceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
-"""
 
 
 class Grader:
@@ -70,36 +61,34 @@ class Grader:
         self.filters = None
         self.raw_submissions = submissions
 
+        self.required_dirs = (self.testcases_dir,)
+
     def run(self):
-        if self.temp_dir.exists():
-            self.cleanup()
-        self.temp_dir.mkdir()
+        old_dir = Path.cwd()
         try:
-            required_dirs = (self.testcases_dir,)
-            dir_not_found = (
-                "{} directory not found. It is required for the grader to function.\n"
-                "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
-            )
-            for directory in required_dirs:
-                if not directory.exists():
-                    raise AutograderError(dir_not_found.format(directory))
-            self._configure_grading()
-            self._configure_logging()
             self.filters = self._import_formatters(self.tests_dir / "output_formatters.py")
-            self.tests = self._gather_testcases()
+            self._configure_grading()
+            self.logger = GradingOutputLogger(
+                self.current_dir,
+                self.path_to_output_summary,
+                self.results_dir,
+                self.assignment_name,
+                self.total_points_possible,
+                self.no_output,
+                self.generate_results,
+            )
             self.submissions = self._gather_submissions(self.raw_submissions)
-            self._copy_extra_files_to_temp(self.tests_dir / "extra")
-            if self.generate_results:
-                self.results_dir.mkdir(exist_ok=True)
-            old_dir = Path.cwd()
+            self._prepare_directory_structure()
             os.chdir(self.temp_dir)
+
             total_class_points = sum(map(self._run_tests_on_submission, self.submissions))
-            class_average = total_class_points / (len(self.submissions) or 1)
-            self.logger.info(f"\nAverage score: {round(class_average)}/{self.total_points_possible}")
-            self.logger.info(KEY)
+
+            class_average = total_class_points / len(self.submissions)
+            self.logger(f"\nAverage score: {round(class_average)}/{self.total_points_possible}")
+            self.logger.print_key()
         finally:
             self.cleanup()
-        os.chdir(str(old_dir))
+            os.chdir(str(old_dir))
         return class_average
 
     def generate_config(self):
@@ -108,9 +97,29 @@ class Grader:
             shutil.copy(str(PATH_TO_DEFAULT_CONFIG), str(config))
 
     def cleanup(self):
-        for path in self.temp_dir.iterdir():
-            os.chmod(path, READ_EXECUTE_WRITE_PERMISSION)
+        # Not sure if we need this
+        # for path in self.temp_dir.iterdir():
+        #     os.chmod(path, READ_EXECUTE_WRITE_PERMISSION)
         shutil.rmtree(self.temp_dir)
+
+    def _prepare_directory_structure(self):
+        # Cleanup in case any error
+        if self.temp_dir.exists():
+            self.cleanup()
+        self.temp_dir.mkdir()
+        self._copy_extra_files_to_temp(self.tests_dir / "extra")
+        self._check_required_directories_exist()
+        self.tests = self._gather_testcases()
+        if self.generate_results:
+            self.results_dir.mkdir(exist_ok=True)
+
+    def _check_required_directories_exist(self):
+        for directory in self.required_dirs:
+            if not directory.exists():
+                raise AutograderError(
+                    f"{directory} directory not found. It is required for the grader to function.\n"
+                    "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
+                )
 
     def _configure_grading(self):
         cfg = self._read_config()
@@ -179,24 +188,6 @@ class Grader:
                 argument_lists[arg_list_index][testcase_name] = args.strip().split(" ")
         return argument_lists
 
-    def _configure_logging(self):
-        self.logger = logging.getLogger("Grader")
-        self.logger.setLevel(logging.INFO)
-        if not self.no_output:
-            self.logger.addHandler(logging.StreamHandler(sys.stdout))
-            if self.path_to_output_summary.exists():
-                ans = input("Output summary file already exists. Would you like to overwrite it? (Yes/No) ")
-                if ans.lower().startswith("y"):
-                    self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
-                else:
-                    print(
-                        "If you don't want to remove the summary, simply use the --no_output command line option "
-                        "which will remove all stdout and file output except for --generate_results directory."
-                    )
-                    exit(0)
-            else:
-                self.logger.addHandler(logging.FileHandler(self.path_to_output_summary, mode="w"))
-
     def _gather_testcases(self) -> List[testcases.TestCase]:
         """ Returns sorted list of testcases from tests/testcases """
         tests = []
@@ -209,7 +200,7 @@ class Grader:
             if not test.is_file():
                 continue
             if testcase_type is None:
-                self.logger.info(f"No appropriate language for {test} found.")
+                self.logger(f"No appropriate language for {test} found.")
                 continue
             arglist = self._generate_arglists(test)
             shutil.copy(test, self.temp_dir)
@@ -222,8 +213,8 @@ class Grader:
                     arglist,
                     self.anti_cheat,
                     weight,
-                    self.per_char_formatting_disabled,
-                    self.full_output_formatting_disabled,
+                    not self.per_char_formatting_enabled,
+                    not self.full_output_formatting_enabled,
                 )
             )
         # Allows consistent output
@@ -257,7 +248,11 @@ class Grader:
                 elif self.source_file_name in submission_name:
                     submissions.append(submission)
                 else:
-                    self.logger.info(f"{submission} does not contain the required suffix. Skipping it.")
+                    self.logger(f"{submission} does not contain the required file name. Skipping it.")
+
+        if not len(submissions):
+            raise AutograderError(f"No student submissions found in '{self.current_dir}'.")
+
         # Allows consistent output
         submissions.sort()
         return submissions
@@ -272,40 +267,45 @@ class Grader:
     def _import_formatters(self, path_to_output_formatters: Path):
         if path_to_output_formatters.exists():
             module = import_from_path("output_formatters", path_to_output_formatters)
-            if hasattr(module, "per_char_formatter") and hasattr(module, "full_output_formatter"):
-                self.per_char_formatting_disabled = False
-                self.full_output_formatting_disabled = False
-            elif not hasattr(module, "per_char_formatter") and not hasattr(module, "full_output_formatter"):
+            self.per_char_formatting_enabled = hasattr(module, "per_char_formatter")
+            self.full_output_formatting_enabled = hasattr(module, "full_output_formatter")
+            if not self.per_char_formatting_enabled and not self.full_output_formatting_enabled:
                 raise AutograderError("Formatter file does not contain the required functions.")
-            elif hasattr(module, "per_char_formatter"):
-                self.per_char_formatting_disabled = False
-                self.full_output_formatting_disabled = True
-            elif hasattr(module, "per_char_formatter"):
-                self.full_output_formatting_disabled = False
-                self.per_char_formatting_disabled = True
             return module
         else:
-            self.per_char_formatting_disabled = True
-            self.full_output_formatting_disabled = True
+            self.per_char_formatting_enabled = False
+            self.full_output_formatting_enabled = False
             return None
 
     def _run_tests_on_submission(self, submission: Path):
-        if self.generate_results:
-            with open(self.results_dir / submission.name, "w") as f:
-                grader_output = self._get_testcase_output(submission)
-                f.write(format_grader_output(grader_output))
-        else:
-            grader_output = self._get_testcase_output(submission)
-        return grader_output["student_score"]
+        with self.logger.single_submission_output_logger() as logger:
+            return self._get_testcase_output(submission, logger)
 
-    def _get_testcase_output(self, submission) -> dict:
+    def _get_testcase_output(self, submission, logger: BufferOutputLogger) -> float:
         """ Returns grading info as a dict """
-        match = STUDENT_NAME_MATCHER.match(submission.stem)
-        if match is not None:
-            student_name = match["student_name"]
-        else:
-            student_name = submission.name
-        self.logger.info(f"Grading {student_name}")
+        logger(f"Grading {get_submission_name(submission)}")
+        precompiled_submission = self._precompile_submission(submission, logger)
+        if precompiled_submission is None:
+            return 0
+        total_testcase_score = 0
+        testcase_results = []
+        allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
+        for test in allowed_tests:
+            logger(f"Running '{test.name}'")
+            testcase_score, message = test.run(precompiled_submission)
+            logger(message)
+            testcase_results.append((test.name, message))
+            total_testcase_score += testcase_score
+        raw_student_score = total_testcase_score / sum(t.weight for t in allowed_tests)
+        normalized_student_score = raw_student_score * self.total_score_to_100_ratio
+        self.logger.print_testcase_results_to_results_file(
+            submission, testcase_results, normalized_student_score, logger
+        )
+
+        precompiled_submission.unlink()
+        return normalized_student_score
+
+    def _precompile_submission(self, submission, logger):
         precompiled_submission = None
         try:
             # TODO: Move half of this into precompile_submission or something
@@ -313,60 +313,18 @@ class Grader:
             source_file_path = Path(self.source_file_name).with_suffix(testcase_type.source_suffix)
             precompiled_submission = testcase_type.precompile_submission(submission, self.current_dir, source_file_path)
         except sh.ErrorReturnCode_1 as e:  # type: ignore
-            stderr = get_stderr(self.current_dir, e, "Failed to precompile")
-            self.logger.info(stderr + f"\nResult: 0/{self.total_points_possible}\n")
+            self.logger.print_precompilation_error_to_results_file(submission, e, logger)
+            # TODO: We should remove it with the entire student directory
             if precompiled_submission is not None:
                 precompiled_submission.unlink()
-            return {
-                "assignment_name": self.assignment_name,
-                "precompilation_error": stderr.replace("Failed to precompile", ""),
-                "student_score": 0,
-            }
-        total_testcase_score = 0
-        testcase_results = []
-        allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
-        for test in self.tests:
-            if test.source_suffix == submission.suffix:
-                self.logger.info(f"Running '{test.name}'")
-                testcase_score, message = test.run(precompiled_submission)
-                self.logger.info(message)
-                testcase_results.append((test.name, message))
-                total_testcase_score += testcase_score
-        raw_student_score = total_testcase_score / sum(t.weight for t in allowed_tests)
-        normalized_student_score = raw_student_score * self.total_score_to_100_ratio
-        student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
-        self.logger.info(f"Result: {student_final_result}\n")
-        precompiled_submission.unlink()
-        return {
-            "assignment_name": self.assignment_name,
-            "testcase_results": testcase_results,
-            "formatted_student_score": student_final_result,
-            "student_score": normalized_student_score,
-        }
+                precompiled_submission = None
+        return precompiled_submission
 
 
 def get_testcase_type_by_suffix(suffix: str):
     for testcase_type in ALLOWED_LANGUAGES.values():
         if testcase_type.source_suffix == suffix:
             return testcase_type
-
-
-def format_grader_output(output: dict):
-    """Replace this function with anything else if you want the output
-    to have a different style
-    """
-    s = f"{output['assignment_name']} Test Results\n\n"
-    s += "%-40s%s" % ("TestCase", "Result")
-    s += "\n================================================================"
-    if "precompilation_error" in output:
-        s += output["precompilation_error"]
-        return s
-    for test_output in output["testcase_results"]:
-        s += "\n%-40s%s" % test_output
-    s += "\n================================================================\n"
-    s += "Result: " + output["formatted_student_score"]
-    s += KEY
-    return s
 
 
 def parse_config_list(config_line: str, value_type):

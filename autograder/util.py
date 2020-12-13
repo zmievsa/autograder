@@ -8,7 +8,6 @@ import sys
 
 
 PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
-STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_\w+")
 
 
 class AutograderError(Exception):
@@ -71,5 +70,5 @@ def import_from_path(module_name: str, path: Path):
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     # TODO: Loader has no attribute exec_module. What's up with that?
-    spec.loader.exec_module(module)
+    spec.loader.exec_module(module)  # type: ignore
     return module
