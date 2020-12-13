@@ -7,13 +7,6 @@ import importlib.util
 import sys
 
 
-PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
-
-
-class AutograderError(Exception):
-    pass
-
-
 class ArgList(Enum):
     submission_precompilation = 0
     submission_compilation = 1
@@ -21,12 +14,8 @@ class ArgList(Enum):
     testcase_compilation = 3
 
 
-ARGUMENT_LIST_NAMES = {
-    ArgList.submission_precompilation: "SUBMISSION_PRECOMPILATION_ARGS",
-    ArgList.submission_compilation: "SUBMISSION_COMPILATION_ARGS",
-    ArgList.testcase_precompilation: "TESTCASE_PRECOMPILATION_ARGS",
-    ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS",
-}
+class AutograderError(Exception):
+    pass
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")

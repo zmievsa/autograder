@@ -1,6 +1,11 @@
-from .grader import Grader, ALLOWED_LANGUAGES
+from autograder.config_manager import ALLOWED_LANGUAGES
+from .grader import Grader
+from .testcases import get_allowed_languages
 from pathlib import Path
 import shutil
+
+
+ALLOWED_LANGUAGES = get_allowed_languages()
 
 
 def create_dir(path: Path):
@@ -35,27 +40,34 @@ def main(path: Path, grader: Grader):
     if not output_formatters_path.exists():
         print(f"{output_formatters_path.name} not found. Creating a default file...")
         shutil.copy(
-            str(Path(__file__).parent / "default_formatters.py"),
-            str(grader.tests_dir / "output_formatters.py")
+            str(Path(__file__).parent / "default_formatters.py"), str(grader.tests_dir / "output_formatters.py")
         )
     else:
         print("Found output_formatters.py")
 
-    ans = input("You are now ready to start working with autograder.\n"
-                "Would you like me to give you the link to the example testcases? (Yes/No) ")
+    ans = input(
+        "You are now ready to start working with autograder.\n"
+        "Would you like me to give you the link to the example testcases? (Yes/No) "
+    )
     if ans.lower().startswith("y"):
         while True:
-            allowed_languages = ', '.join(ALLOWED_LANGUAGES.keys())
-            choice = input(f"Choose a programming language you'd like to generate testcases for ({allowed_languages}): ")
+            allowed_languages = ", ".join(ALLOWED_LANGUAGES.keys())
+            choice = input(
+                f"Choose a programming language you'd like to generate testcases for ({allowed_languages}): "
+            )
             lang = ALLOWED_LANGUAGES.get(choice, None)
             if lang is None:
                 print(f"Couldn't find the language with name '{choice}'. Please, try again.")
             else:
                 break
-        print("Here is the default testcase directory:\n"
-              f"https://github.com/Ovsyanka83/autograder/tree/master/examples/{choice.lower()}/tests/testcases")
-    print("Now if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
-          "for this directory.")
+        print(
+            "Here is the default testcase directory:\n"
+            f"https://github.com/Ovsyanka83/autograder/tree/master/examples/{choice.lower()}/tests/testcases"
+        )
+    print(
+        "Now if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
+        "for this directory."
+    )
     print(f"You can write your testcases in {path / 'tests/testcases'}")
     print("If you want to see command line options, use 'autograder -h'")
     print(f"You can put the stdin inputs to your testcases into {path / 'tests/input'}")
@@ -63,4 +75,3 @@ def main(path: Path, grader: Grader):
     print(f"Yu can put the extra files to be available for each testcase into {path / 'tests/extra'}")
     print(f"You can configure grading by editing {path / 'tests/config.ini'}")
     print("You can find readme at https://github.com/Ovsyanka83/autograder")
-
