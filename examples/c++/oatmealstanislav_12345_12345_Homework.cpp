@@ -8,14 +8,14 @@ int numberSaver()
     int userInput;
     int sum = 0;
     while (1)
-        {
-            cout << "Input number from 1 to 9 (0 to exit):\n";
-            cin >> userInput;
-            if (userInput > 0 && userInput < 10)
-                arr[userInput - 1]++;
-            else
-                break;
-        }
+    {
+        cout << "Input num from 1 to 9 (0 to exit):\n";
+        cin >> userInput;
+        if (userInput > 0 && userInput < 10)
+            arr[userInput - 1]++;
+        else
+            break;
+    }
 
     cout << "You typed:\n";
 
@@ -28,7 +28,8 @@ int numberSaver()
     return sum;
 }
 
-int main() {
+int main()
+{
     numberSaver();
     cout << "Random stuff1\n";
     return 0;

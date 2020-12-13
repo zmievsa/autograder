@@ -11,7 +11,7 @@ public class Homework {
         Scanner sc = new Scanner(System.in);
         while (true)
         {
-            System.out.println("Input number from 1 to 9 (0 to exit):");
+            System.out.println("Input num from 1 to 9 (0 to exit):");
             userInput = sc.nextInt();
             if (userInput > 0 && userInput < 10)
                 arr[userInput - 1]++;

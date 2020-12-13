@@ -6,14 +6,14 @@ int numberSaver()
     int userInput;
     int sum = 0;
     while (1)
-        {
-            printf("Input number from 1 to 9 (0 to exit):\n");
-            scanf("%d", &userInput);
-            if (userInput > 0 && userInput < 10)
-                arr[userInput - 1]++;
-            else
-                break;
-        }
+    {
+        printf("Input num from 1 to 9 (0 to exit):\n");
+        scanf("%d", &userInput);
+        if (userInput > 0 && userInput < 10)
+            arr[userInput - 1]++;
+        else
+            break;
+    }
 
     printf("You typed:\n");
 
@@ -26,7 +26,8 @@ int numberSaver()
     return sum;
 }
 
-int main() {
+int main()
+{
     numberSaver();
     printf("Random stuff1\n");
     return 0;

@@ -150,10 +150,7 @@ class TestCase(ABC):
         if not self.full_output_formatting_disabled:
             formatted_output = self.formatters.full_output_formatter(formatted_output)
         if not self.per_char_formatting_disabled:
-            final_output = ""
-            for c in formatted_output:
-                final_output += self.formatters.per_char_formatter(c)
-            formatted_output = final_output
+            formatted_output = "".join(self.formatters.per_char_formatter(c) for c in formatted_output)
         return formatted_output
 
     @classmethod
