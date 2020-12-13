@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from .util import get_stderr
 from contextlib import contextmanager
 import logging
@@ -6,7 +5,7 @@ import sys
 from pathlib import Path
 import re
 from collections import deque
-from typing import Deque, Protocol
+from typing import Deque
 
 
 KEY = """

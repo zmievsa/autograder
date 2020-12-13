@@ -14,6 +14,15 @@ from .output_validator import generate_validating_string, validate_output
 GRADER_DIR = Path(__file__).resolve().parent
 
 
+def get_allowed_languages():
+    return {
+        "c": CTestCase,
+        "java": JavaTestCase,
+        "python": PythonTestCase,
+        "c++": CPPTestCase,
+    }
+
+
 class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
