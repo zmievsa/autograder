@@ -1,3 +1,6 @@
+# Controls output to stdout and to output file
+
+
 from .util import get_stderr
 from contextlib import contextmanager
 import logging
@@ -16,7 +19,7 @@ KEY = """
 \tAll signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
 \tExceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
 """
-STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_\w+")
+STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_.+")
 
 
 def get_submission_name(submission: Path):
@@ -66,11 +69,12 @@ class GradingOutputLogger:
         self.logger.info(s)
 
     @contextmanager
-    def single_submission_output_logger(self):
+    def single_submission_output_logger(self, lock):
         try:
             buffer = BufferOutputLogger()
             yield buffer
-            self("\n".join(buffer.output))
+            with lock:
+                self("\n".join(buffer.output))
         except Exception as e:
             raise e
 

@@ -3,15 +3,14 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
 import py_compile
+from time import sleep
 from typing import Callable
 
 import sh  # type: ignore
 
-from .util import get_stderr, format_template, ArgList, AutograderError
+from .util import get_stderr, format_template, ArgList, AutograderError, GRADER_DIR
 from .exit_codes import ExitCodeEventType, ExitCodeHandler, USED_EXIT_CODES
 from .output_validator import generate_validating_string, validate_output
-
-GRADER_DIR = Path(__file__).resolve().parent
 
 
 def get_allowed_languages():
@@ -35,7 +34,8 @@ class TestCase(ABC):
     def __init__(
         self,
         path: Path,
-        tests_dir: Path,
+        input_dir: Path,
+        output_dir: Path,
         timeout: int,
         formatters,
         argument_lists: dict,
@@ -51,17 +51,17 @@ class TestCase(ABC):
         self.anti_cheat_enabled = anti_cheat_enabled
         self.weight = weight
         self.max_score = int(weight * 100)
-        output_dir = tests_dir / f"output/{path.stem}.txt"
+        output_file = output_dir / f"{path.stem}.txt"
         self.per_char_formatting_disabled = per_char_formatting_disabled
         self.full_output_formatting_disabled = full_output_formatting_disabled
-        if output_dir.exists():
-            with output_dir.open() as f:
+        if output_file.exists():
+            with output_file.open() as f:
                 self.expected_output = self.format_output(f.read())
         else:
             self.expected_output = StringIO("")
-        input_dir = tests_dir / f"input/{path.stem}.txt"
-        if input_dir.exists():
-            with input_dir.open() as f:
+        input_file = input_dir / f"{path.stem}.txt"
+        if input_file.exists():
+            with input_file.open() as f:
                 self.input = StringIO(f.read().strip())
         else:
             self.input = StringIO("")
@@ -84,24 +84,30 @@ class TestCase(ABC):
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
         result, message = self._weightless_run(precompiled_submission)
-        self.delete_executable_files(precompiled_submission)
+        if self.anti_cheat_enabled:
+            self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
 
     def _weightless_run(self, precompiled_submission: Path):
         """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
+        testcase_path = precompiled_submission.with_name(self.path.name)
         if self.anti_cheat_enabled:
-            with self.path.open("wb") as f:
+            with testcase_path.open("wb") as f:
                 f.write(self.source_contents)
+        else:
+            shutil.copy(self.path, testcase_path)
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(self.path.parent, e, "Failed to compile")
-        self.delete_source_file()
+        if self.anti_cheat_enabled:
+            self.delete_source_file(testcase_path)
         with StringIO() as runtime_output:
             try:
                 # Useful during testing
                 # input("Waiting...")
+                # sleep(15)
                 result = test_executable(
                     _in=self.input, _out=runtime_output, _timeout=self.timeout, _ok_code=USED_EXIT_CODES
                 )
@@ -143,23 +149,23 @@ class TestCase(ABC):
 
     def make_executable_path(self, submission: Path):
         """ By combining test name and student name, it makes a unique path """
-        return self.path.with_name(self.path.stem + submission.stem + self.executable_suffix)
+        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def format_output(self, output: str):
         formatted_output = output
         if not self.full_output_formatting_disabled:
-            formatted_output = self.formatters.full_output_formatter(formatted_output)
+            formatted_output = self.formatters["full_output_formatter"](formatted_output)
         if not self.per_char_formatting_disabled:
-            formatted_output = "".join(self.formatters.per_char_formatter(c) for c in formatted_output)
+            formatted_output = "".join(self.formatters["per_char_formatter"](c) for c in formatted_output)
         return formatted_output
 
     @classmethod
-    def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name) -> Path:
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name) -> Path:
         """Copies student submission into currect_dir and either precompiles
         it and returns the path to the precompiled submission or to the
         copied submission if no precompilation is necesessary
         """
-        destination = current_dir / "temp" / source_file_name
+        destination = student_dir / source_file_name
         shutil.copy(str(submission), str(destination))
         return destination
 
@@ -194,9 +200,9 @@ class TestCase(ABC):
     def delete_executable_files(self, precompiled_submission):
         pass
 
-    def delete_source_file(self):
+    def delete_source_file(self, source_path):
         if self.anti_cheat_enabled:
-            self.path.unlink()
+            source_path.unlink()
 
     def cleanup(self):
         self.input.close()
@@ -211,11 +217,11 @@ class CTestCase(TestCase):
     compiler = sh.gcc  # type: ignore
 
     @classmethod
-    def precompile_submission(cls, submission, current_dir, source_file_name):
+    def precompile_submission(cls, submission, student_dir, source_file_name):
         """Links student submission without compiling it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, current_dir, submission.name)
+        copied_submission = super().precompile_submission(submission, student_dir, submission.name)
         precompiled_submission = copied_submission.with_suffix(".o")
         try:
             cls.compiler("-c", f"{copied_submission}", "-o", precompiled_submission, *cls.SUBMISSION_COMPILATION_ARGS)
@@ -239,15 +245,16 @@ class CTestCase(TestCase):
         self.compiler(
             "-o",
             executable_path,
-            self.path,
-            precompiled_submission.name,
+            precompiled_submission.with_name(self.path.name),
+            str(precompiled_submission),
             *self.argument_lists[ArgList.testcase_compilation],
         )
         return sh.Command(executable_path)
 
     def delete_executable_files(self, precompiled_submission):
-        if self.anti_cheat_enabled:
-            self.make_executable_path(precompiled_submission).unlink()
+        exec_path = self.make_executable_path(precompiled_submission)
+        if exec_path.exists():
+            exec_path.unlink()
 
 
 class CPPTestCase(CTestCase):
@@ -267,26 +274,26 @@ class JavaTestCase(TestCase):
     executable_suffix = ""
     path_to_helper_module = GRADER_DIR / "test_helpers/TestHelper.java"
     parallel_execution_supported = False
-    _compiler = sh.javac  # type: ignore
-    _virtual_machine = sh.java  # type: ignore
+    compiler = sh.javac  # type: ignore
+    virtual_machine = sh.java  # type: ignore
 
     @classmethod
-    def precompile_submission(cls, submission: Path, current_dir: Path, source_file_name: str):
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str):
         """ Renames submission to allow javac compilation """
-        copied_submission = super().precompile_submission(submission, current_dir, submission.name)
+        copied_submission = super().precompile_submission(submission, student_dir, submission.name)
         precompiled_submission = copied_submission.parent / source_file_name
         copied_submission.rename(precompiled_submission)
         return precompiled_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
-        self._compiler(self.path, precompiled_submission.name)
-        return lambda *args, **kwargs: self._virtual_machine(
-            self.path.stem, *args, *self.argument_lists[ArgList.testcase_compilation], **kwargs
-        )
+        new_self_path = precompiled_submission.with_name(self.path.name)
+        self.compiler(precompiled_submission, new_self_path, *self.argument_lists[ArgList.testcase_compilation])
+        return lambda *args, **kwargs: self.virtual_machine(self.path.stem, *args, **kwargs)
 
-    def delete_executable_files(self, precompiled_submission):
-        precompiled_submission.with_suffix(".class").unlink()
-        str(self.path.with_suffix("")) + "$" + "TestHelper.class"
+    def delete_executable_files(self, precompiled_submission: Path):
+        for p in precompiled_submission.parent.iterdir():
+            if p.suffix == ".class":
+                p.unlink()
 
     def prepend_test_helper(self):
         """Puts private TestHelper at the end of testcase class.
@@ -336,12 +343,13 @@ class PythonTestCase(TestCase):
     source_suffix = ".py"
     executable_suffix = ".pyc"
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
-    _interpreter = sh.python3  # type: ignore
+    interpreter = sh.python3  # type: ignore
 
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
         # Argument lists do not seem to work here
-        return lambda *args, **kwargs: self._interpreter(
-            self.path,
+        # Test it, plz.
+        return lambda *args, **kwargs: self.interpreter(
+            precompiled_submission.with_name(self.path.name),
             precompiled_submission.stem,
             *self.argument_lists[ArgList.testcase_compilation],
             **kwargs,
@@ -358,5 +366,5 @@ class PythonTestCase(TestCase):
         self.path.unlink()
         self.path = executable_path
 
-    def delete_source_file(self):
+    def delete_source_file(self, source_path):
         pass

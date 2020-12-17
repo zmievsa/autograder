@@ -1,13 +1,18 @@
-from .config_manager import GradingConfig, PATH_TO_DEFAULT_CONFIG
+# remove relative paths from all modules
+
+import multiprocessing
+
+
+from .config_manager import GradingConfig
 import os
 import shutil
 from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
-from typing import List, Optional
+from typing import Callable, Dict, List, Optional
 
 import sh  # type: ignore
 
-from .grading_output import BufferOutputLogger, GradingOutputLogger, format_output_for_student_file, get_submission_name
+from .grading_output import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from . import testcases
 from .util import (
     AutograderError,
@@ -19,12 +24,6 @@ READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
 
 
 class Grader:
-    current_dir: Path
-    temp_dir: Path
-    tests_dir: Path
-    testcases_dir: Path
-    results_dir: Path
-    path_to_output_summary: Path
     no_output: bool
     submissions: List[Path]
     tests: List[testcases.TestCase]
@@ -32,33 +31,23 @@ class Grader:
     # TODO: Check that the types are the ones sent from CLI and test.py
     raw_submissions: Optional[List[Path]]
 
-    def __init__(
-        self,
-        current_dir,
-        no_output=False,
-        submissions=None,
-    ):
-        self.current_dir = current_dir
-        self.temp_dir = current_dir / "temp"
-        self.tests_dir = current_dir / "tests"
-        self.testcases_dir = self.tests_dir / "testcases"
-        self.results_dir = current_dir / "results"
-        self.path_to_output_summary = current_dir / "grader_output.txt"
-        self.no_output = no_output
-        self.filters = None
-        self.raw_submissions = submissions
+    paths: "AutograderDirectories"
 
-        self.required_dirs = (self.testcases_dir,)
+    def __init__(self, current_dir, no_output=False, submissions=None):
+        self.no_output = no_output
+        self.raw_submissions = submissions
+        self.output_formatters = None
+        self.paths = AutograderDirectories(current_dir)
 
     def run(self):
         old_dir = Path.cwd()
         try:
-            self.filters = self._import_formatters(self.tests_dir / "output_formatters.py")
-            self.config = GradingConfig(self.tests_dir, self.testcases_dir)
+            self.output_formatters = self._import_formatters(self.paths.output_formatters)
+            self.config = GradingConfig(self.paths.testcases_dir, self.paths.config, self.paths.default_config)
             self.logger = GradingOutputLogger(
-                self.current_dir,
-                self.path_to_output_summary,
-                self.results_dir,
+                self.paths.current_dir,
+                self.paths.output_summary,
+                self.paths.results_dir,
                 self.config.assignment_name,
                 self.config.total_points_possible,
                 self.no_output,
@@ -66,49 +55,42 @@ class Grader:
             )
             self.submissions = self._gather_submissions(self.raw_submissions)
             self._prepare_directory_structure()
-            os.chdir(self.temp_dir)
+            os.chdir(self.paths.temp_dir)
 
-            total_class_points = sum(map(self._run_tests_on_submission, self.submissions))
-
+            with multiprocessing.Pool() as pool:
+                man = multiprocessing.Manager()
+                total_class_points = sum(pool.map(Runner(self, man.Lock()), self.submissions))
             class_average = total_class_points / len(self.submissions)
             self.logger(f"\nAverage score: {round(class_average)}/{self.config.total_points_possible}")
             self.logger.print_key()
         finally:
             self.cleanup()
-            os.chdir(str(old_dir))
+            # VERY IMPORTANT in case autograder is used as a module (imported)
+            os.chdir(old_dir)
         return class_average
 
-    def generate_config(self):
-        config = self.tests_dir / "config.ini"
-        if not config.exists():
-            shutil.copy(str(PATH_TO_DEFAULT_CONFIG), str(config))
-
     def cleanup(self):
-        # Not sure if we need this
-        # for path in self.temp_dir.iterdir():
-        #     os.chmod(path, READ_EXECUTE_WRITE_PERMISSION)
-        shutil.rmtree(self.temp_dir)
+        shutil.rmtree(self.paths.temp_dir)
 
     def _prepare_directory_structure(self):
         # Cleanup in case any error
-        if self.temp_dir.exists():
+        if self.paths.temp_dir.exists():
             self.cleanup()
-        self.temp_dir.mkdir()
-        self._copy_extra_files_to_temp(self.tests_dir / "extra")
+        self.paths.temp_dir.mkdir()
         self._check_required_directories_exist()
         self.tests = self._gather_testcases()
         if self.config.generate_results:
-            self.results_dir.mkdir(exist_ok=True)
+            self.paths.results_dir.mkdir(exist_ok=True)
 
-    def _copy_extra_files_to_temp(self, extra_file_dir: Path):
-        if extra_file_dir.exists():
-            for path in extra_file_dir.iterdir():
-                new_path = self.temp_dir / path.name
+    def _copy_extra_files(self, to_dir: Path):
+        if self.paths.extra_dir.exists():
+            for path in self.paths.extra_dir.iterdir():
+                new_path = to_dir / path.name
                 shutil.copy(str(path), str(new_path))
-                os.chmod(new_path, READ_EXECUTE_PERMISSION)
+                # os.chmod(new_path, READ_EXECUTE_PERMISSION)
 
     def _check_required_directories_exist(self):
-        for directory in self.required_dirs:
+        for directory in self.paths.required_dirs:
             if not directory.exists():
                 raise AutograderError(
                     f"{directory} directory not found. It is required for the grader to function.\n"
@@ -120,7 +102,7 @@ class Grader:
         tests = []
         default_weight = self.config.testcase_weights.get("ALL", 1)
         default_timeout = self.config.timeouts.get("ALL", 1)
-        for test in self.testcases_dir.iterdir():
+        for test in self.paths.testcases_dir.iterdir():
             weight = self.config.testcase_weights.get(test.name, default_weight)
             timeout = self.config.timeouts.get(test.name, default_timeout)
             testcase_type = self.config.testcase_types.get(test.suffix, None)
@@ -130,13 +112,14 @@ class Grader:
                 self.logger(f"No appropriate language for {test} found.")
                 continue
             arglist = self.config._generate_arglists(test)
-            shutil.copy(test, self.temp_dir)
+            shutil.copy(test, self.paths.temp_dir)
             tests.append(
                 testcase_type(
-                    self.temp_dir / test.name,
-                    self.tests_dir,
+                    self.paths.temp_dir / test.name,
+                    self.paths.input_dir,
+                    self.paths.output_dir,
                     timeout,
-                    self.filters,
+                    self.output_formatters,
                     arglist,
                     self.config.anti_cheat,
                     weight,
@@ -152,12 +135,14 @@ class Grader:
         """ Returns sorted list of paths to submissions """
         submissions_to_grade = set(submissions_to_grade)
         submissions: List[Path] = []
-        for submission in self.current_dir.iterdir():
+        for submission in self.paths.current_dir.iterdir():
             if submissions_to_grade and submission.name not in submissions_to_grade:
                 continue
             submission_name = submission.name
             if self.config.lower_source_filename:
                 submission_name = submission_name.lower()
+            # TODO: Average grade is calculated only based on submissions that were not skipped
+            # I.e. It's not average class grade. Maybe I should change it?
             if submission.suffix in self.config.testcase_types:
                 if self.config.auto_source_file_name_enabled:
                     submissions.append(submission)
@@ -167,36 +152,32 @@ class Grader:
                     self.logger(f"{submission} does not contain the required file name. Skipping it.")
 
         if not len(submissions):
-            raise AutograderError(f"No student submissions found in '{self.current_dir}'.")
+            raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
 
         # Allows consistent output
         submissions.sort()
         return submissions
 
-    def _import_formatters(self, path_to_output_formatters: Path):
+    def _import_formatters(self, path_to_output_formatters: Path) -> Optional[Dict[str, Callable]]:
         if path_to_output_formatters.exists():
             module = import_from_path("output_formatters", path_to_output_formatters)
             self.per_char_formatting_enabled = hasattr(module, "per_char_formatter")
             self.full_output_formatting_enabled = hasattr(module, "full_output_formatter")
             if not self.per_char_formatting_enabled and not self.full_output_formatting_enabled:
                 raise AutograderError("Formatter file does not contain the required functions.")
-            return module
+            return {k: v for k, v in module.__dict__.items() if callable(v)}
         else:
             self.per_char_formatting_enabled = False
             self.full_output_formatting_enabled = False
             return None
 
-    def _run_tests_on_submission(self, submission: Path):
-        with self.logger.single_submission_output_logger() as logger:
-            return self._get_testcase_output(submission, logger)
-
-    def _precompile_submission(self, submission, logger):
+    def _precompile_submission(self, submission, student_dir, logger):
         precompiled_submission = None
         try:
             # TODO: Move half of this into precompile_submission or something
             testcase_type = self.config.testcase_types[submission.suffix]
             source_file_path = Path(self.config.source_file_name).with_suffix(testcase_type.source_suffix)
-            precompiled_submission = testcase_type.precompile_submission(submission, self.current_dir, source_file_path)
+            precompiled_submission = testcase_type.precompile_submission(submission, student_dir, source_file_path)
         except sh.ErrorReturnCode_1 as e:  # type: ignore
             self.logger.print_precompilation_error_to_results_file(submission, e, logger)
             # TODO: We should remove it with the entire student directory
@@ -205,10 +186,10 @@ class Grader:
                 precompiled_submission = None
         return precompiled_submission
 
-    def _get_testcase_output(self, submission, logger: BufferOutputLogger) -> float:
+    def _get_testcase_output(self, submission: Path, student_dir: Path, logger: BufferOutputLogger) -> float:
         """ Returns grading info as a dict """
         logger(f"Grading {get_submission_name(submission)}")
-        precompiled_submission = self._precompile_submission(submission, logger)
+        precompiled_submission = self._precompile_submission(submission, student_dir, logger)
         if precompiled_submission is None:
             return 0
         total_testcase_score = 0
@@ -228,3 +209,80 @@ class Grader:
 
         precompiled_submission.unlink()
         return normalized_student_score
+
+
+class AutograderDirectories:
+    __slots__ = (
+        "current_dir",
+        "temp_dir",
+        "results_dir",
+        "output_summary",
+        "tests_dir",
+        "testcases_dir",
+        "extra_dir",
+        "input_dir",
+        "output_dir",
+        "output_formatters",
+        "default_output_formatters",
+        "config",
+        "default_config",
+        "required_dirs",
+    )
+    current_dir: Path
+    temp_dir: Path
+    results_dir: Path
+    output_summary: Path
+    tests_dir: Path
+
+    testcases_dir: Path
+    extra_dir: Path
+    input_dir: Path
+    output_dir: Path
+    output_formatters: Path
+    default_output_formatters: Path
+    config: Path
+    default_config: Path
+
+    required_dirs: tuple
+
+    def __init__(self, current_dir):
+        self.current_dir = current_dir
+        self.temp_dir = current_dir / "temp"
+        self.results_dir = current_dir / "results"
+        self.output_summary = current_dir / "grader_output.txt"
+        self.tests_dir = current_dir / "tests"
+
+        self.testcases_dir = self.tests_dir / "testcases"
+        self.extra_dir = self.tests_dir / "extra"
+        self.input_dir = self.tests_dir / "input"
+        self.output_dir = self.tests_dir / "output"
+
+        self.output_formatters = self.tests_dir / "output_formatters.py"
+        self.config = self.tests_dir / "config.ini"
+
+        autograder_dir = Path(__file__).parent
+        self.default_output_formatters = autograder_dir / "default_formatters.py"
+        self.default_config = autograder_dir / "default_config.ini"
+
+        self.required_dirs = (self.testcases_dir,)
+
+    def generate_config(self):
+        if not self.config.exists():
+            if self.default_config.exists():
+                shutil.copy(self.default_config, self.config)
+            else:
+                raise AutograderError(f"Failed to generate config:'{self.default_config}' not found.")
+
+
+class Runner:
+    def __init__(self, grader, lock):
+        self.grader: Grader = grader
+        self.lock = lock
+
+    def __call__(self, submission):
+        student_dir = self.grader.paths.temp_dir / submission.name
+        student_dir.mkdir()
+        os.chdir(student_dir)
+        self.grader._copy_extra_files(student_dir)
+        with self.grader.logger.single_submission_output_logger(self.lock) as logger:
+            return self.grader._get_testcase_output(submission, student_dir, logger)
