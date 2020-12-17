@@ -1,14 +1,14 @@
+Grading HonestStudent.py
+Running 'Test addition'
+100/100
+Result: 100/100
+
 Grading CheatingStudent.py
 Running 'Test addition'
 None of the helper functions have been called.
 Instead, exit() has been called with exit_code 103.
 It could indicate student cheating or testcases being written incorrectly.
 Result: 0/100
-
-Grading HonestStudent.py
-Running 'Test addition'
-100/100
-Result: 100/100
 
 
 Average score: 50/100

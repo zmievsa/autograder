@@ -7,6 +7,9 @@ import importlib.util
 import sys
 
 
+GRADER_DIR = Path(__file__).resolve().parent
+
+
 class ArgList(Enum):
     submission_precompilation = 0
     submission_compilation = 1
@@ -42,8 +45,8 @@ def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):
     return formatted_error.strip().replace(str(current_dir), "...")
 
 
-def print_results(current_dir, min_score: int, *args, **kwargs):
-    with open(current_dir / "grader_output.txt") as f:
+def print_results(paths, min_score: int, *args, **kwargs):
+    with open(paths.output_summary) as f:
         contents = f.read()
     student_outputs = contents.split("\n\n")
     for output in student_outputs:

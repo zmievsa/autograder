@@ -1,12 +1,12 @@
+from typing import Dict, Type
 from .util import ArgList, AutograderError
-from .testcases import get_allowed_languages
+from .testcases import TestCase, get_allowed_languages
 import configparser
 from pathlib import Path
 
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
 ALLOWED_LANGUAGES = get_allowed_languages()
-PATH_TO_DEFAULT_CONFIG: Path = Path(__file__).parent / "default_config.ini"
 ARGUMENT_LIST_NAMES = {
     ArgList.submission_precompilation: "SUBMISSION_PRECOMPILATION_ARGS",
     ArgList.submission_compilation: "SUBMISSION_COMPILATION_ARGS",
@@ -16,13 +16,12 @@ ARGUMENT_LIST_NAMES = {
 
 
 class GradingConfig:
-    def __init__(self, tests_dir, testcases_dir):
-        self.tests_dir = tests_dir
+    def __init__(self, testcases_dir: Path, config: Path, default_config: Path):
         self.testcases_dir = testcases_dir
-        self._configure_grading()
+        self._configure_grading(config, default_config)
 
-    def _configure_grading(self):
-        cfg = self._read_config()
+    def _configure_grading(self, config_path: Path, default_config_path: Path):
+        cfg = self._read_config(config_path, default_config_path)
 
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
@@ -56,11 +55,11 @@ class GradingConfig:
         # TODO: Name me better. The name is seriously bad
         self.cli_argument_lists = parse_arglists(cfg)
 
-    def _read_config(self) -> configparser.SectionProxy:
+    @staticmethod
+    def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
-        default_parser.read(str(PATH_TO_DEFAULT_CONFIG))
+        default_parser.read(path_to_default_config)
 
-        path_to_user_config = self.tests_dir / "config.ini"
         user_parser = configparser.ConfigParser()
         user_parser.read_dict(default_parser)
         user_parser.read(path_to_user_config)
@@ -78,7 +77,7 @@ class GradingConfig:
                 arglist[arglist_index] = tuple()
         return arglist
 
-    def _figure_out_testcase_types(self) -> dict:
+    def _figure_out_testcase_types(self) -> Dict[str, Type[TestCase]]:
         testcase_types = {}
         for testcase in self.testcases_dir.iterdir():
             testcase_type = get_testcase_type_by_suffix(testcase.suffix)
