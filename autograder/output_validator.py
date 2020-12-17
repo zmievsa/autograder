@@ -1,10 +1,9 @@
 # Seems like too much work for only 2 simple functions, no?
 
 
-from typing import Tuple
 import random
 import string
-
+from typing import Tuple
 
 VALIDATING_STRING_LENGTH = 30
 # DO NOT ATTEMPT TO ADD string.punctuation: it might break strings in some languages because it contains "" and ''

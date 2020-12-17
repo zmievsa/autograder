@@ -1,23 +1,19 @@
 # remove relative paths from all modules
 
 import multiprocessing
-
-
-from .config_manager import GradingConfig
 import os
 import shutil
+from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
 from typing import Callable, Dict, List, Optional
 
 import sh  # type: ignore
 
-from .grading_output import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from . import testcases
-from .util import (
-    AutograderError,
-    import_from_path,
-)
+from .config_manager import GradingConfig
+from .grading_output import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
 READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
@@ -31,16 +27,15 @@ class Grader:
     # TODO: Check that the types are the ones sent from CLI and test.py
     raw_submissions: Optional[List[Path]]
 
-    paths: "AutograderDirectories"
+    paths: "AutograderPaths"
 
     def __init__(self, current_dir, no_output=False, submissions=None):
         self.no_output = no_output
         self.raw_submissions = submissions
         self.output_formatters = None
-        self.paths = AutograderDirectories(current_dir)
+        self.paths = AutograderPaths(current_dir)
 
     def run(self):
-        old_dir = Path.cwd()
         try:
             self.output_formatters = self._import_formatters(self.paths.output_formatters)
             self.config = GradingConfig(self.paths.testcases_dir, self.paths.config, self.paths.default_config)
@@ -55,7 +50,7 @@ class Grader:
             )
             self.submissions = self._gather_submissions(self.raw_submissions)
             self._prepare_directory_structure()
-            os.chdir(self.paths.temp_dir)
+            self.tests = self._gather_testcases()  # also copies testcases to temp dir
 
             with multiprocessing.Pool() as pool:
                 man = multiprocessing.Manager()
@@ -65,17 +60,18 @@ class Grader:
             self.logger.print_key()
         finally:
             self.cleanup()
-            # VERY IMPORTANT in case autograder is used as a module (imported)
-            os.chdir(old_dir)
         return class_average
 
     def run_on_single_submission(self, submission, lock):
         student_dir = self.paths.temp_dir / submission.name
         student_dir.mkdir()
-        os.chdir(student_dir)
-        self._copy_extra_files(student_dir)
-        with self.logger.single_submission_output_logger(lock) as logger:
-            return self._get_testcase_output(submission, student_dir, logger)
+        with temporarily_change_dir(student_dir):
+            self._copy_extra_files(student_dir)
+            with self.logger.single_submission_output_logger(lock) as logger:
+                result = self._get_testcase_output(submission, student_dir, logger)
+        # Cleanup after running tests on student submission
+        shutil.rmtree(student_dir)
+        return result
 
     def cleanup(self):
         shutil.rmtree(self.paths.temp_dir)
@@ -86,7 +82,6 @@ class Grader:
             self.cleanup()
         self.paths.temp_dir.mkdir()
         self._check_required_directories_exist()
-        self.tests = self._gather_testcases()
         if self.config.generate_results:
             self.paths.results_dir.mkdir(exist_ok=True)
 
@@ -214,12 +209,10 @@ class Grader:
         self.logger.print_testcase_results_to_results_file(
             submission, testcase_results, normalized_student_score, logger
         )
-
-        precompiled_submission.unlink()
         return normalized_student_score
 
 
-class AutograderDirectories:
+class AutograderPaths:
     __slots__ = (
         "current_dir",
         "temp_dir",
@@ -290,3 +283,15 @@ class Runner:
 
     def __call__(self, submission):
         return self.grader.run_on_single_submission(submission, self.lock)
+
+
+@contextmanager
+def temporarily_change_dir(new_dir):
+    old_dir = Path.cwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    except Exception as e:
+        raise e
+    finally:
+        os.chdir(old_dir)

@@ -1,9 +1,9 @@
-from typing import Dict, Type
-from .util import ArgList, AutograderError
-from .testcases import TestCase, get_allowed_languages
 import configparser
 from pathlib import Path
+from typing import Dict, Type
 
+from .testcases import TestCase, get_allowed_languages
+from .util import ArgList, AutograderError
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
 ALLOWED_LANGUAGES = get_allowed_languages()
