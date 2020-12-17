@@ -1,16 +1,15 @@
+import py_compile
 import shutil
 from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
-import py_compile
-from time import sleep
 from typing import Callable
 
 import sh  # type: ignore
 
-from .util import get_stderr, format_template, ArgList, AutograderError, GRADER_DIR
-from .exit_codes import ExitCodeEventType, ExitCodeHandler, USED_EXIT_CODES
+from .exit_codes import USED_EXIT_CODES, ExitCodeEventType, ExitCodeHandler
 from .output_validator import generate_validating_string, validate_output
+from .util import GRADER_DIR, ArgList, AutograderError, format_template, get_stderr
 
 
 def get_allowed_languages():
@@ -22,6 +21,7 @@ def get_allowed_languages():
     }
 
 
+# TODO: Rename-rewrite some methods in this class to make it easier to subclass
 class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
@@ -84,8 +84,7 @@ class TestCase(ABC):
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
         result, message = self._weightless_run(precompiled_submission)
-        if self.anti_cheat_enabled:
-            self.delete_executable_files(precompiled_submission)
+        self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
 
     def _weightless_run(self, precompiled_submission: Path):
@@ -101,8 +100,7 @@ class TestCase(ABC):
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(self.path.parent, e, "Failed to compile")
-        if self.anti_cheat_enabled:
-            self.delete_source_file(testcase_path)
+        self.delete_source_file(testcase_path)
         with StringIO() as runtime_output:
             try:
                 # Useful during testing
@@ -164,6 +162,8 @@ class TestCase(ABC):
         """Copies student submission into currect_dir and either precompiles
         it and returns the path to the precompiled submission or to the
         copied submission if no precompilation is necesessary
+
+        pwd = temp/student_dir
         """
         destination = student_dir / source_file_name
         shutil.copy(str(submission), str(destination))
@@ -173,6 +173,8 @@ class TestCase(ABC):
         """Replaces the original testcase file with its compiled version,
         thus making reading its contents as plaintext harder.
         Useful in preventing cheating.
+
+        pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
         """
         pass
 
@@ -181,11 +183,16 @@ class TestCase(ABC):
         """Either precompiles student submission and returns the path to
         the precompiled submission or to original submission if no
         precompilation is necesessary
+
+        pwd = temp/student_dir
         """
         pass
 
     def prepend_test_helper(self):
-        """ Prepends all of the associated test_helper code to test code """
+        """Prepends all of the associated test_helper code to test code
+
+        pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
+        """
         with self.path.open() as f:
             content = f.read()
             final_content = self.get_formatted_test_helper() + "\n" + content
@@ -201,8 +208,7 @@ class TestCase(ABC):
         pass
 
     def delete_source_file(self, source_path):
-        if self.anti_cheat_enabled:
-            source_path.unlink()
+        source_path.unlink()
 
     def cleanup(self):
         self.input.close()

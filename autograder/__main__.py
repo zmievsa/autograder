@@ -1,11 +1,11 @@
-import sys
 import argparse
+import sys
 from pathlib import Path
 
-from autograder.grader import Grader  # That's some awful naming
-from autograder.util import print_results, AutograderError
 from autograder import guide
 from autograder.__version__ import __version__
+from autograder.grader import Grader  # That's some awful naming
+from autograder.util import AutograderError, print_results
 
 
 def main(argv=None):

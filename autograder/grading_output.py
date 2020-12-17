@@ -1,15 +1,15 @@
 # Controls output to stdout and to output file
 
 
-from .util import get_stderr
-from contextlib import contextmanager
 import logging
-import sys
-from pathlib import Path
 import re
+import sys
 from collections import deque
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Deque
 
+from .util import get_stderr
 
 KEY = """
 \nKey:
@@ -47,13 +47,12 @@ class GradingOutputLogger:
         self.logger.setLevel(logging.INFO)
         if not no_output:
             self.logger.addHandler(logging.StreamHandler(sys.stdout))
-            file_handler = logging.FileHandler(path_to_output_summary, mode="w")
             if path_to_output_summary.exists():
                 # TODO: Input should be optional because we might ask this question in GUI.
                 #   Or not? Maybe we just check it to exist separately in GUI?
                 ans = input("Output summary file already exists. Would you like to overwrite it? (Yes/No) ")
                 if ans.lower().startswith("y"):
-                    self.logger.addHandler(file_handler)
+                    self.logger.addHandler(logging.FileHandler(path_to_output_summary, mode="w"))
                 else:
                     print(
                         "If you don't want to remove the summary, simply use the --no_output command line option "
@@ -61,7 +60,7 @@ class GradingOutputLogger:
                     )
                     exit(0)
             else:
-                self.logger.addHandler(file_handler)
+                self.logger.addHandler(logging.FileHandler(path_to_output_summary, mode="w"))
         if not generate_results:
             self._silence_generating_results()
 

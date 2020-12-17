@@ -1,11 +1,11 @@
-from pathlib import Path
-import re
-from typing import Any, Dict
-import sh  # type: ignore
-from enum import Enum
 import importlib.util
+import re
 import sys
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict
 
+import sh  # type: ignore
 
 GRADER_DIR = Path(__file__).resolve().parent
 

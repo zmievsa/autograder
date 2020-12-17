@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Dict, Optional
 
-
 SYSTEM_RESERVED_EXIT_CODES = [
     1,
     2,

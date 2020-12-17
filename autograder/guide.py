@@ -1,9 +1,10 @@
-from autograder.config_manager import ALLOWED_LANGUAGES
-from .grader import AutograderDirectories
-from .testcases import get_allowed_languages
-from pathlib import Path
 import shutil
+from pathlib import Path
 
+from autograder.config_manager import ALLOWED_LANGUAGES
+
+from .grader import AutograderPaths
+from .testcases import get_allowed_languages
 
 ALLOWED_LANGUAGES = get_allowed_languages()
 
@@ -16,7 +17,7 @@ def create_dir(path: Path):
         print(f"Found {path.name} directory")
 
 
-def main(paths: AutograderDirectories):
+def main(paths: AutograderPaths):
     if not paths.current_dir.exists() or not paths.current_dir.is_dir():
         print(f"Directory {paths.current_dir} not found. Please, use an existing directory.")
         exit(0)
