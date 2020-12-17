@@ -8,7 +8,7 @@ from typing import Callable
 import sh  # type: ignore
 
 from .exit_codes import USED_EXIT_CODES, ExitCodeEventType, ExitCodeHandler
-from .output_validator import generate_validating_string, validate_output
+from .testcase_result_validator import generate_validating_string, validate_output
 from .util import GRADER_DIR, ArgList, AutograderError, format_template, get_stderr
 
 
