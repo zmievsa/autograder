@@ -69,6 +69,14 @@ class Grader:
             os.chdir(old_dir)
         return class_average
 
+    def run_on_single_submission(self, submission, lock):
+        student_dir = self.paths.temp_dir / submission.name
+        student_dir.mkdir()
+        os.chdir(student_dir)
+        self._copy_extra_files(student_dir)
+        with self.logger.single_submission_output_logger(lock) as logger:
+            return self._get_testcase_output(submission, student_dir, logger)
+
     def cleanup(self):
         shutil.rmtree(self.paths.temp_dir)
 
@@ -274,15 +282,11 @@ class AutograderDirectories:
                 raise AutograderError(f"Failed to generate config:'{self.default_config}' not found.")
 
 
+# Grades single submissions. We use it because multiprocessing.pool only accepts top-level callable objects.
 class Runner:
     def __init__(self, grader, lock):
         self.grader: Grader = grader
         self.lock = lock
 
     def __call__(self, submission):
-        student_dir = self.grader.paths.temp_dir / submission.name
-        student_dir.mkdir()
-        os.chdir(student_dir)
-        self.grader._copy_extra_files(student_dir)
-        with self.grader.logger.single_submission_output_logger(self.lock) as logger:
-            return self.grader._get_testcase_output(submission, student_dir, logger)
+        return self.grader.run_on_single_submission(submission, self.lock)
