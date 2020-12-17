@@ -12,7 +12,7 @@ import sh  # type: ignore
 
 from . import testcases
 from .config_manager import GradingConfig
-from .grading_output import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
