@@ -33,41 +33,36 @@ def main(argv=None):
     )
     parser.add_argument("--no_output", action="store_true", help="Do not output any code to the console")
     parser.add_argument(
-        "--generate_config", action="store_true", help="Generate a default config file in the <submission_path>"
-    )
-    parser.add_argument(
         "-s",
         "--submissions",
         action="store",
         nargs="*",
-        metavar="<submission_name>",
+        metavar="<name>",
         default=[],
         help="Only grade submissions with specified file names (without full path)",
     )
     parser.add_argument("-g", "--guide", action="store_true", help="Guide you through setting up a grading environment")
     args = parser.parse_args(argv)
+    # TODO: What if user does '-s sub1 sub2 sub3'?
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.version:
         print(__version__)
         exit(0)
-    if args.print is None:
-        try:
-            grader = Grader(
-                current_dir,
-                no_output=args.no_output,
-                submissions=args.submissions,
-            )
-            if args.generate_config:
-                grader.generate_config()
-            elif args.guide:
-                guide.main(current_dir, grader)
-            else:
-                return grader.run()
-        except AutograderError as e:
-            print(e)
-    else:
-        print_results(current_dir, args.print)
-        return -1
+    try:
+        grader = Grader(
+            current_dir,
+            no_output=args.no_output,
+            submissions=args.submissions,
+        )
+        if args.print:
+            print_results(grader.paths, args.print)
+            return -1
+        elif args.guide:
+            guide.main(grader.paths)
+        else:
+            return grader.run()
+    except AutograderError as e:
+        print(e)
 
 
 if __name__ == "__main__":
