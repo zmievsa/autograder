@@ -84,6 +84,7 @@ class TestCase(ABC):
     def run(self, precompiled_submission: Path):
         """ Returns student score and message to be displayed """
         result, message = self._weightless_run(precompiled_submission)
+
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
 
@@ -96,11 +97,14 @@ class TestCase(ABC):
                 f.write(self.source_contents)
         else:
             shutil.copy(self.path, testcase_path)
+
         try:
             test_executable = self.compile_testcase(precompiled_submission)
+
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(self.path.parent, e, "Failed to compile")
         self.delete_source_file(testcase_path)
+
         with StringIO() as runtime_output:
             try:
                 # Useful during testing
@@ -109,6 +113,7 @@ class TestCase(ABC):
                 result = test_executable(
                     _in=self.input, _out=runtime_output, _timeout=self.timeout, _ok_code=USED_EXIT_CODES
                 )
+
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
@@ -145,7 +150,7 @@ class TestCase(ABC):
             else:
                 raise ValueError(f"Unknown system code {event.type} has not been handled.")
 
-    def make_executable_path(self, submission: Path):
+    def make_executable_path(self, submission: Path) -> Path:
         """ By combining test name and student name, it makes a unique path """
         return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
@@ -272,8 +277,8 @@ class CPPTestCase(CTestCase):
 class JavaTestCase(TestCase):
     """Please, ask students to remove their main as it can theoretically
     generate errors (not sure how though).
-    Java doesn't support precompilation yet. Read precompile_testcase()
-    for more info.
+    Java doesn't support testcase precompilation because it must always
+    link files on compilation.
     """
 
     source_suffix = ".java"
@@ -285,20 +290,26 @@ class JavaTestCase(TestCase):
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str):
-        """ Renames submission to allow javac compilation """
         copied_submission = super().precompile_submission(submission, student_dir, submission.name)
-        precompiled_submission = copied_submission.parent / source_file_name
-        copied_submission.rename(precompiled_submission)
-        return precompiled_submission
+        renamed_submission = copied_submission.parent / source_file_name
+        copied_submission.rename(renamed_submission)
+        # TODO: What about submission precompilation args? We can't pass them if it's a classmethod
+        try:
+            cls.compiler(renamed_submission)
+        finally:
+            renamed_submission.unlink()
+
+        # What if there are multiple .class files after compilation? What do we do, then?
+        return renamed_submission
 
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
         new_self_path = precompiled_submission.with_name(self.path.name)
-        self.compiler(precompiled_submission, new_self_path, *self.argument_lists[ArgList.testcase_compilation])
+        self.compiler(new_self_path, *self.argument_lists[ArgList.testcase_compilation])
         return lambda *args, **kwargs: self.virtual_machine(self.path.stem, *args, **kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():
-            if p.suffix == ".class":
+            if p.suffix == ".class" and self.path.stem in p.stem:
                 p.unlink()
 
     def prepend_test_helper(self):
@@ -316,7 +327,10 @@ class JavaTestCase(TestCase):
         # TODO: Figure out a better way to do this.
         # This way is rather crude and can be prone to errors,
         # but java does not really leave us any other way to do it.
+
+        # Wait, what if there's a public method in private class? We should find the 'public .+ class' regex
         main_class_index = java_file.find("public")
+
         file_starting_from_main_class = java_file[main_class_index:]
         closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
         return "".join(
@@ -351,11 +365,24 @@ class PythonTestCase(TestCase):
     path_to_helper_module = GRADER_DIR / "test_helpers/test_helper.py"
     interpreter = sh.python3  # type: ignore
 
+    @classmethod
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name) -> Path:
+        copied_submission = super().precompile_submission(submission, student_dir, source_file_name)
+        # kwargs = {}
+        # if "-O" in self.argument_lists[ArgList.testcase_precompilation]:
+        #     kwargs["optimize"] = 1
+        # if "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
+        #     kwargs["optimize"] = 2
+        executable_path = copied_submission.with_suffix(cls.executable_suffix)
+        py_compile.compile(file=str(copied_submission), cfile=str(executable_path))
+        copied_submission.unlink()
+        return executable_path
+
     def compile_testcase(self, precompiled_submission: Path) -> Callable:
         # Argument lists do not seem to work here
         # Test it, plz.
         return lambda *args, **kwargs: self.interpreter(
-            precompiled_submission.with_name(self.path.name),
+            self.make_executable_path(precompiled_submission),
             precompiled_submission.stem,
             *self.argument_lists[ArgList.testcase_compilation],
             **kwargs,
@@ -374,3 +401,9 @@ class PythonTestCase(TestCase):
 
     def delete_source_file(self, source_path):
         pass
+
+    def delete_executable_files(self, precompiled_submission):
+        self.make_executable_path(precompiled_submission).unlink()
+
+    def make_executable_path(self, submission: Path) -> Path:
+        return submission.with_name(self.path.name)
