@@ -1,18 +1,11 @@
 import configparser
 from pathlib import Path
-from typing import Dict, Type
+from typing import Any, Callable, Dict, List, Type, TypeVar
 
-from .testcases import TestCase, get_allowed_languages
-from .util import ArgList, AutograderError
+from .testcases import TestCase, ALLOWED_LANGUAGES, ArgList
+from .util import AutograderError
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
-ALLOWED_LANGUAGES = get_allowed_languages()
-ARGUMENT_LIST_NAMES = {
-    ArgList.submission_precompilation: "SUBMISSION_PRECOMPILATION_ARGS",
-    ArgList.submission_compilation: "SUBMISSION_COMPILATION_ARGS",
-    ArgList.testcase_precompilation: "TESTCASE_PRECOMPILATION_ARGS",
-    ArgList.testcase_compilation: "TESTCASE_COMPILATION_ARGS",
-}
 
 
 class GradingConfig:
@@ -90,7 +83,10 @@ class GradingConfig:
             raise AutograderError(f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}")
 
 
-def parse_config_list(config_line: str, value_type):
+T = TypeVar("T")
+
+
+def parse_config_list(config_line: str, value_type: Callable[[Any], T]) -> Dict[str, T]:
     """Reads in a config line in the format: 'file_name:value, file_name:value, ALL:value '
     ALL sets the default value for all other entries
     """
@@ -102,12 +98,13 @@ def parse_config_list(config_line: str, value_type):
     return config_entries
 
 
-def parse_arglists(cfg):
-    argument_lists = {n: {} for n in ARGUMENT_LIST_NAMES}
-    for arg_list_index, arg_list_name in ARGUMENT_LIST_NAMES.items():
-        arg_list = parse_config_list(cfg[arg_list_name], str)
+def parse_arglists(cfg: configparser.SectionProxy) -> Dict[ArgList, Dict[str, List[str]]]:
+    argument_lists = {n: {} for n in ArgList}
+    convert_to_arglist = lambda s: str(s).replace("  ", " ").strip().split()
+    for arg_list_enum in ArgList:
+        arg_list = parse_config_list(cfg[arg_list_enum.value], convert_to_arglist)
         for testcase_name, args in arg_list.items():
-            argument_lists[arg_list_index][testcase_name] = args.strip().split(" ")
+            argument_lists[arg_list_enum][testcase_name] = args
     return argument_lists
 
 
