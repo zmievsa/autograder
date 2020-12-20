@@ -1,0 +1,223 @@
+# TODO: Rename-rewrite some methods in this class to make it easier to subclass
+from abc import ABC, abstractmethod
+import enum
+from typing import Callable
+
+# TODO: I hate these imports. We should only use relative imports because these imports indicate architectural problems.
+from autograder.util import format_template, get_stderr
+from pathlib import Path
+from io import StringIO
+import shutil
+import sh
+
+from .util.testcase_result_validator import generate_validating_string, validate_output
+from .util.exit_codes import ExitCodeEventType, ExitCodeHandler, USED_EXIT_CODES
+
+
+TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
+
+
+class ArgList(enum.Enum):
+    SUBMISSION_PRECOMPILATION = "SUBMISSION_PRECOMPILATION_ARGS"
+    TESTCASE_PRECOMPILATION = "TESTCASE_PRECOMPILATION_ARGS"
+    TESTCASE_COMPILATION = "TESTCASE_COMPILATION_ARGS"
+
+
+class TestCase(ABC):
+    source_suffix = ".source_suffix"  # dummy value
+    executable_suffix = ".executable_suffix"  # dummy value
+    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+    weight: float
+    per_char_formatting_enabled: bool
+    full_output_formatting_enabled: bool
+
+    @property
+    @abstractmethod
+    def helper_module_name(self) -> str:
+        pass
+
+    def __init__(
+        self,
+        path: Path,
+        input_dir: Path,
+        output_dir: Path,
+        timeout: float,
+        formatters,
+        argument_lists: dict,
+        anti_cheat_enabled: bool,
+        weight,
+        per_char_formatting_enabled,
+        full_output_formatting_enabled,
+    ):
+        self.path = path
+        self.timeout = timeout
+        self.formatters = formatters
+        self.argument_lists = argument_lists
+        self.anti_cheat_enabled = anti_cheat_enabled
+        self.weight = weight
+        self.max_score = int(weight * 100)
+        output_file = output_dir / f"{path.stem}.txt"
+        self.per_char_formatting_enabled = per_char_formatting_enabled
+        self.full_output_formatting_enabled = full_output_formatting_enabled
+
+        # Only really works if test name is in snake_case
+        self.name = path.stem.replace("_", " ").capitalize()
+
+        if output_file.exists():
+            with output_file.open() as f:
+                self.expected_output = self._format_output(f.read())
+        else:
+            self.expected_output = StringIO("")
+        input_file = input_dir / f"{path.stem}.txt"
+        if input_file.exists():
+            with input_file.open() as f:
+                self.input = StringIO(f.read().strip())
+        else:
+            self.input = StringIO("")
+
+        self.validating_string = generate_validating_string()
+
+        self.prepend_test_helper()
+        if anti_cheat_enabled:
+            self.precompile_testcase()
+
+        # This is done to hide the contents of testcases and exit codes to the student
+        if anti_cheat_enabled:
+            with self.path.open("rb") as f:
+                self.source_contents = f.read()
+            self.path.unlink()
+
+    def get_path_to_helper_module(self):
+        return TEST_HELPERS_DIR / self.helper_module_name
+
+    def run(self, precompiled_submission: Path):
+        """ Returns student score and message to be displayed """
+        result, message = self._weightless_run(precompiled_submission)
+
+        self.delete_executable_files(precompiled_submission)
+        return result * self.weight, message
+
+    def make_executable_path(self, submission: Path) -> Path:
+        """ By combining test name and student name, it makes a unique path """
+        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
+
+    @classmethod
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str) -> Path:
+        """Copies student submission into student_dir and either precompiles
+        it and returns the path to the precompiled submission or to the
+        copied submission if no precompilation is necesessary
+
+        pwd = temp/student_dir
+        """
+        destination = student_dir / source_file_name
+        shutil.copy(str(submission), str(destination))
+        return destination
+
+    def precompile_testcase(self):
+        """Replaces the original testcase file with its compiled version,
+        thus making reading its contents as plaintext harder.
+        Useful in preventing cheating.
+
+        pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
+        """
+        pass
+
+    @abstractmethod
+    def compile_testcase(self, precompiled_submission: Path) -> Callable:
+        """Compiles student submission and testcase into a single executable
+        (or simply returns the command to run the testcase if no further compilation is necessary)
+
+        pwd = temp/student_dir
+        """
+        pass
+
+    def prepend_test_helper(self):
+        """Prepends all of the associated test_helper code to test code
+
+        pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
+        """
+        with self.path.open() as f:
+            content = f.read()
+            final_content = self.get_formatted_test_helper() + "\n" + content
+        with self.path.open("w") as f:
+            f.write(final_content)
+
+    def get_formatted_test_helper(self) -> str:
+        with self.get_path_to_helper_module().open() as helper_file:
+            kwargs = {"VALIDATING_STRING": self.validating_string, **self.exit_code_handler.get_formatted_exit_codes()}
+            return format_template(helper_file.read(), **kwargs)
+
+    def delete_executable_files(self, precompiled_submission: Path):
+        pass
+
+    def delete_source_file(self, source_path: Path):
+        source_path.unlink()
+
+    def _weightless_run(self, precompiled_submission: Path):
+        """ Returns student score (without applying testcase weight) and message to be displayed """
+        self.input.seek(0)
+        testcase_path = precompiled_submission.with_name(self.path.name)
+        if self.anti_cheat_enabled:
+            with testcase_path.open("wb") as f:
+                f.write(self.source_contents)
+        else:
+            shutil.copy(self.path, testcase_path)
+
+        try:
+            test_executable = self.compile_testcase(precompiled_submission)
+
+        except sh.ErrorReturnCode as e:
+            return 0, get_stderr(self.path.parent, e, "Failed to compile")
+        self.delete_source_file(testcase_path)
+
+        with StringIO() as runtime_output:
+            try:
+                # Useful during testing
+                # input("Waiting...")
+                # sleep(15)
+                result = test_executable(
+                    _in=self.input, _out=runtime_output, _timeout=self.timeout, _ok_code=USED_EXIT_CODES
+                )
+
+            except sh.TimeoutException:
+                return 0, "Exceeded Time Limit"
+            except sh.ErrorReturnCode as e:
+                # http://man7.org/linux/man-pages/man7/signal.7.html
+                exit_code = e.exit_code  # type: ignore
+                return 0, f"Crashed due to signal {exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
+            # print(">>> Testcase output: " + runtime_output.getvalue())
+            output, output_is_valid = validate_output(runtime_output.getvalue(), self.validating_string)
+            event = self.exit_code_handler.scan(result.exit_code)
+            if not output_is_valid:
+                # This  means that either the student used built-in exit function himself
+                # or some testcase helper is broken, or a testcase exits itself without
+                # the use of helper functions.
+                return (
+                    0,
+                    "None of the helper functions have been called.\n"
+                    f"Instead, exit() has been called with exit_code {result.exit_code}.\n"
+                    "It could indicate student cheating or testcases being written incorrectly.",
+                )
+            elif event.type == ExitCodeEventType.CHECK_OUTPUT:
+                if self._format_output(output) == self.expected_output:
+                    return 100, f"{int(100 * self.weight)}/{self.max_score}"
+                else:
+                    return 0, f"0/{self.max_score} (Wrong answer)"
+            elif event.type == ExitCodeEventType.RESULT:
+                score = event.value
+                message = f"{int(score * self.weight)}/{self.max_score}"
+                if score == 0:
+                    message += " (Wrong answer)"
+                return score, message
+            elif event.type == ExitCodeEventType.SYSTEM_ERROR:
+                # We should already handle this case in try, except block. Maybe we need more info in the error?
+                raise NotImplementedError("System error has not been handled.")
+            else:
+                raise ValueError(f"Unknown system code {event.type} has not been handled.")
+
+    def _format_output(self, output: str) -> str:
+        if self.full_output_formatting_enabled:
+            output = self.formatters["full_output_formatter"](output)
+        if self.per_char_formatting_enabled:
+            output = "".join(self.formatters["per_char_formatter"](c) for c in output)
+        return output

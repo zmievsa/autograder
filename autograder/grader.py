@@ -1,5 +1,4 @@
 # remove relative paths from all modules
-
 import multiprocessing
 import os
 import shutil
@@ -68,6 +67,7 @@ class Grader:
         with temporarily_change_dir(student_dir):
             self._copy_extra_files(student_dir)
             with self.logger.single_submission_output_logger(lock) as logger:
+
                 result = self._get_testcase_output(submission, student_dir, logger)
         # Cleanup after running tests on student submission
         shutil.rmtree(student_dir)
@@ -126,8 +126,8 @@ class Grader:
                     arglist,
                     self.config.anti_cheat,
                     weight,
-                    not self.per_char_formatting_enabled,
-                    not self.full_output_formatting_enabled,
+                    self.per_char_formatting_enabled,
+                    self.full_output_formatting_enabled,
                 )
             )
         # Allows consistent output
@@ -180,7 +180,7 @@ class Grader:
             # TODO: Move half of this into precompile_submission or something
             testcase_type = self.config.testcase_types[submission.suffix]
             source_file_path = Path(self.config.source_file_name).with_suffix(testcase_type.source_suffix)
-            precompiled_submission = testcase_type.precompile_submission(submission, student_dir, source_file_path)
+            precompiled_submission = testcase_type.precompile_submission(submission, student_dir, source_file_path.name)
         except sh.ErrorReturnCode_1 as e:  # type: ignore
             self.logger.print_precompilation_error_to_results_file(submission, e, logger)
             # TODO: We should remove it with the entire student directory
@@ -193,6 +193,7 @@ class Grader:
         """ Returns grading info as a dict """
         logger(f"Grading {get_submission_name(submission)}")
         precompiled_submission = self._precompile_submission(submission, student_dir, logger)
+
         if precompiled_submission is None:
             return 0
         total_testcase_score = 0
@@ -201,6 +202,7 @@ class Grader:
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
+
             logger(message)
             testcase_results.append((test.name, message))
             total_testcase_score += testcase_score

@@ -7,15 +7,6 @@ from typing import Any, Dict
 
 import sh  # type: ignore
 
-GRADER_DIR = Path(__file__).resolve().parent
-
-
-class ArgList(Enum):
-    submission_precompilation = 0
-    submission_compilation = 1
-    testcase_precompilation = 2
-    testcase_compilation = 3
-
 
 class AutograderError(Exception):
     pass

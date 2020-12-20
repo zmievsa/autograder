@@ -4,9 +4,7 @@ from pathlib import Path
 from autograder.config_manager import ALLOWED_LANGUAGES
 
 from .grader import AutograderPaths
-from .testcases import get_allowed_languages
-
-ALLOWED_LANGUAGES = get_allowed_languages()
+from .testcases import ALLOWED_LANGUAGES
 
 
 def create_dir(path: Path):
