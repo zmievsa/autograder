@@ -1,20 +1,27 @@
-# TODO: Rename-rewrite some methods in this class to make it easier to subclass
-from abc import ABC, abstractmethod
 import enum
-from typing import Callable
+import shutil
+from abc import ABC, abstractmethod
+from io import StringIO
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import sh
+from typing_extensions import Protocol
 
 # TODO: I hate these imports. We should only use relative imports because these imports indicate architectural problems.
 from autograder.util import format_template, get_stderr
-from pathlib import Path
-from io import StringIO
-import shutil
-import sh
 
+from .util.exit_codes import USED_EXIT_CODES, ExitCodeEventType, ExitCodeHandler
 from .util.testcase_result_validator import generate_validating_string, validate_output
-from .util.exit_codes import ExitCodeEventType, ExitCodeHandler, USED_EXIT_CODES
-
 
 TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
+
+
+class ShCommand(Protocol):
+    """ We use this to imitate sh.Command by ducktyping it """
+
+    def __call__(self, *args: str, **kwargs: Any) -> Optional[sh.RunningCommand]:
+        raise NotImplementedError()
 
 
 class ArgList(enum.Enum):
@@ -27,6 +34,7 @@ class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
     exit_code_handler: ExitCodeHandler = ExitCodeHandler()
+    path: Path
     weight: float
     per_char_formatting_enabled: bool
     full_output_formatting_enabled: bool
@@ -36,18 +44,26 @@ class TestCase(ABC):
     def helper_module_name(self) -> str:
         pass
 
+    @abstractmethod
+    def compile_testcase(self, precompiled_submission: Path) -> ShCommand:
+        """Compiles student submission and testcase into a single executable
+        (or simply returns the command to run the testcase if no further compilation is necessary)
+
+        pwd = temp/student_dir
+        """
+
     def __init__(
         self,
         path: Path,
         input_dir: Path,
         output_dir: Path,
         timeout: float,
-        formatters,
-        argument_lists: dict,
+        formatters: Dict[str, Callable[[str], str]],
+        argument_lists: Dict[ArgList, List[str]],
         anti_cheat_enabled: bool,
-        weight,
-        per_char_formatting_enabled,
-        full_output_formatting_enabled,
+        weight: float,
+        per_char_formatting_enabled: bool,
+        full_output_formatting_enabled: bool,
     ):
         self.path = path
         self.timeout = timeout
@@ -65,7 +81,7 @@ class TestCase(ABC):
 
         if output_file.exists():
             with output_file.open() as f:
-                self.expected_output = self._format_output(f.read())
+                self.expected_output = self.__format_output(f.read())
         else:
             self.expected_output = StringIO("")
         input_file = input_dir / f"{path.stem}.txt"
@@ -87,22 +103,14 @@ class TestCase(ABC):
                 self.source_contents = f.read()
             self.path.unlink()
 
-    def get_path_to_helper_module(self):
-        return TEST_HELPERS_DIR / self.helper_module_name
-
-    def run(self, precompiled_submission: Path):
-        """ Returns student score and message to be displayed """
-        result, message = self._weightless_run(precompiled_submission)
-
-        self.delete_executable_files(precompiled_submission)
-        return result * self.weight, message
-
-    def make_executable_path(self, submission: Path) -> Path:
-        """ By combining test name and student name, it makes a unique path """
-        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
-
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str) -> Path:
+    def precompile_submission(
+        cls,
+        submission: Path,
+        student_dir: Path,
+        source_file_name: str,
+        arglist: List[str],
+    ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
         copied submission if no precompilation is necesessary
@@ -120,16 +128,20 @@ class TestCase(ABC):
 
         pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
         """
-        pass
 
-    @abstractmethod
-    def compile_testcase(self, precompiled_submission: Path) -> Callable:
-        """Compiles student submission and testcase into a single executable
-        (or simply returns the command to run the testcase if no further compilation is necessary)
+    def get_path_to_helper_module(self):
+        return TEST_HELPERS_DIR / self.helper_module_name
 
-        pwd = temp/student_dir
-        """
-        pass
+    def run(self, precompiled_submission: Path) -> Tuple[float, str]:
+        """ Returns student score and message to be displayed """
+        result, message = self.__weightless_run(precompiled_submission)
+
+        self.delete_executable_files(precompiled_submission)
+        return result * self.weight, message
+
+    def make_executable_path(self, submission: Path) -> Path:
+        """ By combining test name and student name, it makes a unique path """
+        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def prepend_test_helper(self):
         """Prepends all of the associated test_helper code to test code
@@ -148,12 +160,15 @@ class TestCase(ABC):
             return format_template(helper_file.read(), **kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):
-        pass
+        path = self.make_executable_path(precompiled_submission)
+        if path.exists():
+            path.unlink()
 
     def delete_source_file(self, source_path: Path):
-        source_path.unlink()
+        if source_path.exists():
+            source_path.unlink()
 
-    def _weightless_run(self, precompiled_submission: Path):
+    def __weightless_run(self, precompiled_submission: Path):
         """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
         testcase_path = precompiled_submission.with_name(self.path.name)
@@ -174,18 +189,20 @@ class TestCase(ABC):
             try:
                 # Useful during testing
                 # input("Waiting...")
-                # sleep(15)
                 result = test_executable(
-                    _in=self.input, _out=runtime_output, _timeout=self.timeout, _ok_code=USED_EXIT_CODES
+                    _in=self.input,
+                    _out=runtime_output,
+                    _timeout=self.timeout,
+                    _ok_code=USED_EXIT_CODES,
                 )
-
+                if result is None:
+                    raise NotImplementedError()
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
-                exit_code = e.exit_code  # type: ignore
-                return 0, f"Crashed due to signal {exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
-            # print(">>> Testcase output: " + runtime_output.getvalue())
+                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
+
             output, output_is_valid = validate_output(runtime_output.getvalue(), self.validating_string)
             event = self.exit_code_handler.scan(result.exit_code)
             if not output_is_valid:
@@ -199,7 +216,7 @@ class TestCase(ABC):
                     "It could indicate student cheating or testcases being written incorrectly.",
                 )
             elif event.type == ExitCodeEventType.CHECK_OUTPUT:
-                if self._format_output(output) == self.expected_output:
+                if self.__format_output(output) == self.expected_output:
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
                     return 0, f"0/{self.max_score} (Wrong answer)"
@@ -215,7 +232,7 @@ class TestCase(ABC):
             else:
                 raise ValueError(f"Unknown system code {event.type} has not been handled.")
 
-    def _format_output(self, output: str) -> str:
+    def __format_output(self, output: str) -> str:
         if self.full_output_formatting_enabled:
             output = self.formatters["full_output_formatter"](output)
         if self.per_char_formatting_enabled:

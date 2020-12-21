@@ -1,8 +1,8 @@
-from .abstract_base_class import TestCase, ArgList
+from .abstract_base_class import ArgList, TestCase
 from .c import CTestCase
+from .cpp import CPPTestCase
 from .java import JavaTestCase
 from .python import PythonTestCase
-from .cpp import CPPTestCase
 
 ALLOWED_LANGUAGES = {
     "c": CTestCase,

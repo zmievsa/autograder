@@ -1,8 +1,9 @@
-from pathlib import Path
-from typing import Callable
-from .abstract_base_class import ArgList, TestCase
-import sh
 import py_compile
+from pathlib import Path
+
+import sh
+
+from .abstract_base_class import ArgList, TestCase
 
 
 class PythonTestCase(TestCase):
@@ -13,22 +14,20 @@ class PythonTestCase(TestCase):
     source_suffix = ".py"
     executable_suffix = ".pyc"
     helper_module_name = "test_helper.py"
-    interpreter = sh.python3  # type: ignore
+    interpreter = sh.Command("python3")
 
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name) -> Path:
-        copied_submission = super().precompile_submission(submission, student_dir, source_file_name)
-        # kwargs = {}
-        # if "-O" in self.argument_lists[ArgList.testcase_precompilation]:
-        #     kwargs["optimize"] = 1
-        # if "-OO" in self.argument_lists[ArgList.testcase_precompilation]:
-        #     kwargs["optimize"] = 2
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name, arglist) -> Path:
+        copied_submission = super().precompile_submission(submission, student_dir, source_file_name, arglist)
+        kwargs = {}
+        if "-O" in arglist:
+            kwargs["optimize"] = 1
         executable_path = copied_submission.with_suffix(cls.executable_suffix)
-        py_compile.compile(file=str(copied_submission), cfile=str(executable_path))
+        py_compile.compile(file=str(copied_submission), cfile=str(executable_path), doraise=True)
         copied_submission.unlink()
         return executable_path
 
-    def compile_testcase(self, precompiled_submission: Path) -> Callable:
+    def compile_testcase(self, precompiled_submission: Path):
         # Argument lists do not seem to work here
         # Test it, plz.
         return lambda *args, **kwargs: self.interpreter(
@@ -43,19 +42,13 @@ class PythonTestCase(TestCase):
         kwargs = {}
         if "-O" in self.argument_lists[ArgList.TESTCASE_PRECOMPILATION]:
             kwargs["optimize"] = 1
-        if "-OO" in self.argument_lists[ArgList.TESTCASE_PRECOMPILATION]:
-            kwargs["optimize"] = 2
         executable_path = self.path.with_suffix(self.executable_suffix)
-        py_compile.compile(file=str(self.path), cfile=str(executable_path), **kwargs)
+        py_compile.compile(file=str(self.path), cfile=str(executable_path), doraise=True, **kwargs)
         self.path.unlink()
         self.path = executable_path
 
-    def delete_source_file(self, source_path):
+    def delete_source_file(self, source_path: Path):
         """ Source file is the same as executable file so we don't need to delete it """
-        pass
-
-    def delete_executable_files(self, precompiled_submission) -> None:
-        self.make_executable_path(precompiled_submission).unlink()
 
     def make_executable_path(self, submission: Path) -> Path:
         return submission.with_name(self.path.name)

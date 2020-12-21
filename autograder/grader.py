@@ -1,4 +1,3 @@
-# remove relative paths from all modules
 import multiprocessing
 import os
 import shutil
@@ -7,11 +6,14 @@ from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
 from typing import Callable, Dict, List, Optional
 
-import sh  # type: ignore
+import sh
+
+from autograder.testcases.abstract_base_class import ArgList
 
 from . import testcases
 from .config_manager import GradingConfig
-from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .output_summary import (BufferOutputLogger, GradingOutputLogger,
+                             get_submission_name)
 from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
@@ -22,16 +24,15 @@ class Grader:
     no_output: bool
     submissions: List[Path]
     tests: List[testcases.TestCase]
-
-    # TODO: Check that the types are the ones sent from CLI and test.py
-    raw_submissions: Optional[List[Path]]
-
+    raw_submissions: List[Path]
     paths: "AutograderPaths"
 
     def __init__(self, current_dir, no_output=False, submissions=None):
+        if submissions is None:
+            submissions = []
         self.no_output = no_output
         self.raw_submissions = submissions
-        self.output_formatters = None
+        self.output_formatters = {}
         self.paths = AutograderPaths(current_dir)
 
     def run(self):
@@ -67,19 +68,18 @@ class Grader:
         with temporarily_change_dir(student_dir):
             self._copy_extra_files(student_dir)
             with self.logger.single_submission_output_logger(lock) as logger:
-
                 result = self._get_testcase_output(submission, student_dir, logger)
         # Cleanup after running tests on student submission
         shutil.rmtree(student_dir)
         return result
 
     def cleanup(self):
-        shutil.rmtree(self.paths.temp_dir)
+        if self.paths.temp_dir.exists():
+            shutil.rmtree(self.paths.temp_dir)
 
     def _prepare_directory_structure(self):
         # Cleanup in case any error
-        if self.paths.temp_dir.exists():
-            self.cleanup()
+        self.cleanup()
         self.paths.temp_dir.mkdir()
         self._check_required_directories_exist()
         if self.config.generate_results:
@@ -114,7 +114,7 @@ class Grader:
             if testcase_type is None:
                 self.logger(f"No appropriate language for {test} found.")
                 continue
-            arglist = self.config._generate_arglists(test)
+            arglist = self.config._generate_arglists(test.name)
             shutil.copy(test, self.paths.temp_dir)
             tests.append(
                 testcase_type(
@@ -144,8 +144,6 @@ class Grader:
             submission_name = submission.name
             if self.config.lower_source_filename:
                 submission_name = submission_name.lower()
-            # TODO: Average grade is calculated only based on submissions that were not skipped
-            # I.e. It's not average class grade. Maybe I should change it?
             if submission.suffix in self.config.testcase_types:
                 if self.config.auto_source_file_name_enabled:
                     submissions.append(submission)
@@ -161,7 +159,7 @@ class Grader:
         submissions.sort()
         return submissions
 
-    def _import_formatters(self, path_to_output_formatters: Path) -> Optional[Dict[str, Callable]]:
+    def _import_formatters(self, path_to_output_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_output_formatters.exists():
             module = import_from_path("output_formatters", path_to_output_formatters)
             self.per_char_formatting_enabled = hasattr(module, "per_char_formatter")
@@ -172,22 +170,21 @@ class Grader:
         else:
             self.per_char_formatting_enabled = False
             self.full_output_formatting_enabled = False
-            return None
+            return {}
 
-    def _precompile_submission(self, submission, student_dir, logger):
+    def _precompile_submission(self, submission: Path, student_dir: Path, logger):
         precompiled_submission = None
         try:
-            # TODO: Move half of this into precompile_submission or something
+            arglists = self.config._generate_arglists(submission.name)
             testcase_type = self.config.testcase_types[submission.suffix]
             source_file_path = Path(self.config.source_file_name).with_suffix(testcase_type.source_suffix)
-            precompiled_submission = testcase_type.precompile_submission(submission, student_dir, source_file_path.name)
+            precompiled_submission = testcase_type.precompile_submission(
+                submission, student_dir, source_file_path.name, arglists[ArgList.SUBMISSION_PRECOMPILATION]
+            )
+            return precompiled_submission
         except sh.ErrorReturnCode_1 as e:  # type: ignore
             self.logger.print_precompilation_error_to_results_file(submission, e, logger)
-            # TODO: We should remove it with the entire student directory
-            if precompiled_submission is not None:
-                precompiled_submission.unlink()
-                precompiled_submission = None
-        return precompiled_submission
+            return None
 
     def _get_testcase_output(self, submission: Path, student_dir: Path, logger: BufferOutputLogger) -> float:
         """ Returns grading info as a dict """

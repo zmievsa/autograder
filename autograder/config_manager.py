@@ -2,7 +2,7 @@ import configparser
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, TypeVar
 
-from .testcases import TestCase, ALLOWED_LANGUAGES, ArgList
+from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase
 from .util import AutograderError
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -59,13 +59,13 @@ class GradingConfig:
 
         return user_parser["CONFIG"]
 
-    def _generate_arglists(self, test: Path):
+    def _generate_arglists(self, file_name: str) -> Dict[ArgList, List[str]]:
         arglist = {}
-        for arglist_index, arglists_per_testcase in self.cli_argument_lists.items():
-            if test.name in arglists_per_testcase:
-                arglist[arglist_index] = arglists_per_testcase[test.name]
-            elif "ALL" in arglists_per_testcase:
-                arglist[arglist_index] = arglists_per_testcase["ALL"]
+        for arglist_index, arglists_per_file in self.cli_argument_lists.items():
+            if file_name in arglists_per_file:
+                arglist[arglist_index] = arglists_per_file[file_name]
+            elif "ALL" in arglists_per_file:
+                arglist[arglist_index] = arglists_per_file["ALL"]
             else:
                 arglist[arglist_index] = tuple()
         return arglist

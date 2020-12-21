@@ -1,6 +1,7 @@
 # Allows us to use student's module from our testcase
-import sys
 import importlib
+import sys
+
 student_submission = importlib.import_module(sys.argv[1])
 
 
