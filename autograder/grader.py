@@ -12,8 +12,7 @@ from autograder.testcases.abstract_base_class import ArgList
 
 from . import testcases
 from .config_manager import GradingConfig
-from .output_summary import (BufferOutputLogger, GradingOutputLogger,
-                             get_submission_name)
+from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
@@ -51,8 +50,8 @@ class Grader:
             self.submissions = self._gather_submissions(self.raw_submissions)
             self._prepare_directory_structure()
             self.tests = self._gather_testcases()  # also copies testcases to temp dir
-
-            with multiprocessing.Pool() as pool:
+            process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
+            with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
                 total_class_points = sum(pool.map(Runner(self, man.Lock()), self.submissions))
             class_average = total_class_points / len(self.submissions)
