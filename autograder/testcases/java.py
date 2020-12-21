@@ -20,7 +20,6 @@ class JavaTestCase(TestCase):
     source_suffix = ".java"
     executable_suffix = ""
     helper_module_name = "TestHelper.java"
-    parallel_execution_supported = False
     compiler = sh.Command("javac")
     virtual_machine = sh.Command("java")
 
