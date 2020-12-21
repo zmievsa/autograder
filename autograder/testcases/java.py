@@ -54,7 +54,7 @@ class JavaTestCase(TestCase):
         """
         with open(self.path) as f:
             content = f.read()
-            final_content = self._add_at_the_end_of_public_class(self.get_formatted_test_helper(), content)
+        final_content = self._add_at_the_end_of_public_class(self.get_formatted_test_helper(), content)
         with open(self.path, "w") as f:
             f.write(final_content)
 
@@ -67,7 +67,7 @@ class JavaTestCase(TestCase):
         if match is None:
             raise ValueError(f"Public class not found in {self.path}")
         else:
-            main_class_index = match.end()
+            main_class_index = match.start()
 
         file_starting_from_main_class = java_file[main_class_index:]
         closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
