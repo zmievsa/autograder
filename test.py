@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Callable
 
 import autograder
-from time import sleep
-
 
 TEST_DIRS = {
     "simplest_c": 100,
@@ -50,8 +48,7 @@ def FAIL(message):
 
 
 def run_silenced_grader(*args):
-    result = autograder.__main__.main(["--no_output"] + list(args))
-    return result
+    return autograder.__main__.main(["--no_output"] + list(args))
 
 
 def main():
