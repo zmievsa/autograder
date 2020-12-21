@@ -19,6 +19,7 @@ class GradingConfig:
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
         self.anti_cheat = cfg.getboolean("ANTI_CHEAT")
+        self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
 
         self.total_points_possible = cfg.getint("TOTAL_POINTS_POSSIBLE")
         self.total_score_to_100_ratio = self.total_points_possible / 100
