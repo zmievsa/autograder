@@ -4,9 +4,9 @@ TestCase                                Result
 ================================================================
 Check result with assert                Crashed due to signal 1:
 Traceback (most recent call last):
-  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 44, in <module>
+  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 45, in <module>
     main()
-  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 37, in main
+  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 38, in main
     assert result == 3
 AssertionError
 
