@@ -1,8 +1,13 @@
-from autograder.util import AutograderError
+import re
 from pathlib import Path
-from typing import Callable
-from .abstract_base_class import ArgList, TestCase
+
 import sh
+
+from autograder.util import AutograderError
+
+from .abstract_base_class import ArgList, TestCase
+
+PUBLIC_CLASS_MATCHER = re.compile(r"public.+class")
 
 
 class JavaTestCase(TestCase):
@@ -16,24 +21,23 @@ class JavaTestCase(TestCase):
     executable_suffix = ""
     helper_module_name = "TestHelper.java"
     parallel_execution_supported = False
-    compiler = sh.javac  # type: ignore
-    virtual_machine = sh.java  # type: ignore
+    compiler = sh.Command("javac")
+    virtual_machine = sh.Command("java")
 
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str):
-        copied_submission = super().precompile_submission(submission, student_dir, submission.name)
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):
+        copied_submission = super().precompile_submission(submission, student_dir, submission.name, arglist)
         renamed_submission = copied_submission.parent / source_file_name
         copied_submission.rename(renamed_submission)
-        # TODO: What about submission precompilation args? We can't pass them if it's a classmethod
         try:
-            cls.compiler(renamed_submission)
+            cls.compiler(renamed_submission, *arglist)
         finally:
             renamed_submission.unlink()
 
         # What if there are multiple .class files after compilation? What do we do, then?
         return renamed_submission
 
-    def compile_testcase(self, precompiled_submission: Path) -> Callable:
+    def compile_testcase(self, precompiled_submission: Path):
         new_self_path = precompiled_submission.with_name(self.path.name)
         self.compiler(new_self_path, *self.argument_lists[ArgList.TESTCASE_COMPILATION])
         return lambda *args, **kwargs: self.virtual_machine(self.path.stem, *args, **kwargs)
@@ -59,8 +63,11 @@ class JavaTestCase(TestCase):
         # This way is rather crude and can be prone to errors,
         # but java does not really leave us any other way to do it.
 
-        # Wait, what if there's a public method in private class? We should find the 'public .+ class' regex
-        main_class_index = java_file.find("public")
+        match = PUBLIC_CLASS_MATCHER.search(java_file)
+        if match is None:
+            raise ValueError(f"Public class not found in {self.path}")
+        else:
+            main_class_index = match.end()
 
         file_starting_from_main_class = java_file[main_class_index:]
         closing_brace_index = self._find_closing_brace(file_starting_from_main_class)

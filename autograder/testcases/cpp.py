@@ -1,5 +1,6 @@
-from .c import CTestCase
 import sh
+
+from .c import CTestCase
 
 
 class CPPTestCase(CTestCase):

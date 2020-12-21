@@ -43,7 +43,6 @@ def main(argv=None):
     )
     parser.add_argument("-g", "--guide", action="store_true", help="Guide you through setting up a grading environment")
     args = parser.parse_args(argv)
-    # TODO: What if user does '-s sub1 sub2 sub3'?
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.version:
         print(__version__)
@@ -56,13 +55,13 @@ def main(argv=None):
         )
         if args.print:
             print_results(grader.paths, args.print)
-            return -1
         elif args.guide:
             guide.main(grader.paths)
         else:
             return grader.run()
     except AutograderError as e:
         print(e)
+    return -1
 
 
 if __name__ == "__main__":

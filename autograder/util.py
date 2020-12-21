@@ -30,9 +30,10 @@ def format_template(template: str, **kwargs: Dict[str, Any]):
 
 
 def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):
-    # TODO: Make this code clearer.
     error_str = str(error)
+    # Remove all unrelated output
     formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR") :]
+    # Hide path to current dir
     return formatted_error.strip().replace(str(current_dir), "...")
 
 

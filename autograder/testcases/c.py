@@ -1,6 +1,8 @@
 from pathlib import Path
-from .abstract_base_class import TestCase, ArgList
+
 import sh
+
+from .abstract_base_class import ArgList, ShCommand, TestCase
 
 
 class CTestCase(TestCase):
@@ -8,17 +10,24 @@ class CTestCase(TestCase):
     executable_suffix = ".out"
     helper_module_name = "test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    compiler = sh.gcc  # type: ignore
+    compiler = sh.Command("gcc")
 
     @classmethod
-    def precompile_submission(cls, submission, student_dir, source_file_name):
+    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):
         """Links student submission without compiling it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, student_dir, submission.name)
+        copied_submission = super().precompile_submission(submission, student_dir, submission.name, arglist)
         precompiled_submission = copied_submission.with_suffix(".o")
         try:
-            cls.compiler("-c", f"{copied_submission}", "-o", precompiled_submission, *cls.SUBMISSION_COMPILATION_ARGS)
+            cls.compiler(
+                "-c",
+                f"{copied_submission}",
+                "-o",
+                precompiled_submission,
+                *cls.SUBMISSION_COMPILATION_ARGS,
+                *arglist,
+            )
         finally:
             copied_submission.unlink()
         return precompiled_submission
@@ -34,7 +43,7 @@ class CTestCase(TestCase):
         self.path.unlink()
         self.path = self.path.with_suffix(".o")
 
-    def compile_testcase(self, precompiled_submission: Path) -> sh.Command:
+    def compile_testcase(self, precompiled_submission: Path) -> ShCommand:
         executable_path = self.make_executable_path(precompiled_submission)
         self.compiler(
             "-o",
@@ -44,8 +53,3 @@ class CTestCase(TestCase):
             *self.argument_lists[ArgList.TESTCASE_COMPILATION],
         )
         return sh.Command(executable_path)
-
-    def delete_executable_files(self, precompiled_submission):
-        exec_path = self.make_executable_path(precompiled_submission)
-        if exec_path.exists():
-            exec_path.unlink()
