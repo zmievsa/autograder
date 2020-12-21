@@ -1,0 +1,14 @@
+{
+    "include": [
+        "autograder/"
+    ],
+    "exclude": [
+        "autograder/testcases/test_helpers/*",
+        "examples/**"
+    ],
+    "strict": [
+        "autograder/testcases/abstract_base_class.py"
+    ],
+    "reportImportCycles": "information",
+    "reportUnusedFunction": "warning"
+}
