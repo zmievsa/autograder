@@ -1,9 +1,33 @@
 #!/usr/bin/env python
+
+# TODO: Refactor this mess
+
 from contextlib import contextmanager
+from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import Callable
 
 import autograder
+
+
+class NonDaemonPool(Pool):
+    def Process(self, *args, **kwds):
+        proc = super(NonDaemonPool, self).Process(*args, **kwds)  # type: ignore
+
+        class NonDaemonProcess(proc.__class__):
+            """Monkey-patch process to ensure it is never daemonized"""
+
+            @property
+            def daemon(self):
+                return False
+
+            @daemon.setter
+            def daemon(self, val):
+                pass
+
+        proc.__class__ = NonDaemonProcess
+        return proc
+
 
 TEST_DIRS = {
     "simplest_c": 100,
@@ -14,7 +38,7 @@ TEST_DIRS = {
     "multiple_languages": 100,
     "extra_files": 100,
     "fibonacci_c": 58,
-    "cheating_attempt": 50,
+    "cheating_attempts": 0,  # All cheaters shall fail
 }
 
 
@@ -51,17 +75,22 @@ def run_silenced_grader(*args):
     return autograder.__main__.main(["--no_output"] + list(args))
 
 
-def main():
-    for test_dir, expected_result in TEST_DIRS.items():
-        with ErrorHandler(test_dir):
-            real_result = int(run_silenced_grader(f"examples/{test_dir}"))
-            msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
-            if int(expected_result) == real_result:
-                PASS(msg)
-            else:
-                FAIL(msg)
+def test_example(args):
+    test_dir, expected_result = args
+    if expected_result == "EXTRA_CLI_ARGS":
+        return test_extra_cli_args()
+    with ErrorHandler(test_dir):
+        real_result = int(run_silenced_grader(f"examples/{test_dir}"))
+        msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
+        if int(expected_result) == real_result:
+            PASS(msg)
+        else:
+            FAIL(msg)
 
-    test_extra_cli_args()
+
+def main():
+    with NonDaemonPool() as pool:
+        pool.map(test_example, [(d, r) for d, r in TEST_DIRS.items()] + [tuple(["", "EXTRA_CLI_ARGS"])])
 
 
 def test_extra_cli_args():

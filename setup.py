@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import setup
 
-requires = ["sh==1.14.1"]
+requires = ["sh==1.14.1", "typing_extensions"]
 here = Path(__file__).parent
 about = {}
 with (here / "autograder" / "__version__.py").open(encoding="utf-8") as f:
@@ -38,5 +38,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

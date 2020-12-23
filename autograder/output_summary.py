@@ -27,8 +27,34 @@ def get_submission_name(submission: Path):
     return submission.name if match is None else match["student_name"]
 
 
-# Composition is used instead of inheritance for simpler API
-class GradingOutputLogger:
+# Composition is used instead of inheritance for simpler API.
+class SynchronizedLogger:
+    LOGGER_NAME = "SynchronizedLogger"
+
+    def __init__(self, enable_stdout):
+        self.logger = logging.getLogger(self.LOGGER_NAME)
+        self.logger.setLevel(logging.INFO)
+        if enable_stdout:
+            self.logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    def __call__(self, s: str) -> None:
+        self.logger.info(s)
+
+    @contextmanager
+    def single_submission_output_logger(self, lock):
+        try:
+            buffer = BufferOutputLogger()
+            yield buffer
+            with lock:
+                self("\n".join(buffer.output))
+        except Exception as e:
+            raise e
+
+
+# Yes, it does break Liskov's principle and I don't care
+class GradingOutputLogger(SynchronizedLogger):
+    LOGGER_NAME = "Autograder"
+
     def __init__(
         self,
         current_dir: Path,
@@ -39,14 +65,12 @@ class GradingOutputLogger:
         no_output: bool,
         generate_results: bool,
     ):
+        super().__init__(enable_stdout=(not no_output))
         self.current_dir = current_dir
         self.results_dir = path_to_results_dir
         self.assignment_name = assignment_name
         self.total_points_possible = total_points_possible
-        self.logger = logging.getLogger("Grader")
-        self.logger.setLevel(logging.INFO)
         if not no_output:
-            self.logger.addHandler(logging.StreamHandler(sys.stdout))
             if path_to_output_summary.exists():
                 # TODO: Input should be optional because we might ask this question in GUI.
                 #   Or not? Maybe we just check it to exist separately in GUI?
@@ -63,19 +87,6 @@ class GradingOutputLogger:
                 self.logger.addHandler(logging.FileHandler(path_to_output_summary, mode="w"))
         if not generate_results:
             self._silence_generating_results()
-
-    def __call__(self, s: str) -> None:
-        self.logger.info(s)
-
-    @contextmanager
-    def single_submission_output_logger(self, lock):
-        try:
-            buffer = BufferOutputLogger()
-            yield buffer
-            with lock:
-                self("\n".join(buffer.output))
-        except Exception as e:
-            raise e
 
     def print_precompilation_error_to_results_file(self, submission, error, buffer_logger):
         stderr = get_stderr(self.current_dir, error, "Failed to precompile")

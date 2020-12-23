@@ -1,3 +1,4 @@
+from autograder.testcases.java import JavaTestCase
 import multiprocessing
 import os
 import shutil
@@ -118,6 +119,7 @@ class Grader:
             tests.append(
                 testcase_type(
                     self.paths.temp_dir / test.name,
+                    self.config.source_file_name,
                     self.paths.input_dir,
                     self.paths.output_dir,
                     timeout,
@@ -195,6 +197,8 @@ class Grader:
         total_testcase_score = 0
         testcase_results = []
         allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
+        if any(isinstance(t, JavaTestCase) for t in allowed_tests):
+            JavaTestCase.run_additional_testcase_operations_in_student_dir(student_dir)
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
