@@ -12,11 +12,12 @@ with (here / "README.md").open(encoding="utf-8") as f:
 
 setup(
     name=about["__title__"],
-    packages=["autograder"],
+    packages=["autograder", "autograder.testcases", "autograder.testcases.util"],
     version=about["__version__"],
     install_requires=requires,
     package_data={
-        "autograder": ["default_config.ini", "test_helpers/*"],
+        "autograder": ["default_config.ini"],
+        "autograder.testcases": ["test_helpers/*", "test_helpers/extra/*"],
     },
     entry_points={"console_scripts": ["autograder=autograder.__main__:main"]},
     # metadata to display on PyPI
