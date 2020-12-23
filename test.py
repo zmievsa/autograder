@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# TODO: Refactor this mess
+
 from contextlib import contextmanager
 from multiprocessing.pool import Pool
 from pathlib import Path
