@@ -223,7 +223,7 @@ class TestCase(ABC):
                 if self.__format_output(output) == self.expected_output:
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
-                    return 0, f"0/{self.max_score} (Wrong answer)"
+                    return 0, f"0/{self.max_score} (Wrong output)"
             elif event.type == ExitCodeEventType.RESULT:
                 score = event.value
                 message = f"{int(score * self.weight)}/{self.max_score}"
