@@ -45,10 +45,10 @@ class JavaTestCase(TestCase):
         self.compiler(
             new_self_path,
             "-cp",
-            f".:jna.jar",
+            f".:*",
             *self.argument_lists[ArgList.TESTCASE_COMPILATION],
         )
-        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:jna.jar", self.path.stem, *args, **kwargs)
+        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:*", self.path.stem, *args, **kwargs)
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
@@ -66,7 +66,7 @@ class JavaTestCase(TestCase):
         """
         with open(self.path) as f:
             content = f.read()
-        final_content = self._add_at_the_end_of_public_class(self.get_formatted_test_helper(), content)
+        final_content = self._add_at_the_beginning_of_public_class(self.get_formatted_test_helper(), content)
         final_content = (
             f"""import com.sun.jna.Library;
                 import com.sun.jna.Native;
@@ -79,11 +79,10 @@ class JavaTestCase(TestCase):
         with open(self.path, "w") as f:
             f.write(final_content)
 
-    def _add_at_the_end_of_public_class(self, helper_class: str, java_file: str):
-        # TODO: Figure out a better way to do this.
-        # This way is rather crude and can be prone to errors,
+    def _add_at_the_beginning_of_public_class(self, helper_class: str, java_file: str):
+        """ Looks for the first bracket of the first public class and inserts test helper next to it """
+        # This way is rather crude and can be prone to errors if left untested,
         # but java does not really leave us any other way to do it.
-
         match = PUBLIC_CLASS_MATCHER.search(java_file)
         if match is None:
             raise ValueError(f"Public class not found in {self.path}")

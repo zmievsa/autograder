@@ -38,7 +38,7 @@ TEST_DIRS = {
     "multiple_languages": 100,
     "extra_files": 100,
     "fibonacci_c": 58,
-    "cheating_attempt": 0,
+    "cheating_attempts": 0,  # All cheaters shall fail
 }
 
 
