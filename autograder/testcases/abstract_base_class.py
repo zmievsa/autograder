@@ -35,6 +35,7 @@ class TestCase(ABC):
     executable_suffix = ".executable_suffix"  # dummy value
     exit_code_handler: ExitCodeHandler = ExitCodeHandler()
     path: Path
+    source_file_name: Path
     weight: float
     per_char_formatting_enabled: bool
     full_output_formatting_enabled: bool
@@ -55,6 +56,7 @@ class TestCase(ABC):
     def __init__(
         self,
         path: Path,
+        source_file_name: str,
         input_dir: Path,
         output_dir: Path,
         timeout: float,
@@ -66,6 +68,7 @@ class TestCase(ABC):
         full_output_formatting_enabled: bool,
     ):
         self.path = path
+        self.source_file_name = Path(source_file_name)
         self.timeout = timeout
         self.formatters = formatters
         self.argument_lists = argument_lists
@@ -94,6 +97,8 @@ class TestCase(ABC):
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()
+        # with self.path.open() as f:
+        #     print(f.read())
         if anti_cheat_enabled:
             self.precompile_testcase()
 
@@ -129,6 +134,10 @@ class TestCase(ABC):
         pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
         """
 
+    @classmethod
+    def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
+        pass
+
     def get_path_to_helper_module(self):
         return TEST_HELPERS_DIR / self.helper_module_name
 
@@ -156,8 +165,7 @@ class TestCase(ABC):
 
     def get_formatted_test_helper(self) -> str:
         with self.get_path_to_helper_module().open() as helper_file:
-            kwargs = {"VALIDATING_STRING": self.validating_string, **self.exit_code_handler.get_formatted_exit_codes()}
-            return format_template(helper_file.read(), **kwargs)
+            return format_template(helper_file.read(), **self.exit_code_handler.get_formatted_exit_codes())
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
@@ -194,6 +202,7 @@ class TestCase(ABC):
                     _out=runtime_output,
                     _timeout=self.timeout,
                     _ok_code=USED_EXIT_CODES,
+                    _env={"VALIDATING_STRING": self.validating_string},
                 )
                 if result is None:
                     raise NotImplementedError()
@@ -202,8 +211,9 @@ class TestCase(ABC):
             except sh.ErrorReturnCode as e:
                 # http://man7.org/linux/man-pages/man7/signal.7.html
                 return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
-
-            output, output_is_valid = validate_output(runtime_output.getvalue(), self.validating_string)
+            raw_output = runtime_output.getvalue()
+            # print(raw_output)
+            output, output_is_valid = validate_output(raw_output, self.validating_string)
             event = self.exit_code_handler.scan(result.exit_code)
             if not output_is_valid:
                 # This  means that either the student used built-in exit function himself

@@ -12,7 +12,7 @@ import autograder
 
 class NonDaemonPool(Pool):
     def Process(self, *args, **kwds):
-        proc = super(NonDaemonPool, self).Process(*args, **kwds)
+        proc = super(NonDaemonPool, self).Process(*args, **kwds)  # type: ignore
 
         class NonDaemonProcess(proc.__class__):
             """Monkey-patch process to ensure it is never daemonized"""

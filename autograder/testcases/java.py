@@ -1,13 +1,16 @@
 import re
 from pathlib import Path
+import shutil
 
 import sh
 
 from autograder.util import AutograderError
 
-from .abstract_base_class import ArgList, TestCase
+from .abstract_base_class import ArgList, TestCase, TEST_HELPERS_DIR
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public.+class")
+JNA_FILE_NAME = "jna.jar"
+PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / JNA_FILE_NAME
 
 
 class JavaTestCase(TestCase):
@@ -21,6 +24,7 @@ class JavaTestCase(TestCase):
     executable_suffix = ""
     helper_module_name = "TestHelper.java"
     compiler = sh.Command("javac")
+    jar = sh.Command("jar")
     virtual_machine = sh.Command("java")
 
     @classmethod
@@ -34,12 +38,21 @@ class JavaTestCase(TestCase):
             renamed_submission.unlink()
 
         # What if there are multiple .class files after compilation? What do we do, then?
-        return renamed_submission
+        return renamed_submission.with_suffix(".class")
 
     def compile_testcase(self, precompiled_submission: Path):
         new_self_path = precompiled_submission.with_name(self.path.name)
-        self.compiler(new_self_path, *self.argument_lists[ArgList.TESTCASE_COMPILATION])
-        return lambda *args, **kwargs: self.virtual_machine(self.path.stem, *args, **kwargs)
+        self.compiler(
+            new_self_path,
+            "-cp",
+            f".:jna.jar",
+            *self.argument_lists[ArgList.TESTCASE_COMPILATION],
+        )
+        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:jna.jar", self.path.stem, *args, **kwargs)
+
+    @classmethod
+    def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
+        shutil.copyfile(PATH_TO_JNA_FILE, student_dir / JNA_FILE_NAME)
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():
@@ -54,6 +67,12 @@ class JavaTestCase(TestCase):
         with open(self.path) as f:
             content = f.read()
         final_content = self._add_at_the_end_of_public_class(self.get_formatted_test_helper(), content)
+        final_content = (
+            f"""import com.sun.jna.Library;
+                import com.sun.jna.Native;
+            """
+            + final_content
+        )
         with open(self.path, "w") as f:
             f.write(final_content)
 
