@@ -22,7 +22,7 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 * A per-testcase grade can be any number out of 100 points
 * Support for grading C, C++, Java, and Python code
 * A file with testcase results can be generated for each student (done by default)
-* You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and filters for checking student output
+* You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and formatters for checking student output
 * Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (precompilation of testcases, verification of who exited the program, and removal of testcase source files before testing). You can read more on this in implementation details section below
 * You can pass arguments to language compilers during testcase (or submission) precompilation and compilation using config.ini
 * You can grade submissions in multiple programming languages at once, as long as there are testcases written in each language
@@ -45,7 +45,7 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Advanced Usage
 * If you create config.ini in tests, you can customize grader's behavior. Use `autograder --guide` if you want all optional directories and configurations set up for you. If you remove some configuration fields from config.ini, grader will use the respective fields from default config.
-* To check output, you can specify output formatters in a file output_formatters.py in the directory with your testcase folder. They will format student's output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, you can look at autograder/default_formatters.py
+* To check output, you can specify __output formatters__ in a file output_formatters.py in the directory with your testcase folder. They will format student's output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, refer to examples or to default_formatters.py. 
 ## Writing testcases
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with output, you don't check the result, and simply allow autograder to handle grading by calling CHECK_OUTPUT())
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
@@ -76,7 +76,7 @@ optional arguments:
 ```
 # Implementation details
 * I used exit codes to specify student grades. Currently, I choose an integer offset, add it to the student grade when returning from testcase, and subtract it when grading. This allows us to specify student scores using exit codes; CHECK_OUTPUT has its own exit code. The exit code range I use is carefully picked so that it does not use any exit codes occupied by the system. Even though this method seems prone to cheating at first, we mitigate that by the methods described in the anti cheating section.
-* At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use filter function(s) described in advanced usage section.
+* At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use formatters described in advanced usage section.
 * If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how c handles linking.
 
 ## Anti Cheating

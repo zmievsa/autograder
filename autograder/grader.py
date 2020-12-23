@@ -127,8 +127,6 @@ class Grader:
                     arglist,
                     self.config.anti_cheat,
                     weight,
-                    self.per_char_formatting_enabled,
-                    self.full_output_formatting_enabled,
                 )
             )
         # Allows consistent output
@@ -163,14 +161,8 @@ class Grader:
     def _import_formatters(self, path_to_output_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_output_formatters.exists():
             module = import_from_path("output_formatters", path_to_output_formatters)
-            self.per_char_formatting_enabled = hasattr(module, "per_char_formatter")
-            self.full_output_formatting_enabled = hasattr(module, "full_output_formatter")
-            if not self.per_char_formatting_enabled and not self.full_output_formatting_enabled:
-                raise AutograderError("Formatter file does not contain the required functions.")
             return {k: v for k, v in module.__dict__.items() if callable(v)}
         else:
-            self.per_char_formatting_enabled = False
-            self.full_output_formatting_enabled = False
             return {}
 
     def _precompile_submission(self, submission: Path, student_dir: Path, logger):

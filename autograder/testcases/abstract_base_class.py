@@ -37,8 +37,6 @@ class TestCase(ABC):
     path: Path
     source_file_name: Path
     weight: float
-    per_char_formatting_enabled: bool
-    full_output_formatting_enabled: bool
 
     @property
     @abstractmethod
@@ -64,8 +62,6 @@ class TestCase(ABC):
         argument_lists: Dict[ArgList, List[str]],
         anti_cheat_enabled: bool,
         weight: float,
-        per_char_formatting_enabled: bool,
-        full_output_formatting_enabled: bool,
     ):
         self.path = path
         self.source_file_name = Path(source_file_name)
@@ -76,8 +72,6 @@ class TestCase(ABC):
         self.weight = weight
         self.max_score = int(weight * 100)
         output_file = output_dir / f"{path.stem}.txt"
-        self.per_char_formatting_enabled = per_char_formatting_enabled
-        self.full_output_formatting_enabled = full_output_formatting_enabled
 
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
@@ -243,8 +237,7 @@ class TestCase(ABC):
                 raise ValueError(f"Unknown system code {event.type} has not been handled.")
 
     def __format_output(self, output: str) -> str:
-        if self.full_output_formatting_enabled:
-            output = self.formatters["full_output_formatter"](output)
-        if self.per_char_formatting_enabled:
-            output = "".join(self.formatters["per_char_formatter"](c) for c in output)
+        formatter = self.formatters.get(self.path.stem, None) or self.formatters.get("ALL", None)
+        if formatter is not None:
+            output = formatter(output)
         return output
