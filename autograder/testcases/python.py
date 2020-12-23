@@ -1,9 +1,19 @@
 import py_compile
 from pathlib import Path
+import shutil
 
 import sh
 
 from .abstract_base_class import ArgList, TestCase
+
+import sys
+
+PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
+PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"
+PYTHON_EXECUTABLE_NAME = f"python{PYTHON_VERSION}"
+
+if shutil.which(PYTHON_EXECUTABLE_NAME) is None:
+    PYTHON_EXECUTABLE_NAME = "python3"
 
 
 class PythonTestCase(TestCase):
@@ -14,7 +24,7 @@ class PythonTestCase(TestCase):
     source_suffix = ".py"
     executable_suffix = ".pyc"
     helper_module_name = "test_helper.py"
-    interpreter = sh.Command("python3")
+    interpreter = sh.Command(PYTHON_EXECUTABLE_NAME)
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name, arglist) -> Path:
