@@ -2,15 +2,12 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Check result with assert                Crashed due to signal 1:
-Traceback (most recent call last):
-  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 46, in <module>
-    main()
-  File "/home/ovsyanka/code/autograder/examples/extra_cli_args/temp/submission.py/check_result_with_assert.py", line 39, in main
-    assert result == 3
-AssertionError
-
-
+Testenv                                 None of the helper functions have been called.
+Instead, exit() has been called with exit_code 103.
+It could indicate student cheating or testcases being written incorrectly.
+Testexit                                None of the helper functions have been called.
+Instead, exit() has been called with exit_code 103.
+It could indicate student cheating or testcases being written incorrectly.
 ================================================================
 Result: 0/100
 

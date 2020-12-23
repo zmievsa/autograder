@@ -8,7 +8,7 @@ from autograder.util import AutograderError
 
 from .abstract_base_class import ArgList, TestCase, TEST_HELPERS_DIR
 
-PUBLIC_CLASS_MATCHER = re.compile(r"public.+class")
+PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 JNA_FILE_NAME = "jna.jar"
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / JNA_FILE_NAME
 
@@ -70,6 +70,9 @@ class JavaTestCase(TestCase):
         final_content = (
             f"""import com.sun.jna.Library;
                 import com.sun.jna.Native;
+                import java.lang.reflect.Field;
+                import java.util.Map;
+                import java.util.HashMap;
             """
             + final_content
         )
@@ -85,27 +88,12 @@ class JavaTestCase(TestCase):
         if match is None:
             raise ValueError(f"Public class not found in {self.path}")
         else:
-            main_class_index = match.start()
+            main_class_index = match.end(1)
 
-        file_starting_from_main_class = java_file[main_class_index:]
-        closing_brace_index = self._find_closing_brace(file_starting_from_main_class)
         return "".join(
             [
                 java_file[:main_class_index],
-                file_starting_from_main_class[:closing_brace_index],
-                "\n" + helper_class + "\n" + "}",
-                java_file[closing_brace_index + 1 :],
+                "\n" + helper_class + "\n",
+                java_file[main_class_index:],
             ]
         )
-
-    def _find_closing_brace(self, s: str):
-        bracecount = 0
-        for i in range(len(s)):
-            if s[i] == "{":
-                bracecount += 1
-            elif s[i] == "}":
-                bracecount -= 1
-                if bracecount == 0:
-                    return i
-        else:
-            raise AutograderError(f"Braces in testcase '{self.path.name}' don't match.")
