@@ -1,8 +1,15 @@
 from pathlib import Path
+import shutil
 
 import sh
 
 from .abstract_base_class import ArgList, ShCommand, TestCase
+
+
+if shutil.which("gcc") is not None:
+    COMPILER = sh.Command("gcc")
+else:
+    COMPILER = None
 
 
 class CTestCase(TestCase):
@@ -10,7 +17,7 @@ class CTestCase(TestCase):
     executable_suffix = ".out"
     helper_module_name = "test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    compiler = sh.Command("gcc")
+    compiler = COMPILER
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):

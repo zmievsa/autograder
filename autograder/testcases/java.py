@@ -13,6 +13,16 @@ JNA_FILE_NAME = "jna.jar"
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / JNA_FILE_NAME
 
 
+if shutil.which("javac") is not None:
+    COMPILER = sh.Command("javac")
+else:
+    COMPILER = None
+if shutil.which("java") is not None:
+    VM = sh.Command("java")
+else:
+    VM = None
+
+
 class JavaTestCase(TestCase):
     """Please, ask students to remove their main as it can theoretically
     generate errors (not sure how though).
@@ -23,9 +33,8 @@ class JavaTestCase(TestCase):
     source_suffix = ".java"
     executable_suffix = ""
     helper_module_name = "TestHelper.java"
-    compiler = sh.Command("javac")
-    jar = sh.Command("jar")
-    virtual_machine = sh.Command("java")
+    compiler = COMPILER
+    virtual_machine = VM
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):
