@@ -2,11 +2,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from autograder import guide
-from autograder.__version__ import __version__
-from autograder.grader import Grader  # That's some awful naming
-from autograder.util import AutograderError, print_results
-
 
 def main(argv=None):
     """ Returns the average score of the students """
@@ -45,8 +40,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     if args.version:
+        from autograder.__version__ import __version__
+
         print(__version__)
         exit(0)
+
     if sys.platform.startswith("win32"):
         print(
             "Windows is not supported by autograder. If you do not have Linux,"
@@ -55,6 +53,10 @@ def main(argv=None):
         exit(1)
     elif sys.platform.startswith("darwin"):
         print("OSX is not officially supported. Proceed with caution.")
+    from autograder import guide
+    from autograder.grader import Grader  # That's some awful naming
+    from autograder.util import AutograderError, print_results
+
     try:
         grader = Grader(
             current_dir,
