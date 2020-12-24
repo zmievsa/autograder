@@ -4,7 +4,7 @@ import shutil
 
 import sh
 
-from .abstract_base_class import ArgList, TestCase
+from .abstract_base_class import ArgList, Command, TestCase
 
 import sys
 
@@ -24,7 +24,11 @@ class PythonTestCase(TestCase):
     source_suffix = ".py"
     executable_suffix = ".pyc"
     helper_module_name = "test_helper.py"
-    interpreter = sh.Command(PYTHON_EXECUTABLE_NAME)
+    interpreter = Command(PYTHON_EXECUTABLE_NAME)
+
+    @classmethod
+    def is_installed(cls) -> bool:
+        return cls.interpreter is not None
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name, arglist) -> Path:

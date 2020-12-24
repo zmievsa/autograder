@@ -47,6 +47,14 @@ def main(argv=None):
     if args.version:
         print(__version__)
         exit(0)
+    if sys.platform.startswith("win32"):
+        print(
+            "Windows is not supported by autograder. If you do not have Linux,"
+            "try using it through utilities like Windows Subsystem For Linux."
+        )
+        exit(1)
+    elif sys.platform.startswith("darwin"):
+        print("OSX is not officially supported. Proceed with caution.")
     try:
         grader = Grader(
             current_dir,

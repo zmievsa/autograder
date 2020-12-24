@@ -3,13 +3,7 @@ import shutil
 
 import sh
 
-from .abstract_base_class import ArgList, ShCommand, TestCase
-
-
-if shutil.which("gcc") is not None:
-    COMPILER = sh.Command("gcc")
-else:
-    COMPILER = None
+from .abstract_base_class import ArgList, Command, ShCommand, TestCase
 
 
 class CTestCase(TestCase):
@@ -17,7 +11,11 @@ class CTestCase(TestCase):
     executable_suffix = ".out"
     helper_module_name = "test_helper.c"
     SUBMISSION_COMPILATION_ARGS = ("-Dscanf_s=scanf", "-Dmain=__student_main__")
-    compiler = COMPILER
+    compiler = Command("gcc")
+
+    @classmethod
+    def is_installed(cls) -> bool:
+        return cls.compiler is not None
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import sh
 from typing_extensions import Protocol
 
-# TODO: I hate these imports. We should only use relative imports because these imports indicate architectural problems.
+# TODO: I hate these imports. We should only use relative imports because direct imports indicate architectural problems.
 from autograder.util import format_template, get_stderr
 
 from .util.exit_codes import USED_EXIT_CODES, ExitCodeEventType, ExitCodeHandler
@@ -22,6 +22,11 @@ class ShCommand(Protocol):
 
     def __call__(self, *args: str, **kwargs: Any) -> Optional[sh.RunningCommand]:
         raise NotImplementedError()
+
+
+def Command(command: str, *args: Any, **kwargs: Any) -> Optional[sh.Command]:
+    """ An API for commands that do not throw errors on creation """
+    return None if shutil.which(command) is None else sh.Command(command, *args, **kwargs)
 
 
 class ArgList(enum.Enum):
@@ -50,6 +55,11 @@ class TestCase(ABC):
 
         pwd = temp/student_dir
         """
+
+    @classmethod
+    @abstractmethod
+    def is_installed(cls) -> bool:
+        """ Returns True software necessary to run the testcase is installed on the system """
 
     def __init__(
         self,

@@ -6,21 +6,11 @@ import sh
 
 from autograder.util import AutograderError
 
-from .abstract_base_class import ArgList, TestCase, TEST_HELPERS_DIR
+from .abstract_base_class import ArgList, Command, TestCase, TEST_HELPERS_DIR
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 JNA_FILE_NAME = "jna.jar"
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / JNA_FILE_NAME
-
-
-if shutil.which("javac") is not None:
-    COMPILER = sh.Command("javac")
-else:
-    COMPILER = None
-if shutil.which("java") is not None:
-    VM = sh.Command("java")
-else:
-    VM = None
 
 
 class JavaTestCase(TestCase):
@@ -33,8 +23,12 @@ class JavaTestCase(TestCase):
     source_suffix = ".java"
     executable_suffix = ""
     helper_module_name = "TestHelper.java"
-    compiler = COMPILER
-    virtual_machine = VM
+    compiler = Command("javac")
+    virtual_machine = Command("java")
+
+    @classmethod
+    def is_installed(cls) -> bool:
+        return cls.compiler is not None and cls.virtual_machine is not None
 
     @classmethod
     def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):

@@ -117,7 +117,7 @@ class Grader:
             arglist = self.config._generate_arglists(test.name)
             shutil.copy(test, self.paths.temp_dir)
             tests.append(
-                testcase_type(
+                testcase_type(  # type: ignore # The typing error here appears due to the limitations of python's typing
                     self.paths.temp_dir / test.name,
                     self.config.source_file_name,
                     self.paths.input_dir,
@@ -189,6 +189,8 @@ class Grader:
         total_testcase_score = 0
         testcase_results = []
         allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
+        if not allowed_tests:
+            print(f"No testcases suitable for the submission {submission.name} found.")
         if any(isinstance(t, JavaTestCase) for t in allowed_tests):
             JavaTestCase.run_additional_testcase_operations_in_student_dir(student_dir)
         for test in allowed_tests:

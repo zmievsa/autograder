@@ -81,7 +81,7 @@ class GradingConfig:
         if testcase_types:
             return testcase_types
         else:
-            raise AutograderError(f"Couldn't discover a testcase with correct suffix in {self.testcases_dir}")
+            raise AutograderError(f"Couldn't discover a testcase with supported suffix in {self.testcases_dir}")
 
 
 T = TypeVar("T")
