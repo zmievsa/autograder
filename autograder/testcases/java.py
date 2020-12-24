@@ -9,8 +9,8 @@ from autograder.util import AutograderError
 from .abstract_base_class import ArgList, Command, TestCase, TEST_HELPERS_DIR
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
-JNA_FILE_NAME = "jna.jar"
-PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / JNA_FILE_NAME
+PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
+PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionSecurityManager.class"
 
 
 class JavaTestCase(TestCase):
@@ -55,7 +55,8 @@ class JavaTestCase(TestCase):
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
-        shutil.copyfile(PATH_TO_JNA_FILE, student_dir / JNA_FILE_NAME)
+        shutil.copyfile(PATH_TO_JNA_FILE, student_dir / PATH_TO_JNA_FILE.name)
+        shutil.copyfile(PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name)
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():

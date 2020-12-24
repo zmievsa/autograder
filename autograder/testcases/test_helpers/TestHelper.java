@@ -30,6 +30,7 @@
     private static String ENABLE_ANTI_CHEAT() {
         String val = System.getenv("VALIDATING_STRING");
         unsetenv("VALIDATING_STRING");
+        System.setSecurityManager(new NoReflectionSecurityManager());
         return val;
     }
     private static void CHECK_OUTPUT() {

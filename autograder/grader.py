@@ -191,8 +191,8 @@ class Grader:
         allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
         if not allowed_tests:
             print(f"No testcases suitable for the submission {submission.name} found.")
-        if any(isinstance(t, JavaTestCase) for t in allowed_tests):
-            JavaTestCase.run_additional_testcase_operations_in_student_dir(student_dir)
+        for test in set(type(t) for t in allowed_tests):
+            test.run_additional_testcase_operations_in_student_dir(student_dir)
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
