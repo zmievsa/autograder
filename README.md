@@ -1,6 +1,6 @@
 This utility aims to provide a simple, yet secure and highly configurable way to autograde programming assignments.
 
-I consider it to be finished. From now on, I will only be adding extra grading languages if necessary and fixing bugs if any are reported. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades), almost completely safe from cheating, and fast.
+I consider it to be finished. From now on, I will only be adding extra grading languages if necessary and fixing bugs if any are reported. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades), fast, and protected from cheating.
 #### Table of Contents  
 [Features](#Features)   
 [Installation](#Installation)   
@@ -23,7 +23,7 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 * Support for grading C, C++, Java, and Python code
 * A file with testcase results can be generated for each student (done by default)
 * You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and formatters for checking student output
-* Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results (precompilation of testcases, verification of who exited the program, and removal of testcase source files before testing). You can read more on this in implementation details section below
+* Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results. You can read more on this in implementation details section below
 * You can pass arguments to language compilers during testcase (or submission) precompilation and compilation using config.ini
 * You can grade submissions in multiple programming languages at once, as long as there are testcases written in each language
 * Most of these features are described in detail in autograder/default_config.ini, implementation details section below, and command line help section below
@@ -80,11 +80,9 @@ optional arguments:
 * If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how c handles linking.
 
 ## Anti Cheating
-One of the main weaknesses of automatic grading is how prone it is to cheating. Autograder tries to solve this problem with methods described in this section. Currently, it is impossible to cheat autograder in Python, C, C++ (as far as I've read and tested).
-
-It is very unlikely that the student will be able to cheat autograder when using Java because it would require him to read and understand the source code of the grader and make private methods public in the testcase file (technically still possible but not easy at all), or get the validating string from the testcase class (I have made sure that this is impossible but I doubt any solution can be bullet-proof if the student has a lot of time and great Java experience). If the student is able to do all of these steps, he/she can easily pass most of bachelor-level courses where autograder can be applied without attempting to cheat. However, the possibility of cheating in Java is still nonzero which is why I am planning to try to implement protections against making private methods public. The description of anti-cheating features can be found below.
+One of the main weaknesses of automatic grading is how prone it is to cheating. Autograder tries to solve this problem with methods described in this section. Currently, (as far as I've read and tested), it is impossible to cheat autograder. However, Java might still have some weird ways of doing this but there are protections against all of the most popular scenarios (decompiling and parsing testcases, using System.exit, trying to read security key from environment variables, using reflection to use private members of the test helper)
 * To restrict the student from exiting the process himself and returning an exit code with the grade of his/her choice, I validate test output using a pseudorandom key called __validation string__. Autograder gives the string to the testcase as an environment variable which is erased right after the testcase saves it, and then it is automatically printed on the last line of stdout before the testcase exits. The autograder, then, pops it from stdout and verifies that it is the same string it sent. If it is not, the student will get the respective error message and a 0 on the testcase.
-* To prevent students from simply importing the string from the testcase file, test helper files (described above) all have some way of disallowing imports. For C/C++, it is the static identifier, for Java, it is the private method modifiers, for python it is throwing an error if __name__ != "__main__". I assume that similar precautions can be implemented in almost any language added into autograder.
+* To prevent students from simply importing the string from the testcase file, test helper files (described above) all have some way of disallowing imports. For C/C++, it is the static identifier, for Java, it is the private method modifiers and SecurityManager to protect against reflection, for python it is throwing an error if __name__ != "__main__". I assume that similar precautions can be implemented in almost any language added into autograder.
 * Simply parsing validating string from the testcase file is impossible because it is saved at runtime.
 * As an additional (and maybe unnecessary) security measure, autograder precompiles testcases without linking for all languages except for java, thus decreasing the possibility that the student will simply parse the testcase file and figure out the correct return values if the security measure above doesn't work.
 
