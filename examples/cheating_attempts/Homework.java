@@ -1,4 +1,4 @@
- import java.lang.reflect.*;
+import java.lang.reflect.*;
 
 public class Homework {
     public static void test_env() {
@@ -15,8 +15,8 @@ public class Homework {
             String VALIDATING_STRING = (String) f.get(Class.forName("TestReflection")); // IllegalAccessException
             System.out.print("\n" + VALIDATING_STRING);
             System.exit(103);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        } catch (NoSuchFieldException e) {
+        } catch (ClassNotFoundException e) {
+        } catch (IllegalAccessException e) {}
     }
 }
