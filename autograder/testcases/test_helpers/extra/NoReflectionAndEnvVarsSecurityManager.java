@@ -1,5 +1,4 @@
 // I included this file for reference only. It is not necessary for any functions in autograder
-
 import java.lang.SecurityManager;
 
 import java.lang.RuntimePermission;
@@ -15,6 +14,9 @@ import java.lang.ClassLoader;
 import java.lang.reflect.*;
 
 public class NoReflectionAndEnvVarsSecurityManager extends SecurityManager {
+
+        // What if the student uses a lib that uses reflection?
+        // https://stackoverflow.com/questions/8703678/how-can-i-check-if-a-class-belongs-to-java-jdk
         static ClassLoader SYS_CLS_LOADER = "".getClass().getClassLoader();
         @Override
         public void checkPermission(Permission perm) {
