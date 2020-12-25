@@ -10,7 +10,7 @@ from .abstract_base_class import ArgList, Command, TestCase, TEST_HELPERS_DIR
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
-PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionSecurityManager.class"
+PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
 
 
 class JavaTestCase(TestCase):

@@ -1,5 +1,6 @@
 // This class becomes the member class of the testcase, thus restricting
 // the student from accessing helper array and helper methods
+// https://blog.quirk.es/2009/11/setting-environment-variables-in-java.html
     private interface LibC extends Library {
         public int setenv(String name, String value, int overwrite);
         public int unsetenv(String name);
@@ -30,7 +31,7 @@
     private static String ENABLE_ANTI_CHEAT() {
         String val = System.getenv("VALIDATING_STRING");
         unsetenv("VALIDATING_STRING");
-        System.setSecurityManager(new NoReflectionSecurityManager());
+        System.setSecurityManager(new NoReflectionAndEnvVarsSecurityManager());
         return val;
     }
     private static void CHECK_OUTPUT() {
