@@ -11,8 +11,10 @@ from typing_extensions import Protocol
 # TODO: I hate these imports. We should only use relative imports because direct imports indicate architectural problems.
 from autograder.util import format_template, get_stderr
 
-from .util.exit_codes import USED_EXIT_CODES, ExitCodeEventType, ExitCodeHandler
-from .util.testcase_result_validator import generate_validating_string, validate_output
+from .util.exit_codes import (USED_EXIT_CODES, ExitCodeEventType,
+                              ExitCodeHandler)
+from .util.testcase_result_validator import (generate_validating_string,
+                                             validate_output)
 
 TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
 

@@ -1,7 +1,7 @@
 # Allows us to use student's module from our testcase
 import importlib
-import sys
 import os
+import sys
 
 
 def CHECK_OUTPUT():

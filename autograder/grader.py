@@ -1,4 +1,3 @@
-from autograder.testcases.java import JavaTestCase
 import multiprocessing
 import os
 import shutil
@@ -10,10 +9,12 @@ from typing import Callable, Dict, List, Optional
 import sh
 
 from autograder.testcases.abstract_base_class import ArgList
+from autograder.testcases.java import JavaTestCase
 
 from . import testcases
 from .config_manager import GradingConfig
-from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .output_summary import (BufferOutputLogger, GradingOutputLogger,
+                             get_submission_name)
 from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR

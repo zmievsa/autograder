@@ -1,12 +1,10 @@
 import py_compile
-from pathlib import Path
 import shutil
+import sys
+from pathlib import Path
 
-import sh
 
 from .abstract_base_class import ArgList, Command, TestCase
-
-import sys
 
 PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
 PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"

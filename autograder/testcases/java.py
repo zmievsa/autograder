@@ -1,12 +1,8 @@
 import re
-from pathlib import Path
 import shutil
+from pathlib import Path
 
-import sh
-
-from autograder.util import AutograderError
-
-from .abstract_base_class import ArgList, Command, TestCase, TEST_HELPERS_DIR
+from .abstract_base_class import TEST_HELPERS_DIR, ArgList, Command, TestCase
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
