@@ -1,12 +1,24 @@
 Grading oatmealstanislav
 Running 'Testoutput'
-50/50
+Failed to compile:
+.../oatmealstanislav_12345_12345_Homework.java/TestOutput.java:48: error: cannot find symbol
+        System.out.printf("\n%f$%s", result, VALIDATING_STRING);
+                                     ^
+  symbol:   variable result
+  location: class TestOutput
+1 error
 Running 'Testresult'
-100/100
-Result: 100/100
+Failed to compile:
+.../oatmealstanislav_12345_12345_Homework.java/TestResult.java:48: error: cannot find symbol
+        System.out.printf("\n%f$%s", result, VALIDATING_STRING);
+                                     ^
+  symbol:   variable result
+  location: class TestResult
+1 error
+Result: 0/100
 
 
-Average score: 100/100
+Average score: 0/100
 
 
 Key:

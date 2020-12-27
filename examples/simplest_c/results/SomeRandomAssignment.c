@@ -2,8 +2,8 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Mycomplextestytest                      100/100
-Test negative input                     100/100
+Mycomplextestytest                      100.0/100
+Test negative input                     100.0/100
 ================================================================
 Result: 100/100
 

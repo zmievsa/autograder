@@ -10,9 +10,9 @@ Exception in thread "main" java.lang.SecurityException: Using environ is not per
 	at TestEnv.main(TestEnv.java:59)
 
 
-Testexit                                None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
+Testexit                                Crashed due to signal 103:
+
+
 Testreflection                          Crashed due to signal 1:
 Exception in thread "main" java.lang.SecurityException: Using reflection is not permitted. It could indicate cheating.
 	at NoReflectionAndEnvVarsSecurityManager.checkPermission(NoReflectionAndEnvVarsSecurityManager.java:28)

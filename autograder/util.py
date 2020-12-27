@@ -13,20 +13,6 @@ class AutograderError(Exception):
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")
-template_matcher = re.compile("{ *% *([A-Za-z0-9_]+) *% *}")
-
-
-def format_template(template: str, **kwargs: Dict[str, Any]):
-    # We use dict here to filter repeated matches
-    matches = {m.group(1): m.group(0) for m in template_matcher.finditer(template)}
-    for attr, matched_string in matches.items():
-        value = kwargs.pop(attr, None)
-        if value is None:
-            raise ValueError(f"Attribute '{attr}' not supplied")
-        template = template.replace(matched_string, str(value))
-    if len(kwargs):
-        raise ValueError("Too many arguments supplied: " + ", ".join(kwargs.keys()))
-    return template
 
 
 def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):

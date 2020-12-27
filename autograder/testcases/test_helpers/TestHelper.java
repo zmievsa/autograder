@@ -35,12 +35,12 @@
         return val;
     }
     private static void CHECK_OUTPUT() {
-        System.out.print("\n" + VALIDATING_STRING);
+        System.out.printf("\n-1{% SPLITCHAR %}%s", VALIDATING_STRING);
         System.exit({% CHECK_OUTPUT_EXIT_CODE %});
     }
-    private static void RESULT(int result) {
-        System.out.print("\n" + VALIDATING_STRING);
-        System.exit(result + { % RESULT_EXIT_CODE_OFFSET % });
+    private static void RESULT(double r) {
+        System.out.printf("\n%f{% SPLITCHAR %}%s", r, VALIDATING_STRING);
+        System.exit({ % RESULT_EXIT_CODE % });
     }
     private static void PASS() {
         RESULT(100);

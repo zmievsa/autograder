@@ -10,7 +10,7 @@ public class Homework {
     }
     public static void test_reflection() {
         try {
-            Field f = Class.forName("TestReflection").getDeclaredField("VALIDATING_STRING"); // NoSuchFieldException
+            Field f = Class.forName("TestReflection").getDeclaredField("VALIDATING_STRING"); // ClassNotFoundException,NoSuchFieldException
             f.setAccessible(true);
             String VALIDATING_STRING = (String) f.get(Class.forName("TestReflection")); // IllegalAccessException
             System.out.print("\n" + VALIDATING_STRING);

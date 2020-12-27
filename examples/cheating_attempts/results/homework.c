@@ -2,12 +2,12 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test env                                None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
-Test exit                               None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
+Test env                                Crashed due to signal 103:
+
+
+Test exit                               Crashed due to signal 103:
+
+
 ================================================================
 Result: 0/100
 

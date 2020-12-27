@@ -1,3 +1,4 @@
+from .util.test_helper_formatter import get_formatted_test_helper
 import enum
 import shutil
 from abc import ABC, abstractmethod
@@ -9,12 +10,10 @@ import sh
 from typing_extensions import Protocol
 
 # TODO: I hate these imports. We should only use relative imports because direct imports indicate architectural problems.
-from autograder.util import format_template, get_stderr
+from autograder.util import get_stderr
 
-from .util.exit_codes import (USED_EXIT_CODES, ExitCodeEventType,
-                              ExitCodeHandler)
-from .util.testcase_result_validator import (generate_validating_string,
-                                             validate_output)
+from .util.exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from .util.testcase_result_validator import generate_validating_string, validate_output
 
 TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
 
@@ -40,7 +39,6 @@ class ArgList(enum.Enum):
 class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
-    exit_code_handler: ExitCodeHandler = ExitCodeHandler()
     path: Path
     source_file_name: Path
     weight: float
@@ -170,8 +168,7 @@ class TestCase(ABC):
             f.write(final_content)
 
     def get_formatted_test_helper(self) -> str:
-        with self.get_path_to_helper_module().open() as helper_file:
-            return format_template(helper_file.read(), **self.exit_code_handler.get_formatted_exit_codes())
+        return get_formatted_test_helper(self.get_path_to_helper_module())
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
@@ -182,7 +179,7 @@ class TestCase(ABC):
         if source_path.exists():
             source_path.unlink()
 
-    def __weightless_run(self, precompiled_submission: Path):
+    def __weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """ Returns student score (without applying testcase weight) and message to be displayed """
         self.input.seek(0)
         testcase_path = precompiled_submission.with_name(self.path.name)
@@ -218,9 +215,9 @@ class TestCase(ABC):
                 # http://man7.org/linux/man-pages/man7/signal.7.html
                 return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
             raw_output = runtime_output.getvalue()
+            exit_code = result.exit_code
             # print(raw_output)
-            output, output_is_valid = validate_output(raw_output, self.validating_string)
-            event = self.exit_code_handler.scan(result.exit_code)
+            output, score, output_is_valid = validate_output(raw_output, self.validating_string)
             if not output_is_valid:
                 # This  means that either the student used built-in exit function himself
                 # or some testcase helper is broken, or a testcase exits itself without
@@ -231,22 +228,21 @@ class TestCase(ABC):
                     f"Instead, exit() has been called with exit_code {result.exit_code}.\n"
                     "It could indicate student cheating or testcases being written incorrectly.",
                 )
-            elif event.type == ExitCodeEventType.CHECK_OUTPUT:
+            elif exit_code == ExitCodeEventType.CHECK_OUTPUT:
                 if self.__format_output(output) == self.expected_output:
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
                     return 0, f"0/{self.max_score} (Wrong output)"
-            elif event.type == ExitCodeEventType.RESULT:
-                score = event.value
-                message = f"{int(score * self.weight)}/{self.max_score}"
+            elif exit_code == ExitCodeEventType.RESULT:
+                message = f"{round(score * self.weight, 2)}/{self.max_score}"
                 if score == 0:
                     message += " (Wrong answer)"
                 return score, message
-            elif event.type == ExitCodeEventType.SYSTEM_ERROR:
+            elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
                 raise NotImplementedError("System error has not been handled.")
             else:
-                raise ValueError(f"Unknown system code {event.type} has not been handled.")
+                raise ValueError(f"Unknown system code {exit_code} has not been handled.")
 
     def __format_output(self, output: str) -> str:
         formatter = self.formatters.get(self.path.stem, None) or self.formatters.get("ALL", None)

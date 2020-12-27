@@ -20,13 +20,13 @@ static void ENABLE_ANTI_CHEAT()
 }
 static void CHECK_OUTPUT()
 {
-  printf("\n%s", VALIDATING_STRING);
+  printf("\n-1{% SPLITCHAR %}%s", VALIDATING_STRING);
   exit({ % CHECK_OUTPUT_EXIT_CODE % });
 }
-static void RESULT(int r)
+static void RESULT(double r)
 {
-  printf("\n%s", VALIDATING_STRING);
-  exit(r + { % RESULT_EXIT_CODE_OFFSET % });
+  printf("\n%f{% SPLITCHAR %}%s", r, VALIDATING_STRING);
+  exit({ % RESULT_EXIT_CODE % });
 }
 static void PASS()
 {

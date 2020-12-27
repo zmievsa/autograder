@@ -4,17 +4,15 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 import sh
 
 from autograder.testcases.abstract_base_class import ArgList
-from autograder.testcases.java import JavaTestCase
 
 from . import testcases
 from .config_manager import GradingConfig
-from .output_summary import (BufferOutputLogger, GradingOutputLogger,
-                             get_submission_name)
+from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from .util import AutograderError, import_from_path
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
@@ -197,11 +195,10 @@ class Grader:
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
-
             logger(message)
             testcase_results.append((test.name, message))
             total_testcase_score += testcase_score
-        raw_student_score = total_testcase_score / sum(t.weight for t in allowed_tests)
+        raw_student_score = total_testcase_score / (sum(t.weight for t in allowed_tests) or 1)
         normalized_student_score = raw_student_score * self.config.total_score_to_100_ratio
         self.logger.print_testcase_results_to_results_file(
             submission, testcase_results, normalized_student_score, logger
