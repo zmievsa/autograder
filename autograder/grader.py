@@ -285,7 +285,5 @@ def temporarily_change_dir(new_dir):
     os.chdir(new_dir)
     try:
         yield
-    except Exception as e:
-        raise e
     finally:
         os.chdir(old_dir)

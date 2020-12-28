@@ -42,13 +42,10 @@ class SynchronizedLogger:
 
     @contextmanager
     def single_submission_output_logger(self, lock):
-        try:
-            buffer = BufferOutputLogger()
-            yield buffer
-            with lock:
-                self("\n".join(buffer.output))
-        except Exception as e:
-            raise e
+        buffer = BufferOutputLogger()
+        yield buffer
+        with lock:
+            self("\n".join(buffer.output))
 
 
 # Yes, it does break Liskov's principle and I don't care
