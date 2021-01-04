@@ -50,11 +50,11 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with output, you don't check the result, and simply allow autograder to handle grading by calling CHECK_OUTPUT())
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
 * Assume that helper functions CHECK_OUTPUT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
-* Each helper function prints the student's score, __validation string__, terminates the execution of the program and returns its respective exit code that signifies how the testcase shall be graded (TODO: Add more info here).
+* Each helper function prints the student's score, __validation string__, terminates the execution of the program and returns its respective exit code that signifies to autograder if the testcase ended in a result, cheating attempt, or if output checking is necessary.
 * Each testcase is graded out of 100% and each grade is a 64bit double precision floating point number, which means that you can fully control how much partial credit is given.
 ### Helper functions
   * CHECK_OUTPUT() indicates that we do not check student's return values for the testcase and that we only care about their output (stdout) that will be checked by the autograder automatically using student's stdout and the output files with the same name stem as the testcase. (beware: printing anything within your testcase will break this functionality)
-  * RESULT(int r) returns student's score r back to the grader (0 - 100)
+  * RESULT(double r) returns student's score r back to the grader (0 - 100)
   * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
   * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 # Command line help
