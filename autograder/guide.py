@@ -3,7 +3,7 @@ from pathlib import Path
 
 from autograder.config_manager import ALLOWED_LANGUAGES
 
-from .grader import AutograderPaths
+from .autograder import AutograderPaths
 from .testcases import ALLOWED_LANGUAGES
 
 

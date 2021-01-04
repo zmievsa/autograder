@@ -54,7 +54,7 @@ def main(argv=None):
     elif sys.platform.startswith("darwin"):
         print("OSX is not officially supported. Proceed with caution.")
     from autograder import guide
-    from autograder.grader import Grader  # That's some awful naming
+    from autograder.autograder import Grader  # That's some awful naming
     from autograder.util import AutograderError, print_results
 
     try:

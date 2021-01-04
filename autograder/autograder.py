@@ -1,10 +1,12 @@
+from .testcases.util.testcase_io import TestCaseIO
+from .testcases.multifile import MultifileTestCase, is_multifile_submission
 import multiprocessing
 import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Set, Tuple
 
 import sh
 
@@ -25,6 +27,7 @@ class Grader:
     tests: List[testcases.TestCase]
     raw_submissions: List[Path]
     paths: "AutograderPaths"
+    multifile_submissions_found: bool
 
     def __init__(self, current_dir, no_output=False, submissions=None):
         if submissions is None:
@@ -47,9 +50,12 @@ class Grader:
                 self.no_output,
                 self.config.generate_results,
             )
-            self.submissions = self._gather_submissions(self.raw_submissions)
+            self.submissions, self.multifile_submissions_found = self._gather_submissions(self.raw_submissions)
             self._prepare_directory_structure()
-            self.tests = self._gather_testcases()  # also copies testcases to temp dir
+            io_choices = self._gather_io()
+            if self.multifile_submissions_found:
+                self.multifile_tests = self._generate_multifile_testcases(io_choices)
+            self.tests = self._gather_testcases(io_choices)  # also copies testcases to temp dir
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
@@ -59,6 +65,8 @@ class Grader:
             self.logger.print_key()
         finally:
             self.cleanup()
+            for io in io_choices.values():
+                io.cleanup()
         return class_average
 
     def run_on_single_submission(self, submission, lock):
@@ -89,7 +97,6 @@ class Grader:
             for path in self.paths.extra_dir.iterdir():
                 new_path = to_dir / path.name
                 shutil.copy(str(path), str(new_path))
-                # os.chmod(new_path, READ_EXECUTE_PERMISSION)
 
     def _check_required_directories_exist(self):
         for directory in self.paths.required_dirs:
@@ -99,7 +106,65 @@ class Grader:
                     "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
                 )
 
-    def _gather_testcases(self) -> List[testcases.TestCase]:
+    def _gather_submissions(self, submissions_to_grade) -> Tuple[List[Path], bool]:
+        """ Returns sorted list of paths to submissions """
+        submissions_to_grade = set(submissions_to_grade)
+        submissions: List[Path] = []
+        multifile_submissions_found = False
+        for submission in self.paths.current_dir.iterdir():
+            if submissions_to_grade and submission.name not in submissions_to_grade:
+                continue
+            submission_name = submission.name
+            if self.config.lower_source_filename:
+                submission_name = submission_name.lower()
+            if submission.suffix in self.config.testcase_types:
+                if self.config.auto_source_file_name_enabled:
+                    submissions.append(submission)
+                elif self.config.source_file_name in submission_name:
+                    submissions.append(submission)
+                else:
+                    self.logger(f"{submission} does not contain the required file name. Skipping it.")
+            elif (
+                self.config.multifile_submissions_enabled
+                and submission.is_dir()
+                and is_multifile_submission(submission)
+            ):
+                submissions.append(submission)
+                multifile_submissions_found = True
+
+        if not len(submissions):
+            raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
+
+        # Allows consistent output
+        submissions.sort()
+        return submissions, multifile_submissions_found
+
+    def _gather_io(self) -> Dict[str, TestCaseIO]:
+        GET_FILE_STEMS = lambda d: (p.stem for p in d.iterdir()) if d.exists() else []
+        outputs = GET_FILE_STEMS(self.paths.output_dir)
+        inputs = GET_FILE_STEMS(self.paths.input_dir)
+        io: Set[str] = set().union(outputs, inputs)
+        dict_io = {p: TestCaseIO(p, self.output_formatters, self.paths.input_dir, self.paths.output_dir) for p in io}
+        return dict_io
+
+    def _generate_multifile_testcases(self, io_choices: Dict[str, TestCaseIO]):
+        default_timeout = self.config.timeouts.get("ALL", 1)
+        default_weight = self.config.testcase_weights.get("ALL", 1)
+        return [
+            MultifileTestCase(
+                self.paths.temp_dir,
+                self.config.source_file_name,
+                self.config.timeouts.get(io.name, default_timeout),
+                {},
+                self.config.anti_cheat,
+                self.config.testcase_weights.get(io.name, default_weight),
+                io_choices,
+            )
+            for io in io_choices.values()
+            if io.expected_output
+        ]
+
+    def _gather_testcases(self, io) -> List[testcases.TestCase]:
         """ Returns sorted list of testcases from tests/testcases """
         tests = []
         default_weight = self.config.testcase_weights.get("ALL", 1)
@@ -119,43 +184,16 @@ class Grader:
                 testcase_type(  # type: ignore # The typing error here appears due to the limitations of python's typing
                     self.paths.temp_dir / test.name,
                     self.config.source_file_name,
-                    self.paths.input_dir,
-                    self.paths.output_dir,
                     timeout,
-                    self.output_formatters,
                     arglist,
                     self.config.anti_cheat,
                     weight,
+                    io,
                 )
             )
         # Allows consistent output
         tests.sort(key=lambda t: t.path.name)
         return tests
-
-    def _gather_submissions(self, submissions_to_grade) -> List[Path]:
-        """ Returns sorted list of paths to submissions """
-        submissions_to_grade = set(submissions_to_grade)
-        submissions: List[Path] = []
-        for submission in self.paths.current_dir.iterdir():
-            if submissions_to_grade and submission.name not in submissions_to_grade:
-                continue
-            submission_name = submission.name
-            if self.config.lower_source_filename:
-                submission_name = submission_name.lower()
-            if submission.suffix in self.config.testcase_types:
-                if self.config.auto_source_file_name_enabled:
-                    submissions.append(submission)
-                elif self.config.source_file_name in submission_name:
-                    submissions.append(submission)
-                else:
-                    self.logger(f"{submission} does not contain the required file name. Skipping it.")
-
-        if not len(submissions):
-            raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
-
-        # Allows consistent output
-        submissions.sort()
-        return submissions
 
     def _import_formatters(self, path_to_output_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_output_formatters.exists():
@@ -165,10 +203,11 @@ class Grader:
             return {}
 
     def _precompile_submission(self, submission: Path, student_dir: Path, logger):
+        # TODO: change for multifile submissions
         precompiled_submission = None
         try:
             arglists = self.config._generate_arglists(submission.name)
-            testcase_type = self.config.testcase_types[submission.suffix]
+            testcase_type = self.config.testcase_types[submission.suffix]  # TODO: Multifile
             source_file_path = Path(self.config.source_file_name).with_suffix(testcase_type.source_suffix)
             precompiled_submission = testcase_type.precompile_submission(
                 submission, student_dir, source_file_path.name, arglists[ArgList.SUBMISSION_PRECOMPILATION]
@@ -187,7 +226,13 @@ class Grader:
             return 0
         total_testcase_score = 0
         testcase_results = []
-        allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
+        if submission.is_dir():  # Means that it is a multifile submission
+            if self.multifile_submissions_found:
+                allowed_tests = self.multifile_tests
+            else:
+                raise TypeError(f"Submission {submission} is a directory but multifile submissions are disabled.")
+        else:
+            allowed_tests = [t for t in self.tests if t.source_suffix == submission.suffix]
         if not allowed_tests:
             print(f"No testcases suitable for the submission {submission.name} found.")
         for test in set(type(t) for t in allowed_tests):

@@ -1,21 +1,24 @@
+from .util.testcase_io import TestCaseIO
 from .util.test_helper_formatter import get_formatted_test_helper
 import enum
 import shutil
 from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import sh
 from typing_extensions import Protocol
 
-# TODO: I hate these imports. We should only use relative imports because direct imports indicate architectural problems.
+# TODO: I hate these imports. We should only use relative imports because direct imports might indicate architectural problems.
 from autograder.util import get_stderr
 
 from .util.exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
 from .util.testcase_result_validator import generate_validating_string, validate_output
 
 TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
+
+EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
 class ShCommand(Protocol):
@@ -48,6 +51,11 @@ class TestCase(ABC):
     def helper_module_name(self) -> str:
         pass
 
+    @classmethod
+    @abstractmethod
+    def is_installed(cls) -> bool:
+        """ Returns True if software necessary to run the testcase is installed on the system """
+
     @abstractmethod
     def compile_testcase(self, precompiled_submission: Path) -> ShCommand:
         """Compiles student submission and testcase into a single executable
@@ -56,48 +64,28 @@ class TestCase(ABC):
         pwd = temp/student_dir
         """
 
-    @classmethod
-    @abstractmethod
-    def is_installed(cls) -> bool:
-        """ Returns True software necessary to run the testcase is installed on the system """
-
     def __init__(
         self,
         path: Path,
         source_file_name: str,
-        input_dir: Path,
-        output_dir: Path,
         timeout: float,
-        formatters: Dict[str, Callable[[str], str]],
         argument_lists: Dict[ArgList, List[str]],
         anti_cheat_enabled: bool,
         weight: float,
+        io: Dict[str, TestCaseIO],
     ):
         self.path = path
         self.source_file_name = Path(source_file_name)
         self.timeout = timeout
-        self.formatters = formatters
         self.argument_lists = argument_lists
         self.anti_cheat_enabled = anti_cheat_enabled
         self.weight = weight
         self.max_score = int(weight * 100)
-        output_file = output_dir / f"{path.stem}.txt"
 
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
 
-        if output_file.exists():
-            with output_file.open() as f:
-                self.expected_output = self.__format_output(f.read())
-        else:
-            self.expected_output = StringIO("")
-        input_file = input_dir / f"{path.stem}.txt"
-        if input_file.exists():
-            with input_file.open() as f:
-                self.input = StringIO(f.read().strip())
-        else:
-            self.input = StringIO("")
-
+        self.io = io.get(self.path.stem, EMPTY_TESTCASE_IO)
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()
@@ -147,7 +135,7 @@ class TestCase(ABC):
 
     def run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """ Returns student score and message to be displayed """
-        result, message = self.__weightless_run(precompiled_submission)
+        result, message = self._weightless_run(precompiled_submission)
 
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
@@ -179,9 +167,8 @@ class TestCase(ABC):
         if source_path.exists():
             source_path.unlink()
 
-    def __weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
+    def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """ Returns student score (without applying testcase weight) and message to be displayed """
-        self.input.seek(0)
         testcase_path = precompiled_submission.with_name(self.path.name)
         if self.anti_cheat_enabled:
             with testcase_path.open("wb") as f:
@@ -196,12 +183,10 @@ class TestCase(ABC):
             return 0, get_stderr(self.path.parent, e, "Failed to compile")
         self.delete_source_file(testcase_path)
 
-        with StringIO() as runtime_output:
+        with StringIO() as runtime_output, self.io.input() as runtime_input:
             try:
-                # Useful during testing
-                # input("Waiting...")
                 result = test_executable(
-                    _in=self.input,
+                    _in=runtime_input,
                     _out=runtime_output,
                     _timeout=self.timeout,
                     _ok_code=USED_EXIT_CODES,
@@ -212,11 +197,8 @@ class TestCase(ABC):
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
-                # http://man7.org/linux/man-pages/man7/signal.7.html
                 return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
             raw_output = runtime_output.getvalue()
-            exit_code = result.exit_code
-            # print(raw_output)
             output, score, output_is_valid = validate_output(raw_output, self.validating_string)
             if not output_is_valid:
                 # This  means that either the student used built-in exit function himself
@@ -228,24 +210,18 @@ class TestCase(ABC):
                     f"Instead, exit() has been called with exit_code {result.exit_code}.\n"
                     "It could indicate student cheating or testcases being written incorrectly.",
                 )
-            elif exit_code == ExitCodeEventType.CHECK_OUTPUT:
-                if self.__format_output(output) == self.expected_output:
+            elif result.exit_code == ExitCodeEventType.CHECK_OUTPUT:
+                if self.io.expected_output_equals(output):
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
                     return 0, f"0/{self.max_score} (Wrong output)"
-            elif exit_code == ExitCodeEventType.RESULT:
+            elif result.exit_code == ExitCodeEventType.RESULT:
                 message = f"{round(score * self.weight, 2)}/{self.max_score}"
                 if score == 0:
                     message += " (Wrong answer)"
                 return score, message
-            elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
+            elif result.exit_code in SYSTEM_RESERVED_EXIT_CODES or result.exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
                 raise NotImplementedError("System error has not been handled.")
             else:
-                raise ValueError(f"Unknown system code {exit_code} has not been handled.")
-
-    def __format_output(self, output: str) -> str:
-        formatter = self.formatters.get(self.path.stem, None) or self.formatters.get("ALL", None)
-        if formatter is not None:
-            output = formatter(output)
-        return output
+                raise ValueError(f"Unknown system code {result.exit_code} has not been handled.")
