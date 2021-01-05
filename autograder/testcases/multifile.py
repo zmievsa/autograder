@@ -1,15 +1,30 @@
 from pathlib import Path
+import shutil
+from typing import List
+
+import sh
 from .abstract_base_class import Command, TestCase
 
+POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 
-def is_multifile_submission(submission_dir: Path):
+
+def is_multifile_submission(submission_dir: Path, source_file_stem, lower_source_file_stem: bool):
     contents = list(submission_dir.iterdir())
     while len(contents) == 1 and contents[0].is_dir():
         contents = list(contents[0].iterdir())
-    return any(_is_makefile(f) for f in contents)
 
-
-POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
+    # TODO: Remove repetition of code piece below
+    if lower_source_file_stem:
+        source_file_stem = source_file_stem.lower()
+    for f in submission_dir.iterdir():
+        if (
+            _is_makefile(f)
+            or (lower_source_file_stem and f.stem.lower() == source_file_stem)
+            or (not lower_source_file_stem and f.stem == source_file_stem)
+        ):
+            return True
+    else:
+        return False
 
 
 def _is_makefile(path: Path):
@@ -29,20 +44,22 @@ class MultifileTestCase(TestCase):
         """ We don't need TestHelper when we are only checking inputs/outputs """
 
     @classmethod
-    def precompile_submission(cls, submission, student_dir, source_file_name, arglist):
+    def precompile_submission(
+        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+    ):
         """ pwd = temp/student_dir """
-        pass
+        _copy_submission_contents_into_student_dir(submission, student_dir)
+        try:
+            cls.compiler()
+        except sh.ErrorReturnCode as e:
+            if "no makefile found" in str(e):
+                pass
+            else:
+                raise e
+        return _find_submission_executable(student_dir, source_file_stem, lower_source_filename)
 
-    def compile_testcase(self, precompiled_submission):
-        pass
-
-    @classmethod
-    def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
-        pass
-
-    def make_executable_path(self, submission: Path) -> Path:
-        """ By combining test name and student name, it makes a unique path """
-        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
+    def compile_testcase(self, precompiled_submission: Path):
+        return sh.Command(precompiled_submission)
 
     def prepend_test_helper(self):
         """We don't need test helper because we don't have a testcase file"""
@@ -55,3 +72,25 @@ class MultifileTestCase(TestCase):
     def delete_source_file(self, source_path: Path):
         """ There is no testcase file """
         pass
+
+
+def _copy_submission_contents_into_student_dir(submission, student_dir):
+    contents: List[Path] = list(submission.iterdir())
+    while len(contents) == 1 and contents[0].is_dir():
+        contents = list(contents[0].iterdir())
+    for f in contents:
+        new_path = student_dir / f.name
+        if f.is_dir():
+            shutil.copytree(f, new_path)
+        else:
+            shutil.copyfile(f, new_path)
+
+
+def _find_submission_executable(student_dir: Path, source_file_stem: str, lower_source_filename):
+    if lower_source_filename:
+        source_file_stem = source_file_stem.lower()
+    for f in student_dir.iterdir():
+        if lower_source_filename and f.stem.lower() == source_file_stem:
+            return f
+        elif not lower_source_filename and f.stem == source_file_stem:
+            return f

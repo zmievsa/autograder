@@ -17,11 +17,15 @@ class CTestCase(TestCase):
         return cls.compiler is not None
 
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):
+    def precompile_submission(
+        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+    ):
         """Links student submission without compiling it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, student_dir, submission.name, arglist)
+        copied_submission = super().precompile_submission(
+            submission, student_dir, submission.name, lower_source_filename, arglist
+        )
         precompiled_submission = copied_submission.with_suffix(".o")
         try:
             cls.compiler(

@@ -29,8 +29,12 @@ class PythonTestCase(TestCase):
         return cls.interpreter is not None
 
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name, arglist) -> Path:
-        copied_submission = super().precompile_submission(submission, student_dir, source_file_name, arglist)
+    def precompile_submission(
+        cls, submission: Path, student_dir: Path, source_file_stem, lower_source_filename: bool, arglist
+    ) -> Path:
+        copied_submission = super().precompile_submission(
+            submission, student_dir, source_file_stem, lower_source_filename, arglist
+        )
         kwargs = {}
         if "-O" in arglist:
             kwargs["optimize"] = 1

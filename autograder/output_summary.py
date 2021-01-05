@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Deque
 
 from .util import get_stderr
+import sh
 
 KEY = """
 \nKey:
@@ -86,9 +87,12 @@ class GradingOutputLogger(SynchronizedLogger):
             self._silence_generating_results()
 
     def print_precompilation_error_to_results_file(self, submission, error, buffer_logger):
-        stderr = get_stderr(self.current_dir, error, "Failed to precompile")
+        if isinstance(error, sh.ErrorReturnCode):
+            stderr = get_stderr(self.current_dir, error, "Failed to precompile")
+        else:
+            stderr = "Failed to precompile: " + str(error)
+        precompilation_error = stderr.replace("Failed to precompile", "")  # Why is this here
         buffer_logger(stderr + f"\nResult: 0/{self.total_points_possible}\n")
-        precompilation_error = stderr.replace("Failed to precompile", "")
         self._print_single_student_output_to_results_file(
             submission,
             assignment_name=self.assignment_name,

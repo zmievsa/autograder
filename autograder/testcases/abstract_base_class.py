@@ -102,11 +102,7 @@ class TestCase(ABC):
 
     @classmethod
     def precompile_submission(
-        cls,
-        submission: Path,
-        student_dir: Path,
-        source_file_name: str,
-        arglist: List[str],
+        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist: List[str]
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -114,7 +110,7 @@ class TestCase(ABC):
 
         pwd = temp/student_dir
         """
-        destination = student_dir / source_file_name
+        destination = (student_dir / source_file_stem).with_suffix(cls.source_suffix)
         shutil.copy(str(submission), str(destination))
         return destination
 
@@ -129,6 +125,10 @@ class TestCase(ABC):
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
         pass
+
+    @classmethod
+    def is_a_type_of(cls, file: Path):
+        return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self):
         return TEST_HELPERS_DIR / self.helper_module_name

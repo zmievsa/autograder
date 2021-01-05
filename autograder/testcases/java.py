@@ -27,9 +27,13 @@ class JavaTestCase(TestCase):
         return cls.compiler is not None and cls.virtual_machine is not None
 
     @classmethod
-    def precompile_submission(cls, submission: Path, student_dir: Path, source_file_name: str, arglist):
-        copied_submission = super().precompile_submission(submission, student_dir, submission.name, arglist)
-        renamed_submission = copied_submission.parent / source_file_name
+    def precompile_submission(
+        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+    ):
+        copied_submission = super().precompile_submission(
+            submission, student_dir, submission.name, lower_source_filename, arglist
+        )
+        renamed_submission = (copied_submission.parent / source_file_stem).with_suffix(cls.source_suffix)
         copied_submission.rename(renamed_submission)
         try:
             cls.compiler(renamed_submission, *arglist)

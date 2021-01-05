@@ -2,7 +2,7 @@ import configparser
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, TypeVar
 
-from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase
+from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase, get_testcase_type
 from .util import AutograderError
 
 DEFAULT_SOURCE_FILE_STEM = "Homework"
@@ -34,7 +34,7 @@ class GradingConfig:
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
-        source = cfg["SOURCE_FILE_NAME"]
+        source = cfg["SOURCE_FILE_STEM"]
         if source == "AUTO":
             source = DEFAULT_SOURCE_FILE_STEM
             self.auto_source_file_name_enabled = True
@@ -61,7 +61,7 @@ class GradingConfig:
 
         return user_parser["CONFIG"]
 
-    def _generate_arglists(self, file_name: str) -> Dict[ArgList, List[str]]:
+    def generate_arglists(self, file_name: str) -> Dict[ArgList, List[str]]:
         arglist = {}
         for arglist_index, arglists_per_file in self.cli_argument_lists.items():
             if file_name in arglists_per_file:
@@ -75,7 +75,7 @@ class GradingConfig:
     def _figure_out_testcase_types(self) -> Dict[str, Type[TestCase]]:
         testcase_types = {}
         for testcase in self.testcases_dir.iterdir():
-            testcase_type = get_testcase_type_by_suffix(testcase.suffix)
+            testcase_type = get_testcase_type(testcase)
             if testcase_type is not None:
                 testcase_types[testcase_type.source_suffix] = testcase_type
 
@@ -89,7 +89,7 @@ T = TypeVar("T")
 
 
 def parse_config_list(config_line: str, value_type: Callable[[Any], T]) -> Dict[str, T]:
-    """Reads in a config line in the format: 'file_name:value, file_name:value, ALL:value '
+    """Reads in a config line in the format: 'file_name:value, file_name:value, ALL:value'
     ALL sets the default value for all other entries
     """
     config_entries = {}
@@ -108,9 +108,3 @@ def parse_arglists(cfg: configparser.SectionProxy) -> Dict[ArgList, Dict[str, Li
         for testcase_name, args in arg_list.items():
             argument_lists[arg_list_enum][testcase_name] = args
     return argument_lists
-
-
-def get_testcase_type_by_suffix(suffix: str):
-    for testcase_type in ALLOWED_LANGUAGES.values():
-        if testcase_type.source_suffix == suffix:
-            return testcase_type
