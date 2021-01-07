@@ -1,19 +1,8 @@
 Grading oatmealstanislav
-Running 'Testoutput'
-Failed to compile:
-.../oatmealstanislav_12345_12345_Homework.java/TestOutput.java:48: error: cannot find symbol
-        System.out.printf("\n%f$%s", result, VALIDATING_STRING);
-                                     ^
-  symbol:   variable result
-  location: class TestOutput
-1 error
-Running 'Testresult'
-Failed to compile:
-.../oatmealstanislav_12345_12345_Homework.java/TestResult.java:48: error: cannot find symbol
-        System.out.printf("\n%f$%s", result, VALIDATING_STRING);
-                                     ^
-  symbol:   variable result
-  location: class TestResult
+Failed to precompile:
+.../temp/oatmealstanislav_12345_12345_Homework.java/homework.java:3: error: class Homework is public, should be declared in a file named Homework.java
+public class Homework {
+       ^
 1 error
 Result: 0/100
 

@@ -43,7 +43,7 @@ I consider it to be finished. From now on, I will only be adding extra grading l
     1) Create [config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and change configuration to fit your needs (If you do not include some fields, autograder will use the respective fields from default_config.ini)
     1) Create [output_formatters.py](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_formatters.py) and edit it to fit your needs. They will format student's output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, refer to examples or to default_formatters.py. 
 1) Write testcases as described below using [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples) as reference.
-1) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
+1) Run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Writing testcases
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with output, you don't check the result, and simply allow autograder to handle grading by calling CHECK_OUTPUT())
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.

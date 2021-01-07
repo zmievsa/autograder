@@ -15,16 +15,16 @@ Grading perfect_student_homework.c
 Running 'Test output'
 50/50
 Running 'Test result'
-100/100
+100.0/100
 Running 'Test time'
-50/50
+50.0/50
 Result: 100/100
 
 Grading average_student_homework.c
 Running 'Test output'
 50/50
 Running 'Test result'
-100/100
+100.0/100
 Running 'Test time'
 Exceeded Time Limit
 Result: 75/100
