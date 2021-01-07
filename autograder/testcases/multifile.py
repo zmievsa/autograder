@@ -77,7 +77,7 @@ class MultifileTestCase(TestCase):
 
 def _run_multifile_testcase(precompiled_submission: Path, *args, **kwargs):
     sh.Command(precompiled_submission)(*args, **kwargs)
-    return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_OUTPUT)
+    return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_STDOUT)
 
 
 def _copy_submission_contents_into_student_dir(submission, student_dir):

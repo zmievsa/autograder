@@ -8,7 +8,7 @@ template_matcher = re.compile("{ *% *([A-Za-z0-9_]+) *% *}")
 
 FORMAT_KWARGS = {
     "RESULT_EXIT_CODE": str(int(ExitCodeEventType.RESULT)),
-    "CHECK_OUTPUT_EXIT_CODE": str(int(ExitCodeEventType.CHECK_OUTPUT)),
+    "CHECK_STDOUT_EXIT_CODE": str(int(ExitCodeEventType.CHECK_STDOUT)),
     "CHEAT_ATTEMPT_EXIT_CODE": str(int(ExitCodeEventType.CHEAT_ATTEMPT)),
     "SPLITCHAR": LAST_LINE_SPLITTING_CHARACTER,
 }

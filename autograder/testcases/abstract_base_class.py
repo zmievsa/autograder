@@ -213,7 +213,7 @@ class TestCase(ABC):
                     f"Instead, exit() has been called with exit_code {exit_code}.\n"
                     "It could indicate student cheating or testcases being written incorrectly.",
                 )
-            elif exit_code == ExitCodeEventType.CHECK_OUTPUT:
+            elif exit_code == ExitCodeEventType.CHECK_STDOUT:
                 if self.io.expected_output_equals(output):
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:

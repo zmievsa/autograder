@@ -18,10 +18,10 @@ static void ENABLE_ANTI_CHEAT()
     strcpy(VALIDATING_STRING, getenv("VALIDATING_STRING"));
   setenv("VALIDATING_STRING", "", 1);
 }
-static void CHECK_OUTPUT()
+static void CHECK_STDOUT()
 {
   printf("\n-1{% SPLITCHAR %}%s", VALIDATING_STRING);
-  exit({ % CHECK_OUTPUT_EXIT_CODE % });
+  exit({ % CHECK_STDOUT_EXIT_CODE % });
 }
 static void RESULT(double r)
 {

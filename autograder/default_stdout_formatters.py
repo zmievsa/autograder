@@ -1,6 +1,6 @@
 # These functions will format both the expected and student's outputs to compare them against each other
 # It is not required to specify any outputs for your testcases. I.e. If you want, you do not even have to create
-# output_formatters.py in your directory or you can leave it blank. Type hints are also not required and are only
+# stdout_formatters.py in your directory or you can leave it blank. Type hints are also not required and are only
 # here for reference.
 
 # For specific (not ALL) formatters, you name them after their testcase files. I.e. If testcase file has a name

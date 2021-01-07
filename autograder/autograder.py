@@ -34,13 +34,13 @@ class Grader:
             submissions = []
         self.no_output = no_output
         self.raw_submissions = submissions
-        self.output_formatters = {}
+        self.stdout_formatters = {}
         self.paths = AutograderPaths(current_dir)
 
     def run(self):
         io_choices = {}
         try:
-            self.output_formatters = self._import_formatters(self.paths.output_formatters)
+            self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
             self.config = GradingConfig(self.paths.testcases_dir, self.paths.config, self.paths.default_config)
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
@@ -150,7 +150,7 @@ class Grader:
         outputs = GET_FILE_STEMS(self.paths.output_dir)
         inputs = GET_FILE_STEMS(self.paths.input_dir)
         io: Set[str] = set().union(outputs, inputs)
-        dict_io = {p: TestCaseIO(p, self.output_formatters, self.paths.input_dir, self.paths.output_dir) for p in io}
+        dict_io = {p: TestCaseIO(p, self.stdout_formatters, self.paths.input_dir, self.paths.output_dir) for p in io}
         return dict_io
 
     def _generate_multifile_testcases(self, io_choices: Dict[str, TestCaseIO]) -> List[TestCase]:
@@ -200,9 +200,9 @@ class Grader:
             test_list.sort(key=lambda t: t.path.name)
         return tests
 
-    def _import_formatters(self, path_to_output_formatters: Path) -> Dict[str, Callable[[str], str]]:
-        if path_to_output_formatters.exists():
-            module = import_from_path("output_formatters", path_to_output_formatters)
+    def _import_formatters(self, path_to_stdout_formatters: Path) -> Dict[str, Callable[[str], str]]:
+        if path_to_stdout_formatters.exists():
+            module = import_from_path("stdout_formatters", path_to_stdout_formatters)
             return {k: v for k, v in module.__dict__.items() if callable(v)}
         else:
             return {}
@@ -258,8 +258,8 @@ class AutograderPaths:
         "extra_dir",
         "input_dir",
         "output_dir",
-        "output_formatters",
-        "default_output_formatters",
+        "stdout_formatters",
+        "default_stdout_formatters",
         "config",
         "default_config",
         "required_dirs",
@@ -274,8 +274,8 @@ class AutograderPaths:
     extra_dir: Path
     input_dir: Path
     output_dir: Path
-    output_formatters: Path
-    default_output_formatters: Path
+    stdout_formatters: Path
+    default_stdout_formatters: Path
     config: Path
     default_config: Path
 
@@ -293,11 +293,11 @@ class AutograderPaths:
         self.input_dir = self.tests_dir / "input"
         self.output_dir = self.tests_dir / "output"
 
-        self.output_formatters = self.tests_dir / "output_formatters.py"
+        self.stdout_formatters = self.tests_dir / "stdout_formatters.py"
         self.config = self.tests_dir / "config.ini"
 
         autograder_dir = Path(__file__).parent
-        self.default_output_formatters = autograder_dir / "default_formatters.py"
+        self.default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
         self.default_config = autograder_dir / "default_config.ini"
 
         self.required_dirs = (self.testcases_dir,)

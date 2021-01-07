@@ -1,7 +1,7 @@
 unsigned long long fibonacci(int n);
 
-
-int main() {
+int main()
+{
     fibonacci(10);
-    CHECK_OUTPUT();
+    CHECK_STDOUT();
 }

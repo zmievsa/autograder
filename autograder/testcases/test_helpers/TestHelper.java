@@ -34,9 +34,9 @@
         System.setSecurityManager(new NoReflectionAndEnvVarsSecurityManager());
         return val;
     }
-    private static void CHECK_OUTPUT() {
+    private static void CHECK_STDOUT() {
         System.out.printf("\n-1{% SPLITCHAR %}%s", VALIDATING_STRING);
-        System.exit({% CHECK_OUTPUT_EXIT_CODE %});
+        System.exit({% CHECK_STDOUT_EXIT_CODE %});
     }
     private static void RESULT(double r) {
         System.out.printf("\n%f{% SPLITCHAR %}%s", r, VALIDATING_STRING);

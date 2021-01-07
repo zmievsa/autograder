@@ -35,12 +35,12 @@ def main(paths: AutograderPaths):
         paths.generate_config()
     else:
         print("Found config.ini")
-    output_formatters_path = paths.output_formatters
-    if not output_formatters_path.exists():
-        print(f"{output_formatters_path.name} not found. Creating a default file...")
-        shutil.copy(paths.default_output_formatters, str(paths.output_formatters))
+    stdout_formatters_path = paths.stdout_formatters
+    if not stdout_formatters_path.exists():
+        print(f"{stdout_formatters_path.name} not found. Creating a default file...")
+        shutil.copy(paths.default_stdout_formatters, str(paths.stdout_formatters))
     else:
-        print("Found output_formatters.py")
+        print("Found stdout_formatters.py")
 
     ans = input(
         "You are now ready to start working with autograder.\n"

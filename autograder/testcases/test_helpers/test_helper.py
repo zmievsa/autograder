@@ -4,9 +4,9 @@ import os
 import sys
 
 
-def CHECK_OUTPUT():
+def CHECK_STDOUT():
     print(f"\n-1{ % SPLITCHAR % }{VALIDATING_STRING}", end="")
-    exit({ % CHECK_OUTPUT_EXIT_CODE % })
+    exit({ % CHECK_STDOUT_EXIT_CODE % })
 
 def RESULT(r: float):
     print(f"\n{r}{ % SPLITCHAR % }{VALIDATING_STRING}", end="")
