@@ -1,27 +1,23 @@
+from collections import namedtuple
+from autograder.testcases.util.exit_codes import ExitCodeEventType
 from pathlib import Path
 import shutil
 from typing import List
 
 import sh
-from .abstract_base_class import Command, TestCase
+from .abstract_base_class import Command, TestCase, submission_is_allowed
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
+DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
 
 
-def is_multifile_submission(submission_dir: Path, source_file_stem, lower_source_file_stem: bool):
+def is_multifile_submission(submission_dir: Path, possible_source_file_stems, source_is_case_insensitive):
     contents = list(submission_dir.iterdir())
     while len(contents) == 1 and contents[0].is_dir():
         contents = list(contents[0].iterdir())
 
-    # TODO: Remove repetition of code piece below
-    if lower_source_file_stem:
-        source_file_stem = source_file_stem.lower()
     for f in submission_dir.iterdir():
-        if (
-            _is_makefile(f)
-            or (lower_source_file_stem and f.stem.lower() == source_file_stem)
-            or (not lower_source_file_stem and f.stem == source_file_stem)
-        ):
+        if _is_makefile(f) or submission_is_allowed(f, possible_source_file_stems, source_is_case_insensitive):
             return True
     else:
         return False
@@ -40,12 +36,14 @@ class MultifileTestCase(TestCase):
         """We assume all utilities necessary are installed because we can't possibly check for all of them."""
         return cls.compiler is not None
 
-    def prepend_test_helper(self):
-        """ We don't need TestHelper when we are only checking inputs/outputs """
-
     @classmethod
     def precompile_submission(
-        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+        cls,
+        submission: Path,
+        student_dir: Path,
+        possible_source_file_stems: str,
+        source_is_case_insensitive: bool,
+        arglist,
     ):
         """ pwd = temp/student_dir """
         _copy_submission_contents_into_student_dir(submission, student_dir)
@@ -56,10 +54,13 @@ class MultifileTestCase(TestCase):
                 pass
             else:
                 raise e
-        return _find_submission_executable(student_dir, source_file_stem, lower_source_filename)
+        return _find_submission_executable(student_dir, possible_source_file_stems, source_is_case_insensitive)
 
     def compile_testcase(self, precompiled_submission: Path):
-        return sh.Command(precompiled_submission)
+        return lambda *a, **kw: _run_multifile_testcase(precompiled_submission, *a, **kw)
+
+    def prepend_test_helper(self):
+        """ We don't need TestHelper when we are only checking inputs/outputs """
 
     def prepend_test_helper(self):
         """We don't need test helper because we don't have a testcase file"""
@@ -74,6 +75,11 @@ class MultifileTestCase(TestCase):
         pass
 
 
+def _run_multifile_testcase(precompiled_submission: Path, *args, **kwargs):
+    sh.Command(precompiled_submission)(*args, **kwargs)
+    return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_OUTPUT)
+
+
 def _copy_submission_contents_into_student_dir(submission, student_dir):
     contents: List[Path] = list(submission.iterdir())
     while len(contents) == 1 and contents[0].is_dir():
@@ -86,11 +92,7 @@ def _copy_submission_contents_into_student_dir(submission, student_dir):
             shutil.copyfile(f, new_path)
 
 
-def _find_submission_executable(student_dir: Path, source_file_stem: str, lower_source_filename):
-    if lower_source_filename:
-        source_file_stem = source_file_stem.lower()
+def _find_submission_executable(student_dir: Path, possible_source_file_stems, source_is_case_insensitive):
     for f in student_dir.iterdir():
-        if lower_source_filename and f.stem.lower() == source_file_stem:
-            return f
-        elif not lower_source_filename and f.stem == source_file_stem:
+        if submission_is_allowed(f, possible_source_file_stems, source_is_case_insensitive):
             return f

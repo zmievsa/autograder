@@ -18,13 +18,18 @@ class CTestCase(TestCase):
 
     @classmethod
     def precompile_submission(
-        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+        cls,
+        submission: Path,
+        student_dir: Path,
+        possible_source_file_stems: str,
+        source_is_case_insensitive: bool,
+        arglist,
     ):
         """Links student submission without compiling it.
         It is done to speed up total compilation time
         """
         copied_submission = super().precompile_submission(
-            submission, student_dir, submission.name, lower_source_filename, arglist
+            submission, student_dir, [submission.stem], source_is_case_insensitive, arglist
         )
         precompiled_submission = copied_submission.with_suffix(".o")
         try:

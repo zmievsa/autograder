@@ -8,7 +8,7 @@ from .java import JavaTestCase
 from .python import PythonTestCase
 
 
-def _is_installed(language_name: str, testcase: TestCase) -> bool:
+def _is_installed(language_name: str, testcase: Type[TestCase]) -> bool:
     """ Useful for logging """
     if testcase.is_installed():
         return True

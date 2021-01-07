@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Type, TypeVar
 from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase, get_testcase_type
 from .util import AutograderError
 
-DEFAULT_SOURCE_FILE_STEM = "Homework"
+DEFAULT_FILE_STEM = "Homework"
 
 
 class GradingConfig:
@@ -34,16 +34,14 @@ class GradingConfig:
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
-        source = cfg["SOURCE_FILE_STEM"]
+        source = cfg["POSSIBLE_SOURCE_FILE_STEMS"].strip()
         if source == "AUTO":
-            source = DEFAULT_SOURCE_FILE_STEM
+            source = DEFAULT_FILE_STEM
             self.auto_source_file_name_enabled = True
         else:
             self.auto_source_file_name_enabled = False
-        self.lower_source_filename = cfg.getboolean("LOWER_SOURCE_FILENAME")
-        if self.lower_source_filename:
-            source = source.lower()
-        self.source_file_name = source
+        self.source_file_stem_is_case_insensitive = cfg.getboolean("SOURCE_FILE_NAME_IS_CASE_INSENSITIVE")
+        self.possible_source_file_stems = source.replace(" ", "").split(",")
 
         self.testcase_weights = parse_config_list(cfg["TESTCASE_WEIGHTS"], float)
 

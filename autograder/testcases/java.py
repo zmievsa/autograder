@@ -1,8 +1,10 @@
+from autograder.util import AutograderError
 import re
 import shutil
 from pathlib import Path
+from typing import List
 
-from .abstract_base_class import TEST_HELPERS_DIR, ArgList, Command, TestCase
+from .abstract_base_class import TEST_HELPERS_DIR, ArgList, Command, TestCase, find_appropriate_source_file_stem
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
@@ -28,20 +30,27 @@ class JavaTestCase(TestCase):
 
     @classmethod
     def precompile_submission(
-        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist
+        cls,
+        submission: Path,
+        student_dir: Path,
+        possible_source_file_stems: List[str],
+        source_is_case_insensitive: bool,
+        arglist,
     ):
+        stem = find_appropriate_source_file_stem(submission, possible_source_file_stems, source_is_case_insensitive)
+        if stem is None:
+            raise AutograderError(
+                f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
+            )
         copied_submission = super().precompile_submission(
-            submission, student_dir, submission.name, lower_source_filename, arglist
+            submission, student_dir, [stem], source_is_case_insensitive, arglist
         )
-        renamed_submission = (copied_submission.parent / source_file_stem).with_suffix(cls.source_suffix)
-        copied_submission.rename(renamed_submission)
         try:
-            cls.compiler(renamed_submission, *arglist)
+            cls.compiler(copied_submission, *arglist)
         finally:
-            renamed_submission.unlink()
+            copied_submission.unlink()
 
-        # What if there are multiple .class files after compilation? What do we do, then?
-        return renamed_submission.with_suffix(".class")
+        return copied_submission.with_suffix(".class")
 
     def compile_testcase(self, precompiled_submission: Path):
         new_self_path = precompiled_submission.with_name(self.path.name)

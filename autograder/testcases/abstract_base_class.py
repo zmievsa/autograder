@@ -43,7 +43,6 @@ class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
     path: Path
-    source_file_name: Path
     weight: float
 
     @property
@@ -67,7 +66,6 @@ class TestCase(ABC):
     def __init__(
         self,
         path: Path,
-        source_file_name: str,
         timeout: float,
         argument_lists: Dict[ArgList, List[str]],
         anti_cheat_enabled: bool,
@@ -75,7 +73,6 @@ class TestCase(ABC):
         io: Dict[str, TestCaseIO],
     ):
         self.path = path
-        self.source_file_name = Path(source_file_name)
         self.timeout = timeout
         self.argument_lists = argument_lists
         self.anti_cheat_enabled = anti_cheat_enabled
@@ -102,7 +99,12 @@ class TestCase(ABC):
 
     @classmethod
     def precompile_submission(
-        cls, submission: Path, student_dir: Path, source_file_stem: str, lower_source_filename: bool, arglist: List[str]
+        cls,
+        submission: Path,
+        student_dir: Path,
+        possible_source_file_stems: List[str],
+        source_is_case_insensitive: bool,
+        arglist: List[str],
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -110,7 +112,7 @@ class TestCase(ABC):
 
         pwd = temp/student_dir
         """
-        destination = (student_dir / source_file_stem).with_suffix(cls.source_suffix)
+        destination = (student_dir / possible_source_file_stems[0]).with_suffix(cls.source_suffix)
         shutil.copy(str(submission), str(destination))
         return destination
 
@@ -194,6 +196,7 @@ class TestCase(ABC):
                 )
                 if result is None:
                     raise NotImplementedError()
+                exit_code = result.exit_code
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
@@ -207,21 +210,40 @@ class TestCase(ABC):
                 return (
                     0,
                     "None of the helper functions have been called.\n"
-                    f"Instead, exit() has been called with exit_code {result.exit_code}.\n"
+                    f"Instead, exit() has been called with exit_code {exit_code}.\n"
                     "It could indicate student cheating or testcases being written incorrectly.",
                 )
-            elif result.exit_code == ExitCodeEventType.CHECK_OUTPUT:
+            elif exit_code == ExitCodeEventType.CHECK_OUTPUT:
                 if self.io.expected_output_equals(output):
                     return 100, f"{int(100 * self.weight)}/{self.max_score}"
                 else:
                     return 0, f"0/{self.max_score} (Wrong output)"
-            elif result.exit_code == ExitCodeEventType.RESULT:
+            elif exit_code == ExitCodeEventType.RESULT:
                 message = f"{round(score * self.weight, 2)}/{self.max_score}"
                 if score == 0:
                     message += " (Wrong answer)"
                 return score, message
-            elif result.exit_code in SYSTEM_RESERVED_EXIT_CODES or result.exit_code < 0:
+            elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
                 raise NotImplementedError("System error has not been handled.")
             else:
-                raise ValueError(f"Unknown system code {result.exit_code} has not been handled.")
+                raise ValueError(f"Unknown system code {exit_code} has not been handled.")
+
+
+def submission_is_allowed(file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool):
+    return find_appropriate_source_file_stem(file, possible_source_file_stems, source_is_case_insensitive) is not None
+
+
+def find_appropriate_source_file_stem(
+    file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool
+) -> Optional[str]:
+    file_stem = file.stem
+    if source_is_case_insensitive:
+        file_stem = file_stem.lower()
+    for s in possible_source_file_stems:
+        if source_is_case_insensitive:
+            if s.lower() in file_stem:
+                return s
+        else:
+            if s in file_stem:
+                return s

@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Set, Tuple, Type
 
 import sh
 
-from .testcases.abstract_base_class import ArgList, TestCase
+from .testcases.abstract_base_class import ArgList, TestCase, submission_is_allowed
 
 from .testcases import Submission
 from .config_manager import GradingConfig
@@ -113,15 +113,16 @@ class Grader:
         for submission_path in self.paths.current_dir.iterdir():
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
-            submission_name = submission_path.name
-            if self.config.lower_source_filename:
-                submission_name = submission_name.lower()
 
             testcase_type = self.config.testcase_types.get(submission_path.suffix, None)
             if testcase_type is not None:
                 if self.config.auto_source_file_name_enabled:
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
-                elif self.config.source_file_name in submission_name:
+                elif submission_is_allowed(
+                    submission_path,
+                    self.config.possible_source_file_stems,
+                    self.config.source_file_stem_is_case_insensitive,
+                ):
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
                     self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
@@ -129,7 +130,9 @@ class Grader:
                 self.config.multifile_submissions_enabled
                 and submission_path.is_dir()
                 and is_multifile_submission(
-                    submission_path, self.config.source_file_name, self.config.lower_source_filename
+                    submission_path,
+                    self.config.possible_source_file_stems,
+                    self.config.source_file_stem_is_case_insensitive,
                 )
             ):
                 submissions.append(Submission(submission_path, MultifileTestCase, self.paths.temp_dir))
@@ -156,7 +159,6 @@ class Grader:
         return [
             MultifileTestCase(
                 self.paths.temp_dir,
-                self.config.source_file_name,
                 self.config.timeouts.get(io.name, default_timeout),
                 {},
                 self.config.anti_cheat,
@@ -186,7 +188,6 @@ class Grader:
             tests[testcase_type].append(
                 testcase_type(  # type: ignore # The typing error here appears due to the limitations of python's typing
                     self.paths.temp_dir / test.name,
-                    self.config.source_file_name,
                     timeout,
                     arglist,
                     self.config.anti_cheat,
@@ -212,8 +213,8 @@ class Grader:
             return submission.type.precompile_submission(
                 submission.path,
                 submission.dir,
-                self.config.source_file_name,
-                self.config.lower_source_filename,
+                self.config.possible_source_file_stems,
+                self.config.source_file_stem_is_case_insensitive,
                 arglists[ArgList.SUBMISSION_PRECOMPILATION],
             )
         except (AutograderError, sh.ErrorReturnCode_1) as e:  # type: ignore

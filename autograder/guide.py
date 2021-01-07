@@ -62,7 +62,7 @@ def main(paths: AutograderPaths):
             f"https://github.com/Ovsyanka83/autograder/tree/master/examples/{choice.lower()}/tests/testcases"
         )
     print(
-        "Now if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
+        "\n\nNow if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
         "for this directory."
     )
     print(f"You can write your testcases in {paths.testcases_dir}")
