@@ -4,48 +4,46 @@ I consider it to be finished. From now on, I will only be adding extra grading l
 #### Table of Contents  
 [Features](#Features)   
 [Installation](#Installation)   
-[Quickstart](#Quickstart)   
 [Supported Programming Languages](#Supported-Programming-Languages)   
+[Quickstart](#Quickstart)   
 [Usage](#Usage)   
-[Advanced Usage](#Advanced-Usage)   
 [Writing testcases](#Writing-testcases)  
 [Helper functions](#Helper-functions)  
+[Limitations](#Limitations)   
 [Command line help](#Command-line-help)  
-[Implementation details](#Implementation-details)  
 [Anti Cheating](#Anti-Cheating)   
 [Adding Programming Languages](#Adding-Programming-Languages)
 # Features
 * Most features are demonstrated in examples/ directory
-* Easy to grade (simply running `autograder` on a directory with assignments and testcases)
-* Easy-to-write testcases
-* Testcase grade can be based on student's output in stdout
-* A per-testcase grade can be any number out of 100 points
-* Support for grading C, C++, Java, and Python code
-* A file with testcase results can be generated for each student (done by default)
-* You can customize the total points for the assignment, timeout for the running time of student's program, file names to be considered for grading, and formatters for checking student output
-* Anti-Cheating capabilities that make it nearly impossible for students to break the grader and choose their results. You can read more on this in implementation details section below
-* You can pass arguments to language compilers during testcase (or submission) precompilation and compilation using config.ini
-* You can grade submissions in multiple programming languages at once, as long as there are testcases written in each language
-* Most of these features are described in detail in autograder/default_config.ini, implementation details section below, and command line help section below
+* [Easy to grade](#Usage) 
+* [Easy-to-write testcases](#Writing-testcases)  
+* Testcase grade can be based on [student's output](#Helper-functions) in stdout
+* Can grade C, C++, Java, and Python code
+* A file with testcase results will be generated for each student
+* You can customize the total points for the assignment, maximum running time of student's program, file names to be considered for grading, formatters for checking student stdout, and [much more](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_formatters.py).
+* [Anti Cheating capabilities](#Anti-Cheating) that make it nearly impossible for students to break the grader and choose their grades.
+* Grading submissions in multiple programming languages at once, as long as there are testcases written in each language.
+* Most of these features are described in detail in [default_config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_formatters.py), [implementation details section](), and [command line help section]()
 # Installation
 * Currently, Linux-only and Python >= 3.6. OS X has not been tested. Windows, Python < 3.6 are not supported at all.
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
-# Quickstart
-* Run `autograder path/to/directory/you'd/like/to/grade --guide`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
 # Supported Programming Languages
 * Java (only through javac and java alias)
 * C (only through gcc)
 * C++ (only through g++)
 * CPython (3.6-3.10)
+# Quickstart
+* Run `autograder path/to/directory/you'd/like/to/grade --guide`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
+* Read [Usage](#Usage) section
 # Usage
-1) Create tests directory in the same directory as student submissions. It has to follow the same structure as one of the examples. (can be automatically created using instructions from quickstart section)
-2) Write testcases as described below. You can use examples/ as reference.
-3) Create input and output text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
-4) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
-## Advanced Usage
-* If you create config.ini in tests, you can customize grader's behavior. Use `autograder --guide` if you want all optional directories and configurations set up for you. If you remove some configuration fields from config.ini, grader will use the respective fields from default config.
-* To check output, you can specify __output formatters__ in a file output_formatters.py in the directory with your testcase folder. They will format student's output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, refer to examples or to default_formatters.py. 
+1) Create tests directory in the same directory as student submissions. Its structure is shown in [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples). (can be automatically created using [--guide](#Quickstart))
+1) __Optional__ files that can be automatically created by [--guide](#Quickstart) CLI option and whose use is demostrated by [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples):
+    1) Input (stdin) and expected output (stdout) text files in their respective directories for each testcase. If a test does not require input and/or output, the respective text file is also not required.
+    1) Create [config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and change configuration to fit your needs (If you do not include some fields, autograder will use the respective fields from default_config.ini)
+    1) Create [output_formatters.py](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_formatters.py) and edit it to fit your needs. They will format student's output to allow you to give credit to students even if their output is not exactly the same as expected. To see how to write this file, refer to examples or to default_formatters.py. 
+1) Write testcases as described below using [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples) as reference.
+1) run `autograder path/to/submissions/dir` from command line. If you are in the same directory as submissions, you can simply run `autograder`.
 ## Writing testcases
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with output, you don't check the result, and simply allow autograder to handle grading by calling CHECK_OUTPUT())
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
@@ -57,6 +55,10 @@ I consider it to be finished. From now on, I will only be adding extra grading l
   * RESULT(double r) returns student's score r back to the grader (0 - 100)
   * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
   * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
+## Limitations
+* At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use formatters described in advanced usage section.
+* If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how c handles linking.
+* __Student's main functions ARE NOT meant to be accessed because testcase must be the starting point of the program.__
 # Command line help
 ```
 usage: autograder [-h] [-v] [-p [min_score]] [--no_output] [-s [<name> [<name> ...]]] [-g] [submission_path]
@@ -74,9 +76,6 @@ optional arguments:
                         Only grade submissions with specified file names (without full path)
   -g, --guide           Guide you through setting up a grading environment
 ```
-# Implementation details
-* At the point of writing this readme, output checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' output matching, you should use formatters described in advanced usage section.
-* If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how c handles linking.
 
 ## Anti Cheating
 One of the main weaknesses of automatic grading is how prone it is to cheating. Autograder tries to solve this problem with methods described in this section. Currently, (as far as I've read and tested), it is impossible to cheat autograder. However, Java might still have some weird ways of doing this but there are protections against all of the most popular scenarios (decompiling and parsing testcases, using System.exit, trying to read security key from environment variables, using reflection to use private members of the test helper)
