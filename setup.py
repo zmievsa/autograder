@@ -16,7 +16,13 @@ setup(
     version=about["__version__"],
     install_requires=requires,
     package_data={
-        "autograder": ["default_config.ini", "templates/*"],
+        "autograder": [
+            "default_config.ini",
+            "templates/c/*",
+            "templates/c++/*",
+            "templates/java/*",
+            "templates/python/*",
+        ],
         "autograder.testcases": ["test_helpers/*", "test_helpers/extra/*"],
     },
     entry_points={"console_scripts": ["autograder=autograder.__main__:main"]},
