@@ -1,6 +1,6 @@
 This utility aims to provide a simple, yet secure and highly configurable way to autograde programming assignments.
 
-I consider it to be finished. From now on, I will only be adding extra grading languages if necessary and fixing bugs if any are reported. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades), fast, and protected from cheating.
+I consider it to be finished. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades), fast, and protected from cheating.
 #### Table of Contents  
 [Features](#Features)   
 [Installation](#Installation)   
