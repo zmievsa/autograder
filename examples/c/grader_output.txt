@@ -2,7 +2,7 @@ Grading oatmealstanislav
 Running 'Test output'
 50/50
 Running 'Test result'
-100/100
+100.0/100
 Result: 100/100
 
 

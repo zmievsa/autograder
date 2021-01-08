@@ -1,11 +1,11 @@
 Grading submission.py
 Running 'Check result'
-100/100
+100.0/100
 Result: 100/100
 
 Grading submission.c
 Running 'Check result'
-100/100
+100.0/100
 Result: 100/100
 
 

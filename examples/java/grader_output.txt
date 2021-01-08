@@ -1,13 +1,12 @@
 Grading oatmealstanislav
-Failed to precompile:
-.../temp/oatmealstanislav_12345_12345_Homework.java/homework.java:3: error: class Homework is public, should be declared in a file named Homework.java
-public class Homework {
-       ^
-1 error
-Result: 0/100
+Running 'Testoutput'
+50/50
+Running 'Testresult'
+100.0/100
+Result: 100/100
 
 
-Average score: 0/100
+Average score: 100/100
 
 
 Key:

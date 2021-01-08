@@ -1,6 +1,6 @@
 Grading submission.py
 Running 'Test addition'
-100/100
+100.0/100
 Result: 100/100
 
 

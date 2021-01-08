@@ -1,8 +1,8 @@
 Grading SomeRandomAssignment.c
 Running 'Mycomplextestytest'
-100/100
+100.0/100
 Running 'Test negative input'
-100/100
+100.0/100
 Result: 100/100
 
 

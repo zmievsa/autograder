@@ -1,12 +1,12 @@
 Grading oatmealstanislav
 Running 'Test output'
-0/50 (Wrong output)
+50/50
 Running 'Test result'
 100.0/100
-Result: 67/100
+Result: 100/100
 
 
-Average score: 67/100
+Average score: 100/100
 
 
 Key:

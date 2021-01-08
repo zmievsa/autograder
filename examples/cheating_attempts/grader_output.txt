@@ -1,27 +1,27 @@
-Grading homework.c
+Grading homework.py
 Running 'Test env'
-None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
+Crashed due to signal 103:
+
+
 Running 'Test exit'
+Crashed due to signal 103:
+
+
+Running 'Test import'
 None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
+Instead, exit() has been called with exit_code 5.
 It could indicate student cheating or testcases being written incorrectly.
 Result: 0/100
 
-Grading homework.py
+Grading homework.c
 Running 'Test env'
-None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
+Crashed due to signal 103:
+
+
 Running 'Test exit'
-None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
-Running 'Test import'
-None of the helper functions have been called.
-Instead, exit() has been called with exit_code 3.
-It could indicate student cheating or testcases being written incorrectly.
+Crashed due to signal 103:
+
+
 Result: 0/100
 
 Grading Homework.java
@@ -35,9 +35,9 @@ Exception in thread "main" java.lang.SecurityException: Using environ is not per
 
 
 Running 'Testexit'
-None of the helper functions have been called.
-Instead, exit() has been called with exit_code 103.
-It could indicate student cheating or testcases being written incorrectly.
+Crashed due to signal 103:
+
+
 Running 'Testreflection'
 Crashed due to signal 1:
 Exception in thread "main" java.lang.SecurityException: Using reflection is not permitted. It could indicate cheating.
