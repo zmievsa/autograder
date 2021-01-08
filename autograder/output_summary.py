@@ -1,6 +1,7 @@
 # Controls output to stdout and to output file
 
 
+from .testcases import Submission
 import logging
 import re
 import sys
@@ -86,17 +87,19 @@ class GradingOutputLogger(SynchronizedLogger):
         if not generate_results:
             self._silence_generating_results()
 
-    def print_precompilation_error_to_results_file(self, submission, error, buffer_logger):
+    def print_precompilation_error_to_results_file(self, submission: Submission, max_score, error, buffer_logger):
         if isinstance(error, sh.ErrorReturnCode):
-            stderr = get_stderr(self.current_dir, error, "Failed to precompile")
+            stderr = get_stderr(error, "Failed to precompile")
         else:
             stderr = "Failed to precompile: " + str(error)
-        precompilation_error = stderr.replace("Failed to precompile", "")  # Why is this here
+        # Hide path to current dir
+        precompilation_error = stderr.strip().replace(str(submission.dir), "...")
         buffer_logger(stderr + f"\nResult: 0/{self.total_points_possible}\n")
         self._print_single_student_output_to_results_file(
-            submission,
+            submission.path,
             assignment_name=self.assignment_name,
             precompilation_error=precompilation_error,
+            formatted_student_score=f"0/{max_score}",
         )
 
     def print_testcase_results_to_results_file(
@@ -144,15 +147,18 @@ def format_output_for_student_file(**output_info):
     to have a different style
     """
     str_builder = deque()
-    str_builder.append(f"{output_info['assignment_name']} Test Results\n\n")
-    str_builder.append("%-40s%s" % ("TestCase", "Result"))
-    str_builder.append("\n================================================================")
+    b = str_builder.append
+    b(f"{output_info['assignment_name']} Test Results\n\n")
+    if not "precompilation_error" in output_info:
+        b("%-40s%s\n" % ("TestCase", "Result"))
+    b("================================================================")
     if "precompilation_error" in output_info:
-        str_builder.append(output_info["precompilation_error"])
-        return "".join(str_builder)
-    for test_output in output_info["testcase_results"]:
-        str_builder.append("\n%-40s%s" % test_output)
-    str_builder.append("\n================================================================\n")
-    str_builder.append("Result: " + output_info["formatted_student_score"])
-    str_builder.append(KEY)
+        b("\n")
+        b(output_info["precompilation_error"])
+    else:
+        for test_output in output_info["testcase_results"]:
+            b("\n%-40s%s" % test_output)
+    b("\n================================================================\n")
+    b("Result: " + output_info["formatted_student_score"])
+    b(KEY)
     return "".join(str_builder)

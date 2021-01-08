@@ -1,9 +1,7 @@
 import importlib.util
 import re
 import sys
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict
 
 import sh  # type: ignore
 
@@ -15,12 +13,11 @@ class AutograderError(Exception):
 RESULT_REGEX = re.compile(r"Result: (\d+)\/\d+")
 
 
-def get_stderr(current_dir: Path, error: sh.ErrorReturnCode, string):
+def get_stderr(error: sh.ErrorReturnCode, string):
     error_str = str(error)
     # Remove all unrelated output
     formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR") :]
-    # Hide path to current dir
-    return formatted_error.strip().replace(str(current_dir), "...")
+    return formatted_error
 
 
 def print_results(paths, min_score: int, *args, **kwargs):

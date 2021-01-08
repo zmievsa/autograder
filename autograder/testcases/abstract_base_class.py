@@ -182,7 +182,7 @@ class TestCase(ABC):
             test_executable = self.compile_testcase(precompiled_submission)
 
         except sh.ErrorReturnCode as e:
-            return 0, get_stderr(self.path.parent, e, "Failed to compile")
+            return 0, get_stderr(e, "Failed to compile")
         self.delete_source_file(testcase_path)
 
         with StringIO() as runtime_output, self.io.input() as runtime_input:
