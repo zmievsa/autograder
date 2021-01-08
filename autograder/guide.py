@@ -44,23 +44,20 @@ def main(paths: AutograderPaths):
 
     ans = input(
         "You are now ready to start working with autograder.\n"
-        "Would you like me to give you the link to the example testcases? (Yes/No) "
+        "Would you like me to generate the testcase templates? (Yes/No) "
     )
     if ans.lower().startswith("y"):
         allowed_languages = ", ".join(ALLOWED_LANGUAGES.keys())
         while True:
             choice = input(
-                f"Choose a programming language you'd like to generate testcases for ({allowed_languages}): "
+                f"Choose a programming language you'd like to generate testcase templates for ({allowed_languages}): "
             )
             lang = ALLOWED_LANGUAGES.get(choice, None)
             if lang is None:
                 print(f"Couldn't find the language with name '{choice}'. Please, try again.")
             else:
                 break
-        print(
-            "Here is the default testcase directory:\n"
-            f"https://github.com/Ovsyanka83/autograder/tree/master/examples/{choice.lower()}/tests/testcases"
-        )
+        shutil.copytree(Path(__file__).parent / "templates" / choice, paths.testcases_dir, dirs_exist_ok=True)
     print(
         "\n\nNow if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
         "for this directory."
