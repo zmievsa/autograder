@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 requires = ["sh==1.14.1", "typing_extensions"]
 here = Path(__file__).parent
@@ -12,10 +12,19 @@ with (here / "README.md").open(encoding="utf-8") as f:
 
 setup(
     name=about["__title__"],
-    packages=find_packages("autograder"),
-    include_package_data=True,
+    packages=["autograder", "autograder.testcases", "autograder.testcases.util"],
     version=about["__version__"],
     install_requires=requires,
+    package_data={
+        "autograder": [
+            "default_config.ini",
+            "templates/c/*",
+            "templates/c++/*",
+            "templates/java/*",
+            "templates/python/*",
+        ],
+        "autograder.testcases": ["test_helpers/*", "test_helpers/extra/*"],
+    },
     entry_points={"console_scripts": ["autograder=autograder.__main__:main"]},
     # metadata to display on PyPI
     author=about["__author__"],
