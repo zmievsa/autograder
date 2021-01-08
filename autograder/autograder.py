@@ -227,7 +227,6 @@ class Grader:
         logger(f"Grading {get_submission_name(submission.path)}")
         precompiled_submission = self._precompile_submission(submission, logger)
         if precompiled_submission is None:
-            print("PRECOMPILED SUMBISSION IS NONE")
             return 0
         total_testcase_score = 0
         testcase_results = []
