@@ -42,7 +42,7 @@ I consider it to be finished. Autograder has been tested on a real university cl
     1) Input (stdin) and expected output (__stdout__) text files in their respective directories for each testcase. If a test does not require input and/or stdout, the respective text file is also not required.
     1) Create [config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and change configuration to fit your needs (If you do not include some fields, autograder will use the respective fields from default_config.ini)
     1) Create [stdout_formatters.py](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_stdout_formatters.py) and edit it to fit your needs. They will format student's stdout to allow you to give credit to students even if their stdout is not exactly the same as expected.
-1) Write testcases as described below using [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples) as reference.
+1) Write testcases as described [below](#Writing-testcases) using [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples) as reference.
 1) Run `autograder path/to/submissions/dir` from command line.
 ## Writing testcases
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with stdout, you don't check the result, and simply allow autograder to handle grading by calling CHECK_STDOUT())
@@ -56,9 +56,9 @@ I consider it to be finished. Autograder has been tested on a real university cl
   * PASS() returns the score of 100% back to the grader and is equivalent to RESULT(100)
   * FAIL() returns the score of 0% back to the grader and is equivalent to RESULT(0)
 ## Limitations
-* At the point of writing this readme, stdout checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' stdout matching, you should use formatters described in advanced usage section.
-* If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how c handles linking.
-* __Student's main functions ARE NOT meant to be accessed because testcase must be the starting point of the program.__
+* At the point of writing this readme, stdout checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' stdout matching, you should use stdout formatters described [above](#Usage).
+* If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how C and C++ handle linking.
+* __Student's main functions ARE NOT meant to be accessed because testcase must be the starting point of the program.__ (they are, however, accessible if necessary but undocumented)
 # Command line help
 ```
 usage: autograder [-h] [-v] [-p [min_score]] [--no_output] [-s [<name> [<name> ...]]] [-g] [submission_path]
