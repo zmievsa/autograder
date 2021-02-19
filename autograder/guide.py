@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 from pathlib import Path
 
@@ -85,7 +84,6 @@ def safe_copytree(
     """This is a newer version of copytree only available for python3.8
     We need it because it has a dirs_exist_ok keyword arg
     """
-    sys.audit("shutil.copytree", src, dst)
     with os.scandir(src) as itr:
         entries = list(itr)
     if ignore is not None:
