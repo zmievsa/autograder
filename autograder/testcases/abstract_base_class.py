@@ -71,6 +71,7 @@ class TestCase(ABC):
         anti_cheat_enabled: bool,
         weight: float,
         io: Dict[str, TestCaseIO],
+        testcase_picker: TestCasePicker,
     ):
         self.path = path
         self.timeout = timeout
@@ -225,7 +226,7 @@ class TestCase(ABC):
                 return score, message
             elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
-                raise NotImplementedError("System error has not been handled.")
+                raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
             else:
                 raise ValueError(f"Unknown system code {exit_code} has not been handled.")
 

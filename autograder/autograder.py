@@ -1,5 +1,5 @@
 from .testcases.util.testcase_io import TestCaseIO
-from .testcases.multifile import MultifileTestCase, is_multifile_submission
+from .testcases.multifile import StdoutOnlyTestCase, is_multifile_submission
 import multiprocessing
 import os
 import shutil
@@ -52,11 +52,10 @@ class Grader:
                 self.config.generate_results,
             )
             self._prepare_directory_structure()
-            self.submissions, self.multifile_submissions_found = self._gather_submissions(self.raw_submissions)
+            self.submissions = self._gather_submissions(self.raw_submissions)
             io_choices = self._gather_io()
             self.tests = self._gather_testcases(io_choices)  # also copies testcases to temp dir
-            if self.multifile_submissions_found:
-                self.tests[MultifileTestCase] = self._generate_multifile_testcases(io_choices)
+            self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
@@ -105,11 +104,10 @@ class Grader:
                     "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
                 )
 
-    def _gather_submissions(self, submissions_to_grade) -> Tuple[List[Submission], bool]:
+    def _gather_submissions(self, submissions_to_grade) -> List[Submission]:
         """ Returns sorted list of paths to submissions """
         submissions_to_grade = set(submissions_to_grade)
         submissions: List[Submission] = []
-        multifile_submissions_found = False
         for submission_path in self.paths.current_dir.iterdir():
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
@@ -126,24 +124,19 @@ class Grader:
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
                     self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
-            elif (
-                self.config.multifile_submissions_enabled
-                and submission_path.is_dir()
-                and is_multifile_submission(
-                    submission_path,
-                    self.config.possible_source_file_stems,
-                    self.config.source_file_stem_is_case_insensitive,
-                )
+            elif self.config.stdout_only_submissions_enabled and is_multifile_submission(
+                submission_path,
+                self.config.possible_source_file_stems,
+                self.config.source_file_stem_is_case_insensitive,
             ):
-                submissions.append(Submission(submission_path, MultifileTestCase, self.paths.temp_dir))
-                multifile_submissions_found = True
+                submissions.append(Submission(submission_path, StdoutOnlyTestCase, self.paths.temp_dir))
 
         if not len(submissions):
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
 
         # Allows consistent output
         submissions.sort(key=lambda s: s.path)
-        return submissions, multifile_submissions_found
+        return submissions
 
     def _gather_io(self) -> Dict[str, TestCaseIO]:
         GET_FILE_STEMS = lambda d: (p.stem for p in d.iterdir()) if d.exists() else []
@@ -153,11 +146,11 @@ class Grader:
         dict_io = {p: TestCaseIO(p, self.stdout_formatters, self.paths.input_dir, self.paths.output_dir) for p in io}
         return dict_io
 
-    def _generate_multifile_testcases(self, io_choices: Dict[str, TestCaseIO]) -> List[TestCase]:
+    def _generate_stdout_only_testcases(self, io_choices: Dict[str, TestCaseIO]) -> List[TestCase]:
         default_timeout = self.config.timeouts.get("ALL", 1)
         default_weight = self.config.testcase_weights.get("ALL", 1)
         return [
-            MultifileTestCase(
+            StdoutOnlyTestCase(
                 self.paths.temp_dir,
                 self.config.timeouts.get(io.name, default_timeout),
                 {},
@@ -230,7 +223,8 @@ class Grader:
             return 0
         total_testcase_score = 0
         testcase_results = []
-        allowed_tests = self.tests[submission.type]
+        allowed_tests = self.tests.get(submission.type, None)
+        allowed_tests += self.stdout_only_tests
         if not allowed_tests:
             print(f"No testcases suitable for the submission {submission.path.name} found.")
         submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)

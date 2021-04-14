@@ -39,3 +39,50 @@ def import_from_path(module_name: str, path: Path):
     # TODO: Loader has no attribute exec_module. What's up with that?
     spec.loader.exec_module(module)  # type: ignore
     return module
+
+
+def _is_installed(language_name: str, testcase: Type[TestCase]) -> bool:
+    """ Useful for logging """
+    if testcase.is_installed():
+        return True
+    else:
+        print(f"Utilities for running {language_name} are not installed. Disabling it.")
+        return False
+
+
+class Submission:
+    __slots__ = "path", "type", "dir"
+
+    def __init__(self, file: Path, testcase_type: Type[TestCase], temp_dir: Path):
+        self.path = file
+        self.type = testcase_type
+        self.dir = temp_dir / file.name
+        self.dir.mkdir()
+
+
+def get_allowed_languages() -> Dict[str, Type[TestCase]]:
+    allowed_languages = {
+        "c": CTestCase,
+        "java": JavaTestCase,
+        "python": PythonTestCase,
+        "c++": CPPTestCase,
+    }
+    return {k: v for k, v in allowed_languages.items() if _is_installed(k, v)}
+
+
+def get_testcase_type(
+    file: Path, allowed_types: Iterable[Type[TestCase]] = ALLOWED_LANGUAGES.values()
+) -> Optional[Type[TestCase]]:
+    for testcase_type in allowed_types:
+        if testcase_type.is_a_type_of(file):
+            return testcase_type
+
+
+class TestCasePicker:
+    def __init__(self, allowed_languages=None):
+        if allowed_languages is None:
+            allowed_languages = get_allowed_languages()
+        self.allowed_languages = allowed_languages
+
+    def we():
+        pass

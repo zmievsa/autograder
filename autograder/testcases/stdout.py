@@ -27,7 +27,7 @@ def _is_makefile(path: Path):
     return not path.is_dir() and path.name in POSSIBLE_MAKEFILE_NAMES
 
 
-class MultifileTestCase(TestCase):
+class StdoutOnlyTestCase(TestCase):
     helper_module_name = ""
     compiler = Command("make")
 
@@ -62,17 +62,11 @@ class MultifileTestCase(TestCase):
     def prepend_test_helper(self):
         """ We don't need TestHelper when we are only checking inputs/outputs """
 
-    def prepend_test_helper(self):
-        """We don't need test helper because we don't have a testcase file"""
-        pass
-
     def delete_executable_files(self, precompiled_submission: Path):
         """ We don't compile each testcase separately so we don't need to clean up executable files """
-        pass
 
     def delete_source_file(self, source_path: Path):
         """ There is no testcase file """
-        pass
 
 
 def _run_multifile_testcase(precompiled_submission: Path, *args, **kwargs):
