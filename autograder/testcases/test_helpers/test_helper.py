@@ -19,7 +19,6 @@ def FAIL():
     RESULT(0)
 
 def CHEATING_ATTEMPT():
-    print(f"\n0{ % SPLITCHAR % }{VALIDATING_STRING}", end="")
     exit({ % CHEAT_ATTEMPT_EXIT_CODE % })
 
 
@@ -29,6 +28,7 @@ if __name__ != "__main__" or VALIDATING_STRING is None:
     # It would also technically be a recursive import which would most likely
     # raise an exception but I put this here as a safeguard.
     print("CHEATING ATTEMPT")
+    del VALIDATING_STRING
     CHEATING_ATTEMPT()
 
 student_submission = importlib.import_module(sys.argv[1])
