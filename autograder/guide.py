@@ -2,10 +2,8 @@ import os
 import shutil
 from pathlib import Path
 
-from autograder.config_manager import ALLOWED_LANGUAGES
-
 from .autograder import AutograderPaths
-from .testcases import ALLOWED_LANGUAGES
+from .testcase_utils.abstract_base_class import TestCasePicker
 
 
 def create_dir(path: Path):
@@ -23,7 +21,9 @@ def main(paths: AutograderPaths):
     print("Hello. I will now guide you through the initial setup of autograder.")
     ans = input(f"Would you like to grade submissions located in '{paths.current_dir}'? (Yes/No) ")
     if not ans.lower().startswith("y"):
-        print("You probably haven't specified a directory to the grader. Use 'autograder path/to/submissions/dir'")
+        print(
+            "You probably haven't specified a directory to the grader. Use 'autograder path/to/submissions/dir'"
+        )
         exit(0)
     create_dir(paths.tests_dir)
     create_dir(paths.testcases_dir)
@@ -39,7 +39,7 @@ def main(paths: AutograderPaths):
     stdout_formatters_path = paths.stdout_formatters
     if not stdout_formatters_path.exists():
         print(f"{stdout_formatters_path.name} not found. Creating a default file...")
-        shutil.copy(paths.default_stdout_formatters, str(paths.stdout_formatters))
+        shutil.copy(str(paths.default_stdout_formatters), str(paths.stdout_formatters))
     else:
         print("Found stdout_formatters.py")
 
@@ -58,7 +58,9 @@ def main(paths: AutograderPaths):
                 print(f"Couldn't find the language with name '{choice}'. Please, try again.")
             else:
                 break
-        safe_copytree(Path(__file__).parent / "templates" / choice, paths.testcases_dir, dirs_exist_ok=True)
+        safe_copytree(
+            Path(__file__).parent / "templates" / choice, paths.testcases_dir, dirs_exist_ok=True
+        )
     print(
         "\n\nNow if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
         "for this directory."
@@ -98,9 +100,9 @@ def safe_copytree(
     for srcentry in entries:
         if srcentry.name in ignored_names:
             continue
-        srcname = os.path.join(src, srcentry.name)
-        dstname = os.path.join(dst, srcentry.name)
-        srcobj = srcentry if use_srcentry else srcname
+        src_name = os.path.join(src, srcentry.name)
+        dst_name = os.path.join(dst, srcentry.name)
+        src_obj = srcentry if use_srcentry else src_name
         try:
             is_symlink = srcentry.is_symlink()
             if is_symlink and os.name == "nt":
@@ -110,33 +112,42 @@ def safe_copytree(
                 if lstat.st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT:
                     is_symlink = False
             if is_symlink:
-                linkto = os.readlink(srcname)
+                linkto = os.readlink(src_name)
                 if symlinks:
                     # We can't just leave it to `copy_function` because legacy
                     # code with a custom `copy_function` may rely on copytree
                     # doing the right thing.
-                    os.symlink(linkto, dstname)
-                    shutil.copystat(srcobj, dstname, follow_symlinks=not symlinks)
+                    os.symlink(linkto, dst_name)
+                    shutil.copystat(src_obj, dst_name, follow_symlinks=not symlinks)
                 else:
                     # ignore dangling symlink if the flag is on
                     if not os.path.exists(linkto) and ignore_dangling_symlinks:
                         continue
                     # otherwise let the copy occur. copy2 will raise an error
                     if srcentry.is_dir():
-                        shutil.copytree(srcobj, dstname, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)
+                        shutil.copytree(
+                            src_obj,
+                            dst_name,
+                            symlinks,
+                            ignore,
+                            copy_function,
+                            dirs_exist_ok=dirs_exist_ok,
+                        )
                     else:
-                        copy_function(srcobj, dstname)
+                        copy_function(src_obj, dst_name)
             elif srcentry.is_dir():
-                shutil.copytree(srcobj, dstname, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)
+                shutil.copytree(
+                    src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok
+                )
             else:
                 # Will raise a SpecialFileError for unsupported file types
-                copy_function(srcobj, dstname)
+                copy_function(src_obj, dst_name)
         # catch the Error from the recursive copytree so that we can
         # continue with other files
         except shutil.Error as err:
             errors.extend(err.args[0])
         except OSError as why:
-            errors.append((srcname, dstname, str(why)))
+            errors.append((src_name, dst_name, str(why)))
     try:
         shutil.copystat(src, dst)
     except OSError as why:

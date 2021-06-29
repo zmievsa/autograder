@@ -4,14 +4,22 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from .abstract_base_class import TEST_HELPERS_DIR, ArgList, Command, TestCase, find_appropriate_source_file_stem
+from autograder.testcase_utils.abstract_base_class import (
+    TEST_HELPERS_DIR,
+    ArgList,
+    TestCase as AbstractTestCase,
+    find_appropriate_source_file_stem,
+)
+from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
-PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
+PATH_TO_SECURITY_MANAGER_FILE = (
+    TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
+)
 
 
-class JavaTestCase(TestCase):
+class TestCase(AbstractTestCase):
     """Please, ask students to remove their main as it can theoretically
     generate errors (not sure how though).
     Java doesn't support testcase precompilation because it must always
@@ -20,7 +28,7 @@ class JavaTestCase(TestCase):
 
     source_suffix = ".java"
     executable_suffix = ""
-    helper_module_name = "TestHelper.java"
+    helper_module = "TestHelper.java"
     compiler = Command("javac")
     virtual_machine = Command("java")
 
@@ -37,7 +45,9 @@ class JavaTestCase(TestCase):
         source_is_case_insensitive: bool,
         arglist,
     ):
-        stem = find_appropriate_source_file_stem(submission, possible_source_file_stems, source_is_case_insensitive)
+        stem = find_appropriate_source_file_stem(
+            submission, possible_source_file_stems, source_is_case_insensitive
+        )
         if stem is None:
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
@@ -60,12 +70,16 @@ class JavaTestCase(TestCase):
             f".:*",
             *self.argument_lists[ArgList.TESTCASE_COMPILATION],
         )
-        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:*", self.path.stem, *args, **kwargs)
+        return lambda *args, **kwargs: self.virtual_machine(
+            "-cp", ".:*", self.path.stem, *args, **kwargs
+        )
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
         shutil.copyfile(PATH_TO_JNA_FILE, student_dir / PATH_TO_JNA_FILE.name)
-        shutil.copyfile(PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name)
+        shutil.copyfile(
+            PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name
+        )
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():
@@ -79,7 +93,9 @@ class JavaTestCase(TestCase):
         """
         with open(self.path) as f:
             content = f.read()
-        final_content = self._add_at_the_beginning_of_public_class(self.get_formatted_test_helper(), content)
+        final_content = self._add_at_the_beginning_of_public_class(
+            self.get_formatted_test_helper(), content
+        )
         final_content = (
             f"""import com.sun.jna.Library;
                 import com.sun.jna.Native;
@@ -93,7 +109,7 @@ class JavaTestCase(TestCase):
             f.write(final_content)
 
     def _add_at_the_beginning_of_public_class(self, helper_class: str, java_file: str):
-        """ Looks for the first bracket of the first public class and inserts test helper next to it """
+        """Looks for the first bracket of the first public class and inserts test helper next to it"""
         # This way is rather crude and can be prone to errors if left untested,
         # but java does not really leave us any other way to do it.
         match = PUBLIC_CLASS_MATCHER.search(java_file)

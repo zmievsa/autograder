@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 class TestCaseIO:
-    """ Represents everything related to stdin/stdout in testcases """
+    """Represents everything related to stdin/stdout in testcase_utils"""
 
     def __init__(self, testcase_name_stem, formatters, input_dir, output_dir):
         self.name = testcase_name_stem

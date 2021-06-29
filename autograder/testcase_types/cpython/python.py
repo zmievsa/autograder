@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 
 
-from .abstract_base_class import ArgList, Command, TestCase
+from autograder.testcase_utils.abstract_base_class import ArgList, TestCase as AbstractTestCase
+from autograder.testcase_utils.shell import Command
 
 PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
 PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"
@@ -14,14 +15,14 @@ if shutil.which(PYTHON_EXECUTABLE_NAME) is None:
     PYTHON_EXECUTABLE_NAME = "python3"
 
 
-class PythonTestCase(TestCase):
+class TestCase(AbstractTestCase):
     """A proof of concept of how easy it is to add new languages.
     Will only work if python is accessible via python3 alias for now.
     """
 
     source_suffix = ".py"
     executable_suffix = ".pyc"
-    helper_module_name = "test_helper.py"
+    helper_module = "test_helper.py"
     interpreter = Command(PYTHON_EXECUTABLE_NAME)
 
     @classmethod
@@ -69,7 +70,7 @@ class PythonTestCase(TestCase):
         self.path = executable_path
 
     def delete_source_file(self, source_path: Path):
-        """ Source file is the same as executable file so we don't need to delete it """
+        """Source file is the same as executable file so we don't need to delete it"""
 
     def make_executable_path(self, submission: Path) -> Path:
         return submission.with_name(self.path.name)

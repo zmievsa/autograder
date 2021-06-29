@@ -1,36 +1,68 @@
-from .util.testcase_io import TestCaseIO
-from .util.test_helper_formatter import get_formatted_test_helper
 import enum
 import shutil
 from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Tuple
+from typing import Optional, Type, Dict, Iterable
 
 import sh
-from typing_extensions import Protocol
 
-# TODO: I hate these imports. We should only use relative imports because direct imports might indicate architectural problems.
-from autograder.util import get_stderr
-
-from .util.exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
-from .util.testcase_result_validator import generate_validating_string, validate_output
+# TODO: Get rid of this horrible import
+from autograder.util import import_from_path
+from .shell import get_stderr, ShCommand
+from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from .test_helper_formatter import get_formatted_test_helper
+from .testcase_io import TestCaseIO
+from .testcase_result_validator import generate_validating_string, validate_output
 
 TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
-class ShCommand(Protocol):
-    """ We use this to imitate sh.Command by ducktyping it """
+class Submission:
+    __slots__ = "path", "type", "dir"
 
-    def __call__(self, *args: str, **kwargs: Any) -> Optional[sh.RunningCommand]:
-        raise NotImplementedError()
+    def __init__(self, file: Path, testcase_type: Type["TestCase"], temp_dir: Path):
+        self.path = file
+        self.type = testcase_type
+        self.dir = temp_dir / file.name
+        self.dir.mkdir()
 
 
-def Command(command: str, *args: Any, **kwargs: Any) -> Optional[sh.Command]:
-    """ An API for commands that do not throw errors on creation """
-    return None if shutil.which(command) is None else sh.Command(command, *args, **kwargs)
+class TestCasePicker:
+    def __init__(self, testcase_types_dir: Path, allowed_languages=None):
+        self.registered_testcase_types = self._discover_testcase_types(testcase_types_dir)
+        self.allowed_languages = allowed_languages
+
+    def _discover_testcase_types(self, testcase_types_dir: Path) -> List[Type["TestCase"]]:
+        testcase_types = []
+        for testcase_type_dir in testcase_types_dir.iterdir():
+            for path in testcase_type_dir.iterdir():
+                if path.is_file() and path.suffix == ".py":
+                    testcase = import_from_path("testcase", path).TestCase
+                    if self._is_installed(testcase_types_dir.name, testcase):
+                        testcase_types.append(testcase)
+        return testcase_types
+
+    def pick(
+        self,
+        file: Path,
+        allowed_types: Iterable[Type["TestCase"]] = None,
+    ) -> Optional[Type["TestCase"]]:
+        for testcase_type in allowed_types:
+            if testcase_type.is_a_type_of(file):
+                return testcase_type
+
+    @staticmethod
+    def _is_installed(language_name: str, testcase: Type["TestCase"]) -> bool:
+        """Useful for logging"""
+        if testcase.is_installed():
+            return True
+        else:
+            print(f"Utilities for running {language_name} are not installed. Disabling it.")
+            return False
 
 
 class ArgList(enum.Enum):
@@ -47,13 +79,13 @@ class TestCase(ABC):
 
     @property
     @abstractmethod
-    def helper_module_name(self) -> str:
+    def helper_module(self) -> str:
         pass
 
     @classmethod
     @abstractmethod
     def is_installed(cls) -> bool:
-        """ Returns True if software necessary to run the testcase is installed on the system """
+        """Returns True if software necessary to run the testcase is installed on the system"""
 
     @abstractmethod
     def compile_testcase(self, precompiled_submission: Path) -> ShCommand:
@@ -87,12 +119,10 @@ class TestCase(ABC):
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()
-        # with self.path.open() as f:
-        #     print(f.read())
         if anti_cheat_enabled:
             self.precompile_testcase()
 
-        # This is done to hide the contents of testcases and exit codes to the student
+        # This is done to hide the contents of testcase_utils and exit codes to the student
         if anti_cheat_enabled:
             with self.path.open("rb") as f:
                 self.source_contents = f.read()
@@ -127,6 +157,7 @@ class TestCase(ABC):
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
+        """Do nothing by default"""
         pass
 
     @classmethod
@@ -134,17 +165,17 @@ class TestCase(ABC):
         return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self):
-        return TEST_HELPERS_DIR / self.helper_module_name
+        return TEST_HELPERS_DIR / self.helper_module
 
     def run(self, precompiled_submission: Path) -> Tuple[float, str]:
-        """ Returns student score and message to be displayed """
+        """Returns student score and message to be displayed"""
         result, message = self._weightless_run(precompiled_submission)
 
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
 
     def make_executable_path(self, submission: Path) -> Path:
-        """ By combining test name and student name, it makes a unique path """
+        """By combining test name and student name, it makes a unique path"""
         return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def prepend_test_helper(self):
@@ -171,13 +202,13 @@ class TestCase(ABC):
             source_path.unlink()
 
     def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
-        """ Returns student score (without applying testcase weight) and message to be displayed """
+        """Returns student score (without applying testcase weight) and message to be displayed"""
         testcase_path = precompiled_submission.with_name(self.path.name)
         if self.anti_cheat_enabled:
             with testcase_path.open("wb") as f:
                 f.write(self.source_contents)
         else:
-            shutil.copy(self.path, testcase_path)
+            shutil.copy(str(self.path), str(testcase_path))
 
         try:
             test_executable = self.compile_testcase(precompiled_submission)
@@ -201,7 +232,10 @@ class TestCase(ABC):
             except sh.TimeoutException:
                 return 0, "Exceeded Time Limit"
             except sh.ErrorReturnCode as e:
-                return 0, f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n"
+                return (
+                    0,
+                    f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n",
+                )
             raw_output = runtime_output.getvalue()
             output, score, output_is_valid = validate_output(raw_output, self.validating_string)
             if not output_is_valid:
@@ -212,7 +246,7 @@ class TestCase(ABC):
                     0,
                     "None of the helper functions have been called.\n"
                     f"Instead, exit() has been called with exit_code {exit_code}.\n"
-                    "It could indicate student cheating or testcases being written incorrectly.",
+                    "It could indicate student cheating or testcase_utils being written incorrectly.",
                 )
             elif exit_code == ExitCodeEventType.CHECK_STDOUT:
                 if self.io.expected_output_equals(output):
@@ -226,13 +260,22 @@ class TestCase(ABC):
                 return score, message
             elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
-                raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
+                raise NotImplementedError(
+                    f"System error with exit code {exit_code} has not been handled."
+                )
             else:
                 raise ValueError(f"Unknown system code {exit_code} has not been handled.")
 
 
-def submission_is_allowed(file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool):
-    return find_appropriate_source_file_stem(file, possible_source_file_stems, source_is_case_insensitive) is not None
+def submission_is_allowed(
+    file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool
+):
+    return (
+        find_appropriate_source_file_stem(
+            file, possible_source_file_stems, source_is_case_insensitive
+        )
+        is not None
+    )
 
 
 def find_appropriate_source_file_stem(

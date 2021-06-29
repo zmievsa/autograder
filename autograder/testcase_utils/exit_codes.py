@@ -1,5 +1,4 @@
 from enum import IntEnum
-from typing import Dict
 
 SYSTEM_RESERVED_EXIT_CODES = [
     1,

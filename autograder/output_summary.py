@@ -1,7 +1,7 @@
 # Controls output to stdout and to output file
 
 
-from .testcases import Submission
+from .testcase_utils.abstract_base_class import Submission
 import logging
 import re
 import sys
@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Deque
 
-from .util import get_stderr
+from .testcase_utils.shell import get_stderr
 import sh
 
 KEY = """
@@ -73,9 +73,13 @@ class GradingOutputLogger(SynchronizedLogger):
             if path_to_output_summary.exists():
                 # TODO: Input should be optional because we might ask this question in GUI.
                 #   Or not? Maybe we just check it to exist separately in GUI?
-                ans = input("Output summary file already exists. Would you like to overwrite it? (Yes/No) ")
+                ans = input(
+                    "Output summary file already exists. Would you like to overwrite it? (Yes/No) "
+                )
                 if ans.lower().startswith("y"):
-                    self.logger.addHandler(logging.FileHandler(path_to_output_summary, mode="w"))
+                    self.logger.addHandler(
+                        logging.FileHandler(str(path_to_output_summary), mode="w")
+                    )
                 else:
                     print(
                         "If you don't want to remove the summary, simply use the --no_output command line option "
@@ -83,11 +87,13 @@ class GradingOutputLogger(SynchronizedLogger):
                     )
                     exit(0)
             else:
-                self.logger.addHandler(logging.FileHandler(path_to_output_summary, mode="w"))
+                self.logger.addHandler(logging.FileHandler(str(path_to_output_summary), mode="w"))
         if not generate_results:
             self._silence_generating_results()
 
-    def print_precompilation_error_to_results_file(self, submission: Submission, max_score, error, buffer_logger):
+    def print_precompilation_error_to_results_file(
+        self, submission: Submission, max_score, error, buffer_logger
+    ):
         if isinstance(error, sh.ErrorReturnCode):
             stderr = get_stderr(error, "Failed to precompile")
         else:
@@ -149,7 +155,7 @@ def format_output_for_student_file(**output_info):
     str_builder = deque()
     b = str_builder.append
     b(f"{output_info['assignment_name']} Test Results\n\n")
-    if not "precompilation_error" in output_info:
+    if "precompilation_error" not in output_info:
         b("%-40s%s\n" % ("TestCase", "Result"))
     b("================================================================")
     if "precompilation_error" in output_info:

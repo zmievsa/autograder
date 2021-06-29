@@ -2,13 +2,28 @@ import configparser
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, TypeVar
 
-from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase, get_testcase_type
+from .testcase_utils.abstract_base_class import ArgList, TestCase, TestCasePicker
 from .util import AutograderError
 
 DEFAULT_FILE_STEM = "Homework"
 
 
 class GradingConfig:
+    testcases_dir: Path
+    timeouts: Dict[str, float]
+    generate_results: bool
+    parallel_grading_enabled: bool
+    multifile_submissions_enabled: bool
+    total_points_possible: int
+    total_score_to_100_ratio: float
+    testcase_types: Dict[str, Type[TestCase]]
+    assignment_name: str
+    auto_source_file_name_enabled: bool
+    source_file_stem_is_case_insensitive: bool
+    possible_source_file_stems: List[str]
+    testcase_weights: Dict[str, float]
+    cli_argument_lists: Dict[ArgList, Dict[str, List[str]]]
+
     def __init__(self, testcases_dir: Path, config: Path, default_config: Path):
         self.testcases_dir = testcases_dir
         self._configure_grading(config, default_config)
@@ -40,7 +55,9 @@ class GradingConfig:
             self.auto_source_file_name_enabled = True
         else:
             self.auto_source_file_name_enabled = False
-        self.source_file_stem_is_case_insensitive = cfg.getboolean("SOURCE_FILE_NAME_IS_CASE_INSENSITIVE")
+        self.source_file_stem_is_case_insensitive = cfg.getboolean(
+            "SOURCE_FILE_NAME_IS_CASE_INSENSITIVE"
+        )
         self.possible_source_file_stems = source.replace(" ", "").split(",")
 
         self.testcase_weights = parse_config_list(cfg["TESTCASE_WEIGHTS"], float)
@@ -49,13 +66,15 @@ class GradingConfig:
         self.cli_argument_lists = parse_arglists(cfg)
 
     @staticmethod
-    def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.SectionProxy:
+    def _read_config(
+        path_to_user_config: Path, path_to_default_config: Path
+    ) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
-        default_parser.read(path_to_default_config)
+        default_parser.read(str(path_to_default_config))
 
         user_parser = configparser.ConfigParser()
         user_parser.read_dict(default_parser)
-        user_parser.read(path_to_user_config)
+        user_parser.read(str(path_to_user_config))
 
         return user_parser["CONFIG"]
 
@@ -80,7 +99,9 @@ class GradingConfig:
         if testcase_types:
             return testcase_types
         else:
-            raise AutograderError(f"Couldn't discover any testcases with supported suffixes in {self.testcases_dir}")
+            raise AutograderError(
+                f"Couldn't discover any testcases with supported suffixes in {self.testcases_dir}"
+            )
 
 
 T = TypeVar("T")
