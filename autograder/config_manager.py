@@ -1,22 +1,22 @@
 import configparser
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Type, TypeVar
+from typing import Any, Callable, Dict, List, TypeVar
 
-from .testcase_utils.abstract_base_class import ArgList, TestCase, TestCasePicker
-from .util import AutograderError
+from .testcase_utils.abstract_base_class import ArgList, TestCasePicker
 
 DEFAULT_FILE_STEM = "Homework"
 
 
 class GradingConfig:
-    testcases_dir: Path
     timeouts: Dict[str, float]
     generate_results: bool
     parallel_grading_enabled: bool
-    multifile_submissions_enabled: bool
+    stdout_only_submissions_enabled: bool
     total_points_possible: int
     total_score_to_100_ratio: float
-    testcase_types: Dict[str, Type[TestCase]]
+
+    testcase_picker: TestCasePicker
+
     assignment_name: str
     auto_source_file_name_enabled: bool
     source_file_stem_is_case_insensitive: bool
@@ -24,28 +24,30 @@ class GradingConfig:
     testcase_weights: Dict[str, float]
     cli_argument_lists: Dict[ArgList, Dict[str, List[str]]]
 
-    def __init__(self, testcases_dir: Path, config: Path, default_config: Path):
-        self.testcases_dir = testcases_dir
-        self._configure_grading(config, default_config)
+    def __init__(self, config: Path, default_config: Path, testcase_types_dir: Path):
+        self._configure_grading(config, default_config, testcase_types_dir)
 
-    def _configure_grading(self, config_path: Path, default_config_path: Path):
+    def _configure_grading(
+        self,
+        config_path: Path,
+        default_config_path: Path,
+        testcase_types_dir: Path,
+    ):
         cfg = self._read_config(config_path, default_config_path)
 
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
         self.anti_cheat = cfg.getboolean("ANTI_CHEAT")
         self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
-        self.multifile_submissions_enabled = cfg.getboolean("MULTIFILE_SUBMISSIONS_ENABLED")
+        self.stdout_only_submissions_enabled = cfg.getboolean("MULTIFILE_SUBMISSIONS_ENABLED")
 
         self.total_points_possible = cfg.getint("TOTAL_POINTS_POSSIBLE")
         self.total_score_to_100_ratio = self.total_points_possible / 100
 
-        language = cfg["PROGRAMMING_LANGUAGE"]
-        if language == "AUTO":
-            self.testcase_types = self._figure_out_testcase_types()
-        else:
-            testcase_type = ALLOWED_LANGUAGES[language.lower().strip()]
-            self.testcase_types = {testcase_type.source_suffix: testcase_type}
+        # TODO: Add support for choosing multiple programming languages
+        language = cfg["PROGRAMMING_LANGUAGE"].strip()
+        allowed_testcase_types = None if language == "AUTO" else [language]
+        self.testcase_picker = TestCasePicker(testcase_types_dir, allowed_testcase_types)
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
@@ -89,20 +91,6 @@ class GradingConfig:
                 arglist[arglist_index] = tuple()
         return arglist
 
-    def _figure_out_testcase_types(self) -> Dict[str, Type[TestCase]]:
-        testcase_types = {}
-        for testcase in self.testcases_dir.iterdir():
-            testcase_type = get_testcase_type(testcase)
-            if testcase_type is not None:
-                testcase_types[testcase_type.source_suffix] = testcase_type
-
-        if testcase_types:
-            return testcase_types
-        else:
-            raise AutograderError(
-                f"Couldn't discover any testcases with supported suffixes in {self.testcases_dir}"
-            )
-
 
 T = TypeVar("T")
 
@@ -121,9 +109,12 @@ def parse_config_list(config_line: str, value_type: Callable[[Any], T]) -> Dict[
 
 def parse_arglists(cfg: configparser.SectionProxy) -> Dict[ArgList, Dict[str, List[str]]]:
     argument_lists = {n: {} for n in ArgList}
-    convert_to_arglist = lambda s: str(s).replace("  ", " ").strip().split()
     for arg_list_enum in ArgList:
         arg_list = parse_config_list(cfg[arg_list_enum.value], convert_to_arglist)
         for testcase_name, args in arg_list.items():
             argument_lists[arg_list_enum][testcase_name] = args
     return argument_lists
+
+
+def convert_to_arglist(s: str) -> List[str]:
+    return str(s).replace("  ", " ").strip().split()

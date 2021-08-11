@@ -30,3 +30,7 @@ def import_from_path(module_name: str, path: Path):
     # TODO: Loader has no attribute exec_module. What's up with that?
     spec.loader.exec_module(module)  # type: ignore
     return module
+
+
+def get_file_stems(dir_: Path):
+    return (p.stem for p in dir_.iterdir()) if dir_.exists() else []

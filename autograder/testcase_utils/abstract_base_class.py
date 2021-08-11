@@ -4,12 +4,12 @@ from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
 from typing import List, Tuple
-from typing import Optional, Type, Dict, Iterable
+from typing import Optional, Type, Dict
 
 import sh
 
 # TODO: Get rid of this horrible import
-from autograder.util import import_from_path
+from autograder.util import import_from_path, AutograderError
 from .shell import get_stderr, ShCommand
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
 from .test_helper_formatter import get_formatted_test_helper
@@ -22,7 +22,12 @@ EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
 class Submission:
+    # I wanted to use a dataclass but they do not work well with slots until 3.10
     __slots__ = "path", "type", "dir"
+
+    file: Path
+    type: Type["TestCase"]
+    dir: Path
 
     def __init__(self, file: Path, testcase_type: Type["TestCase"], temp_dir: Path):
         self.path = file
@@ -32,9 +37,20 @@ class Submission:
 
 
 class TestCasePicker:
-    def __init__(self, testcase_types_dir: Path, allowed_languages=None):
-        self.registered_testcase_types = self._discover_testcase_types(testcase_types_dir)
-        self.allowed_languages = allowed_languages
+    testcase_types: List[Type["TestCase"]]
+
+    def __init__(self, testcase_types_dir: Path, allowed_languages: List[str] = None):
+        registered_ttypes = self._discover_testcase_types(testcase_types_dir)
+        if allowed_languages is not None:
+            self.testcase_types = [t for t in registered_ttypes if t.name() in allowed_languages]
+        else:
+            self.testcase_types = registered_ttypes
+        if not self.testcase_types:
+            raise AutograderError(
+                "No acceptable testcase types were detected.\n"
+                f"Allowed languages: {allowed_languages}\n"
+                f"Registered testcase types: {registered_ttypes}"
+            )
 
     def _discover_testcase_types(self, testcase_types_dir: Path) -> List[Type["TestCase"]]:
         testcase_types = []
@@ -46,12 +62,8 @@ class TestCasePicker:
                         testcase_types.append(testcase)
         return testcase_types
 
-    def pick(
-        self,
-        file: Path,
-        allowed_types: Iterable[Type["TestCase"]] = None,
-    ) -> Optional[Type["TestCase"]]:
-        for testcase_type in allowed_types:
+    def pick(self, file: Path) -> Optional[Type["TestCase"]]:
+        for testcase_type in self.testcase_types:
             if testcase_type.is_a_type_of(file):
                 return testcase_type
 
@@ -65,6 +77,7 @@ class TestCasePicker:
             return False
 
 
+# TODO: Why is this not in config?
 class ArgList(enum.Enum):
     SUBMISSION_PRECOMPILATION = "SUBMISSION_PRECOMPILATION_ARGS"
     TESTCASE_PRECOMPILATION = "TESTCASE_PRECOMPILATION_ARGS"
@@ -74,8 +87,14 @@ class ArgList(enum.Enum):
 class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
+
     path: Path
     weight: float
+    max_score: int
+    name: str
+    io: TestCaseIO
+    testcase_picker: TestCasePicker
+    validating_string: str
 
     @property
     @abstractmethod
@@ -95,6 +114,10 @@ class TestCase(ABC):
         pwd = temp/student_dir
         """
 
+    @staticmethod
+    def name() -> str:
+        return Path().stem
+
     def __init__(
         self,
         path: Path,
@@ -111,6 +134,7 @@ class TestCase(ABC):
         self.anti_cheat_enabled = anti_cheat_enabled
         self.weight = weight
         self.max_score = int(weight * 100)
+        self.testcase_picker = testcase_picker
 
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
@@ -212,7 +236,6 @@ class TestCase(ABC):
 
         try:
             test_executable = self.compile_testcase(precompiled_submission)
-
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(e, "Failed to compile")
         self.delete_source_file(testcase_path)
@@ -272,7 +295,9 @@ def submission_is_allowed(
 ):
     return (
         find_appropriate_source_file_stem(
-            file, possible_source_file_stems, source_is_case_insensitive
+            file,
+            possible_source_file_stems,
+            source_is_case_insensitive,
         )
         is not None
     )

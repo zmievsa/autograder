@@ -1,3 +1,5 @@
+# TODO: Figure out what to do with testcase picker (i.e. make it work somehow)
+
 from autograder.testcase_utils.testcase_io import TestCaseIO
 from .testcase_utils.stdout import StdoutOnlyTestCase, is_multifile_submission
 import multiprocessing
@@ -17,7 +19,7 @@ from autograder.testcase_utils.abstract_base_class import (
 
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
-from .util import AutograderError, import_from_path
+from .util import AutograderError, import_from_path, get_file_stems
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
 READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
@@ -30,6 +32,10 @@ class Grader:
     raw_submissions: List[Path]
     paths: "AutograderPaths"
     multifile_submissions_found: bool
+
+    logger: GradingOutputLogger
+    config: GradingConfig
+    stdout_only_tests: list
 
     def __init__(self, current_dir, no_output=False, submissions=None):
         if submissions is None:
@@ -44,7 +50,7 @@ class Grader:
         try:
             self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
             self.config = GradingConfig(
-                self.paths.testcases_dir, self.paths.config, self.paths.default_config
+                self.paths.config, self.paths.default_config, self.paths.testcase_types_dir
             )
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
@@ -56,11 +62,10 @@ class Grader:
                 self.config.generate_results,
             )
             self._prepare_directory_structure()
-            self.submissions = self._gather_submissions(self.raw_submissions)
+            self.submissions = self._gather_submissions()
             io_choices = self._gather_io()
-            self.tests = self._gather_testcases(
-                io_choices
-            )  # also copies testcase_utils to temp dir
+            # also copies testcase_utils to temp dir
+            self.tests = self._gather_testcases(io_choices)
             self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
             process_count = (
                 multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
@@ -114,15 +119,15 @@ class Grader:
                     "Maybe you specified the incorrect directory? Use `autograder submission_directory_here`"
                 )
 
-    def _gather_submissions(self, submissions_to_grade) -> List[Submission]:
+    def _gather_submissions(self) -> List[Submission]:
         """Returns sorted list of paths to submissions"""
-        submissions_to_grade = set(submissions_to_grade)
+        submissions_to_grade = set(self.raw_submissions)
         submissions: List[Submission] = []
         for submission_path in self.paths.current_dir.iterdir():
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
 
-            testcase_type = self.config.testcase_types.get(submission_path.suffix, None)
+            testcase_type = self.config.testcase_picker.pick(submission_path)
             if testcase_type is not None:
                 if self.config.auto_source_file_name_enabled or submission_is_allowed(
                     submission_path,
@@ -153,9 +158,8 @@ class Grader:
         return submissions
 
     def _gather_io(self) -> Dict[str, TestCaseIO]:
-        GET_FILE_STEMS = lambda d: (p.stem for p in d.iterdir()) if d.exists() else []
-        outputs = GET_FILE_STEMS(self.paths.output_dir)
-        inputs = GET_FILE_STEMS(self.paths.input_dir)
+        outputs = get_file_stems(self.paths.output_dir)
+        inputs = get_file_stems(self.paths.input_dir)
         io: Set[str] = set().union(outputs, inputs)
         dict_io = {
             p: TestCaseIO(p, self.stdout_formatters, self.paths.input_dir, self.paths.output_dir)
@@ -174,35 +178,35 @@ class Grader:
                 self.config.anti_cheat,
                 self.config.testcase_weights.get(io.name, default_weight),
                 io_choices,
+                testcase_picker=self.config.testcase_picker,
             )
             for io in io_choices.values()
             if io.expected_output
         ]
 
     def _gather_testcases(self, io) -> Dict[Type[TestCase], List[TestCase]]:
-        """Returns sorted list of testcase_utils from tests/testcase_utils"""
-        tests = {t: [] for t in self.config.testcase_types.values()}
+        """Returns sorted list of testcase_types from tests/testcases"""
+        tests = {t: [] for t in self.config.testcase_picker.testcase_types}
         default_weight = self.config.testcase_weights.get("ALL", 1)
         default_timeout = self.config.timeouts.get("ALL", 1)
         for test in self.paths.testcases_dir.iterdir():
-            weight = self.config.testcase_weights.get(test.name, default_weight)
-            timeout = self.config.timeouts.get(test.name, default_timeout)
-            testcase_type = self.config.testcase_types.get(test.suffix, None)
             if not test.is_file():
                 continue
+            testcase_type = self.config.testcase_picker.pick(test)
             if testcase_type is None:
                 self.logger(f"No appropriate language for {test} found.")
                 continue
             arglist = self.config.generate_arglists(test.name)
             shutil.copy(str(test), str(self.paths.temp_dir))
             tests[testcase_type].append(
-                testcase_type(  # type: ignore # The typing error here appears due to the limitations of python's typing
+                testcase_type(
                     self.paths.temp_dir / test.name,
-                    timeout,
+                    self.config.timeouts.get(test.name, default_timeout),
                     arglist,
                     self.config.anti_cheat,
-                    weight,
+                    self.config.testcase_weights.get(test.name, default_weight),
                     io,
+                    testcase_picker=self.config.testcase_picker,
                 )
             )
         # Allows consistent output
@@ -210,9 +214,8 @@ class Grader:
             test_list.sort(key=lambda t: t.path.name)
         return tests
 
-    def _import_formatters(
-        self, path_to_stdout_formatters: Path
-    ) -> Dict[str, Callable[[str], str]]:
+    @staticmethod
+    def _import_formatters(path_to_stdout_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_stdout_formatters.exists():
             module = import_from_path("stdout_formatters", path_to_stdout_formatters)
             return {k: v for k, v in module.__dict__.items() if callable(v)}
@@ -242,9 +245,9 @@ class Grader:
             return 0
         total_testcase_score = 0
         testcase_results = []
-        allowed_tests = self.tests.get(submission.type, None)
-        allowed_tests += self.stdout_only_tests
+        allowed_tests = self.tests.get(submission.type, []) + self.stdout_only_tests
         if not allowed_tests:
+            # TODO: Replace all print statements with proper logging
             print(f"No testcase_utils suitable for the submission {submission.path.name} found.")
         submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
         for test in allowed_tests:
@@ -273,6 +276,7 @@ class AutograderPaths:
         "input_dir",
         "output_dir",
         "stdout_formatters",
+        "testcase_types_dir",
         "default_stdout_formatters",
         "config",
         "default_config",
@@ -289,11 +293,12 @@ class AutograderPaths:
     input_dir: Path
     output_dir: Path
     stdout_formatters: Path
-    default_stdout_formatters: Path
     config: Path
-    default_config: Path
-
     required_dirs: tuple
+
+    testcase_types_dir: Path
+    default_stdout_formatters: Path
+    default_config: Path
 
     def __init__(self, current_dir):
         self.current_dir = current_dir
@@ -310,16 +315,17 @@ class AutograderPaths:
         self.stdout_formatters = self.tests_dir / "stdout_formatters.py"
         self.config = self.tests_dir / "config.ini"
 
+        self.required_dirs = (self.testcases_dir,)
+
         autograder_dir = Path(__file__).parent
+        self.testcase_types_dir = autograder_dir
         self.default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
         self.default_config = autograder_dir / "default_config.ini"
-
-        self.required_dirs = (self.testcases_dir,)
 
     def generate_config(self):
         if not self.config.exists():
             if self.default_config.exists():
-                shutil.copy(self.default_config, self.config)
+                shutil.copy(str(self.default_config), str(self.config))
             else:
                 raise AutograderError(
                     f"Failed to generate config:'{self.default_config}' not found."
@@ -343,4 +349,4 @@ def temporarily_change_dir(new_dir):
     try:
         yield
     finally:
-        os.chdir(old_dir)
+        os.chdir(str(old_dir))
