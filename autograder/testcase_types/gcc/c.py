@@ -8,6 +8,7 @@ from autograder.testcase_utils.abstract_base_class import (
     TestCase as AbstractTestCase,
 )
 from autograder.testcase_utils.shell import Command
+from autograder.testcase_utils.submission import SubmissionFormatChecker
 
 
 class TestCase(AbstractTestCase):
@@ -27,14 +28,18 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: str,
-        source_is_case_insensitive: bool,
+        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
         """Links student submission without compiling it.
         It is done to speed up total compilation time
         """
         copied_submission = super().precompile_submission(
-            submission, student_dir, [submission.stem], source_is_case_insensitive, arglist
+            submission,
+            student_dir,
+            [submission.stem],
+            submission_is_allowed,
+            arglist,
         )
         precompiled_submission = copied_submission.with_suffix(".o")
         try:

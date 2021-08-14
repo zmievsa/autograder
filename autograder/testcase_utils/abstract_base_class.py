@@ -12,6 +12,7 @@ import sh
 from autograder.util import import_from_path, AutograderError
 from .shell import get_stderr, ShCommand
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from .submission import SubmissionFormatChecker
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
@@ -143,7 +144,7 @@ class TestCase(ABC):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        source_is_case_insensitive: bool,
+        submission_is_allowed: SubmissionFormatChecker,
         arglist: List[str],
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
@@ -268,10 +269,6 @@ class TestCase(ABC):
                 return score, message
             elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
                 # We should already handle this case in try, except block. Maybe we need more info in the error?
-                raise NotImplementedError(
-                    f"System error with exit code {exit_code} has not been handled."
-                )
+                raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
             else:
                 raise ValueError(f"Unknown system code {exit_code} has not been handled.")
-
-

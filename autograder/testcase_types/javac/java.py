@@ -9,14 +9,12 @@ from autograder.testcase_utils.abstract_base_class import (
     ArgList,
     TestCase as AbstractTestCase,
 )
-from autograder.testcase_utils.submission import find_appropriate_source_file_stem
+from autograder.testcase_utils.submission import find_appropriate_source_file_stem, SubmissionFormatChecker
 from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
-PATH_TO_SECURITY_MANAGER_FILE = (
-    TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
-)
+PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
 
 
 class TestCase(AbstractTestCase):
@@ -42,18 +40,16 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        source_is_case_insensitive: bool,
+        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
-        stem = find_appropriate_source_file_stem(
-            submission, possible_source_file_stems, source_is_case_insensitive
-        )
+        stem = submission_is_allowed(submission)
         if stem is None:
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
         copied_submission = super().precompile_submission(
-            submission, student_dir, [stem], source_is_case_insensitive, arglist
+            submission, student_dir, [stem], submission_is_allowed, arglist
         )
         try:
             cls.compiler(copied_submission, *arglist)
@@ -70,16 +66,12 @@ class TestCase(AbstractTestCase):
             f".:*",
             *self.argument_lists[ArgList.TESTCASE_COMPILATION],
         )
-        return lambda *args, **kwargs: self.virtual_machine(
-            "-cp", ".:*", self.path.stem, *args, **kwargs
-        )
+        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:*", self.path.stem, *args, **kwargs)
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
         shutil.copyfile(PATH_TO_JNA_FILE, student_dir / PATH_TO_JNA_FILE.name)
-        shutil.copyfile(
-            PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name
-        )
+        shutil.copyfile(PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name)
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():
@@ -93,9 +85,7 @@ class TestCase(AbstractTestCase):
         """
         with open(self.path) as f:
             content = f.read()
-        final_content = self._add_at_the_beginning_of_public_class(
-            self.get_formatted_test_helper(), content
-        )
+        final_content = self._add_at_the_beginning_of_public_class(self.get_formatted_test_helper(), content)
         final_content = (
             f"""import com.sun.jna.Library;
                 import com.sun.jna.Native;

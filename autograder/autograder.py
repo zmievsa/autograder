@@ -1,7 +1,7 @@
 # TODO: Figure out what to do with testcase picker (i.e. make it work somehow)
 
 from autograder.testcase_utils.testcase_io import TestCaseIO
-from .testcase_utils.stdout import StdoutOnlyTestCase, is_multifile_submission, contains_shebang
+from .testcase_utils.stdout_testcase import StdoutOnlyTestCase, is_multifile_submission, contains_shebang
 import multiprocessing
 import os
 import shutil

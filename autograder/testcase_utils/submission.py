@@ -1,10 +1,12 @@
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Callable
 
 from autograder.testcase_utils import TestCase
 
+SubmissionFormatChecker = Callable[[Path], Optional[str]]
 
-def get_submission_format_checker(possible_file_stems: List[str], name_is_case_insensitive):
+
+def get_submission_format_checker(possible_file_stems: List[str], name_is_case_insensitive) -> SubmissionFormatChecker:
     def submission_format_checker(f: Path) -> Optional[str]:
         return find_appropriate_source_file_stem(f, possible_file_stems, name_is_case_insensitive)
 

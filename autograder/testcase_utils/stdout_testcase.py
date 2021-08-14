@@ -1,3 +1,4 @@
+import stat
 from collections import namedtuple
 from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from pathlib import Path
@@ -7,6 +8,7 @@ from typing import List, Callable
 import sh
 from .abstract_base_class import TestCase
 from .shell import Command
+from .submission import SubmissionFormatChecker
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
@@ -37,7 +39,8 @@ def contains_shebang(path: Path) -> bool:
 
 
 class StdoutOnlyTestCase(TestCase):
-    helper_module_name = ""
+
+    helper_module = ""
     compiler = Command("make")
 
     @classmethod
@@ -50,22 +53,27 @@ class StdoutOnlyTestCase(TestCase):
         cls,
         submission: Path,
         student_dir: Path,
-        possible_source_file_stems: str,
-        source_is_case_insensitive: bool,
+        possible_source_file_stems: List[str],
+        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
         """pwd is temp/student_dir"""
-        _copy_submission_contents_into_student_dir(submission, student_dir)
-        try:
-            cls.compiler()
-        except sh.ErrorReturnCode as e:
-            if "no makefile found" not in str(e):
-                raise e
-        return _find_submission_executable(
-            student_dir,
-            possible_source_file_stems,
-            source_is_case_insensitive,
-        )
+
+        # Single-file with shebang
+        if submission.is_file():
+            destination = student_dir / submission.name
+            shutil.copy(str(submission), str(destination))
+            _make_executable(destination)
+            return destination
+        # A directory with a makefile
+        else:
+            _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
+            try:
+                cls.compiler(*arglist)
+            except sh.ErrorReturnCode as e:
+                if "no makefile found" not in str(e):
+                    raise e
+            return _find_submission_executable(student_dir, submission_is_allowed)
 
     def compile_testcase(self, precompiled_submission: Path):
         return lambda *a, **kw: _run_multifile_testcase(precompiled_submission, *a, **kw)
@@ -81,11 +89,12 @@ class StdoutOnlyTestCase(TestCase):
 
 
 def _run_multifile_testcase(precompiled_submission: Path, *args, **kwargs):
+
     sh.Command(precompiled_submission)(*args, **kwargs)
     return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_STDOUT)
 
 
-def _copy_submission_contents_into_student_dir(submission: Path, student_dir: Path):
+def _copy_multifile_submission_contents_into_student_dir(submission: Path, student_dir: Path):
     contents: List[Path] = list(submission.iterdir())
     while len(contents) == 1 and contents[0].is_dir():
         contents = list(contents[0].iterdir())
@@ -98,11 +107,11 @@ def _copy_submission_contents_into_student_dir(submission: Path, student_dir: Pa
         op(str(f), new_path)
 
 
-def _find_submission_executable(
-    student_dir: Path,
-    possible_source_file_stems,
-    source_is_case_insensitive,
-):
+def _find_submission_executable(student_dir: Path, submission_is_allowed: SubmissionFormatChecker):
     for f in student_dir.iterdir():
-        if submission_is_allowed(f, possible_source_file_stems, source_is_case_insensitive):
+        if submission_is_allowed(f):
             return f
+
+
+def _make_executable(f: Path) -> None:
+    f.chmod(f.stat().st_mode | stat.S_IEXEC)
