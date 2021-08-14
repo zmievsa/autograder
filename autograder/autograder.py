@@ -1,7 +1,7 @@
 # TODO: Figure out what to do with testcase picker (i.e. make it work somehow)
 
 from autograder.testcase_utils.testcase_io import TestCaseIO
-from .testcase_utils.stdout import StdoutOnlyTestCase, is_multifile_submission
+from .testcase_utils.stdout import StdoutOnlyTestCase, is_multifile_submission, contains_shebang
 import multiprocessing
 import os
 import shutil
@@ -13,9 +13,8 @@ from typing import Callable, Dict, List, Set, Type
 from autograder.testcase_utils.abstract_base_class import (
     ArgList,
     TestCase,
-    submission_is_allowed,
-    Submission,
 )
+from .testcase_utils.submission import get_submission_format_checker, Submission
 
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
@@ -31,10 +30,10 @@ class Grader:
     tests: Dict[Type[TestCase], List[TestCase]]
     raw_submissions: List[Path]
     paths: "AutograderPaths"
-    multifile_submissions_found: bool
 
     logger: GradingOutputLogger
     config: GradingConfig
+    submission_is_allowed: Callable
     stdout_only_tests: list
 
     def __init__(self, current_dir, no_output=False, submissions=None):
@@ -50,7 +49,13 @@ class Grader:
         try:
             self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
             self.config = GradingConfig(
-                self.paths.config, self.paths.default_config, self.paths.testcase_types_dir
+                self.paths.config,
+                self.paths.default_config,
+                self.paths.testcase_types_dir,
+            )
+            self.submission_is_allowed = get_submission_format_checker(
+                self.config.possible_source_file_stems,
+                self.config.source_file_stem_is_case_insensitive,
             )
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
@@ -67,16 +72,12 @@ class Grader:
             # also copies testcase_utils to temp dir
             self.tests = self._gather_testcases(io_choices)
             self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
-            process_count = (
-                multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
-            )
+            process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
                 total_class_points = sum(pool.map(Runner(self, man.Lock()), self.submissions))
             class_average = total_class_points / len(self.submissions)
-            self.logger(
-                f"\nAverage score: {round(class_average)}/{self.config.total_points_possible}"
-            )
+            self.logger(f"\nAverage score: {round(class_average)}/{self.config.total_points_possible}")
             self.logger.print_key()
         finally:
             self.cleanup()
@@ -129,26 +130,15 @@ class Grader:
 
             testcase_type = self.config.testcase_picker.pick(submission_path)
             if testcase_type is not None:
-                if self.config.auto_source_file_name_enabled or submission_is_allowed(
-                    submission_path,
-                    self.config.possible_source_file_stems,
-                    self.config.source_file_stem_is_case_insensitive,
-                ):
-                    submissions.append(
-                        Submission(submission_path, testcase_type, self.paths.temp_dir)
-                    )
+                if self.config.any_submission_file_name_is_allowed or self.submission_is_allowed(submission_path):
+                    submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
-                    self.logger(
-                        f"{submission_path} does not contain the required file name. Skipping it."
-                    )
-            elif self.config.stdout_only_submissions_enabled and is_multifile_submission(
-                submission_path,
-                self.config.possible_source_file_stems,
-                self.config.source_file_stem_is_case_insensitive,
+                    self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
+            elif self.config.stdout_only_submissions_enabled and (
+                contains_shebang(submission_path)
+                or is_multifile_submission(submission_path, self.submission_is_allowed)
             ):
-                submissions.append(
-                    Submission(submission_path, StdoutOnlyTestCase, self.paths.temp_dir)
-                )
+                submissions.append(Submission(submission_path, StdoutOnlyTestCase, self.paths.temp_dir))
 
         if not len(submissions):
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
@@ -161,10 +151,7 @@ class Grader:
         outputs = get_file_stems(self.paths.output_dir)
         inputs = get_file_stems(self.paths.input_dir)
         io: Set[str] = set().union(outputs, inputs)
-        dict_io = {
-            p: TestCaseIO(p, self.stdout_formatters, self.paths.input_dir, self.paths.output_dir)
-            for p in io
-        }
+        dict_io = {p: TestCaseIO(p, self.stdout_formatters, self.paths.input_dir, self.paths.output_dir) for p in io}
         return dict_io
 
     def _generate_stdout_only_testcases(self, io_choices: Dict[str, TestCaseIO]) -> List[TestCase]:
@@ -215,7 +202,9 @@ class Grader:
         return tests
 
     @staticmethod
-    def _import_formatters(path_to_stdout_formatters: Path) -> Dict[str, Callable[[str], str]]:
+    def _import_formatters(
+        path_to_stdout_formatters: Path,
+    ) -> Dict[str, Callable[[str], str]]:
         if path_to_stdout_formatters.exists():
             module = import_from_path("stdout_formatters", path_to_stdout_formatters)
             return {k: v for k, v in module.__dict__.items() if callable(v)}
@@ -245,6 +234,7 @@ class Grader:
             return 0
         total_testcase_score = 0
         testcase_results = []
+        # Note: self.stdout_only_tests are not included in self.tests
         allowed_tests = self.tests.get(submission.type, []) + self.stdout_only_tests
         if not allowed_tests:
             # TODO: Replace all print statements with proper logging
@@ -327,9 +317,7 @@ class AutograderPaths:
             if self.default_config.exists():
                 shutil.copy(str(self.default_config), str(self.config))
             else:
-                raise AutograderError(
-                    f"Failed to generate config:'{self.default_config}' not found."
-                )
+                raise AutograderError(f"Failed to generate config:'{self.default_config}' not found.")
 
 
 # Grades single submissions. We use it because multiprocessing.pool only accepts top-level callable objects.

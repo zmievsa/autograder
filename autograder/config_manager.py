@@ -18,7 +18,7 @@ class GradingConfig:
     testcase_picker: TestCasePicker
 
     assignment_name: str
-    auto_source_file_name_enabled: bool
+    any_submission_file_name_is_allowed: bool
     source_file_stem_is_case_insensitive: bool
     possible_source_file_stems: List[str]
     testcase_weights: Dict[str, float]
@@ -54,9 +54,9 @@ class GradingConfig:
         source = cfg["POSSIBLE_SOURCE_FILE_STEMS"].strip()
         if source == "AUTO":
             source = DEFAULT_FILE_STEM
-            self.auto_source_file_name_enabled = True
+            self.any_submission_file_name_is_allowed = True
         else:
-            self.auto_source_file_name_enabled = False
+            self.any_submission_file_name_is_allowed = False
         self.source_file_stem_is_case_insensitive = cfg.getboolean(
             "SOURCE_FILE_NAME_IS_CASE_INSENSITIVE"
         )

@@ -21,21 +21,6 @@ TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
-class Submission:
-    # I wanted to use a dataclass but they do not work well with slots until 3.10
-    __slots__ = "path", "type", "dir"
-
-    file: Path
-    type: Type["TestCase"]
-    dir: Path
-
-    def __init__(self, file: Path, testcase_type: Type["TestCase"], temp_dir: Path):
-        self.path = file
-        self.type = testcase_type
-        self.dir = temp_dir / file.name
-        self.dir.mkdir()
-
-
 class TestCasePicker:
     testcase_types: List[Type["TestCase"]]
 
@@ -290,29 +275,3 @@ class TestCase(ABC):
                 raise ValueError(f"Unknown system code {exit_code} has not been handled.")
 
 
-def submission_is_allowed(
-    file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool
-):
-    return (
-        find_appropriate_source_file_stem(
-            file,
-            possible_source_file_stems,
-            source_is_case_insensitive,
-        )
-        is not None
-    )
-
-
-def find_appropriate_source_file_stem(
-    file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool
-) -> Optional[str]:
-    file_stem = file.stem
-    if source_is_case_insensitive:
-        file_stem = file_stem.lower()
-    for s in possible_source_file_stems:
-        if source_is_case_insensitive:
-            if s.lower() in file_stem:
-                return s
-        else:
-            if s in file_stem:
-                return s

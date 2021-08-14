@@ -1,7 +1,7 @@
 # Controls output to stdout and to output file
 
 
-from .testcase_utils.abstract_base_class import Submission
+from .testcase_utils.submission import Submission
 import logging
 import re
 import sys

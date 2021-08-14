@@ -8,8 +8,8 @@ from autograder.testcase_utils.abstract_base_class import (
     TEST_HELPERS_DIR,
     ArgList,
     TestCase as AbstractTestCase,
-    find_appropriate_source_file_stem,
 )
+from autograder.testcase_utils.submission import find_appropriate_source_file_stem
 from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")

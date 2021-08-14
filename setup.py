@@ -12,7 +12,7 @@ with (here / "README.md").open(encoding="utf-8") as f:
 
 setup(
     name=about["__title__"],
-    packages=["autograder", "autograder.testcase_utils", "autograder.testcase_utils.util"],
+    packages=["autograder", "autograder.testcase_utils", ],
     version=about["__version__"],
     install_requires=requires,
     package_data={

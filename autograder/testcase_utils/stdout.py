@@ -2,37 +2,38 @@ from collections import namedtuple
 from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from pathlib import Path
 import shutil
-from typing import List
+from typing import List, Callable
 
 import sh
-from .abstract_base_class import TestCase, submission_is_allowed
+from .abstract_base_class import TestCase
 from .shell import Command
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
 
 
-def is_multifile_submission(
-    submission_dir: Path,
-    possible_source_file_stems,
-    source_is_case_insensitive,
-) -> bool:
+def is_multifile_submission(submission_dir: Path, submission_is_allowed: Callable) -> bool:
     contents = list(submission_dir.iterdir())
+    # Seek the innermost non-single-file directory
+    # in case the directory contains another directory with the project (common issue when zipping directories)
     while len(contents) == 1 and contents[0].is_dir():
         contents = list(contents[0].iterdir())
 
     for f in submission_dir.iterdir():
-        if _is_makefile(f) or submission_is_allowed(
-            f,
-            possible_source_file_stems,
-            source_is_case_insensitive,
-        ):
+        if _is_makefile(f) or submission_is_allowed(f):
             return True
     return False
 
 
 def _is_makefile(path: Path):
     return not path.is_dir() and path.name in POSSIBLE_MAKEFILE_NAMES
+
+
+def contains_shebang(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    with open(path) as f:
+        return f.readline().startswith("#!")
 
 
 class StdoutOnlyTestCase(TestCase):
