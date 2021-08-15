@@ -218,7 +218,7 @@ class Grader:
                 submission.path,
                 submission.dir,
                 self.config.possible_source_file_stems,
-                self.config.source_file_stem_is_case_insensitive,
+                self.submission_is_allowed,
                 arglists[ArgList.SUBMISSION_PRECOMPILATION],
             )
         except Exception as e:  # type: ignore
@@ -297,7 +297,7 @@ class AutograderPaths:
         self.output_summary = current_dir / "grader_output.txt"
         self.tests_dir = current_dir / "tests"
 
-        self.testcases_dir = self.tests_dir / "testcase_utils"
+        self.testcases_dir = self.tests_dir / "testcases"
         self.extra_dir = self.tests_dir / "extra"
         self.input_dir = self.tests_dir / "input"
         self.output_dir = self.tests_dir / "output"
@@ -308,7 +308,7 @@ class AutograderPaths:
         self.required_dirs = (self.testcases_dir,)
 
         autograder_dir = Path(__file__).parent
-        self.testcase_types_dir = autograder_dir
+        self.testcase_types_dir = autograder_dir / "testcase_types"
         self.default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
         self.default_config = autograder_dir / "default_config.ini"
 

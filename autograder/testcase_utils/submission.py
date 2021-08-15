@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Type, Callable
 
-from autograder.testcase_utils import TestCase
+from .abstract_base_class import TestCase
 
 SubmissionFormatChecker = Callable[[Path], Optional[str]]
 

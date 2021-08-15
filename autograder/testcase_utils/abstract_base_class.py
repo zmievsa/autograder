@@ -3,8 +3,9 @@ import shutil
 from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 from typing import Optional, Type, Dict
+from inspect import getsourcefile
 
 import sh
 
@@ -12,12 +13,9 @@ import sh
 from autograder.util import import_from_path, AutograderError
 from .shell import get_stderr, ShCommand
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
-from .submission import SubmissionFormatChecker
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-
-TEST_HELPERS_DIR = Path(__file__).resolve().parent / "test_helpers"
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -40,11 +38,11 @@ class TestCasePicker:
 
     def _discover_testcase_types(self, testcase_types_dir: Path) -> List[Type["TestCase"]]:
         testcase_types = []
-        for testcase_type_dir in testcase_types_dir.iterdir():
-            for path in testcase_type_dir.iterdir():
+        for testcase_type in testcase_types_dir.iterdir():
+            for path in testcase_type.iterdir():
                 if path.is_file() and path.suffix == ".py":
                     testcase = import_from_path("testcase", path).TestCase
-                    if self._is_installed(testcase_types_dir.name, testcase):
+                    if self._is_installed(testcase_type.name, testcase):
                         testcase_types.append(testcase)
         return testcase_types
 
@@ -74,6 +72,7 @@ class TestCase(ABC):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
 
+    test_helpers_dir: Path
     path: Path
     weight: float
     max_score: int
@@ -81,6 +80,9 @@ class TestCase(ABC):
     io: TestCaseIO
     testcase_picker: TestCasePicker
     validating_string: str
+
+    # Useful in getting the resources associated with each testcase type
+    _source_dir: Path
 
     @property
     @abstractmethod
@@ -114,6 +116,9 @@ class TestCase(ABC):
         io: Dict[str, TestCaseIO],
         testcase_picker: TestCasePicker,
     ):
+        # We needed a way to get a source file based solely on __class__ to access its sibling directories
+        self._source_dir = Path(getsourcefile(self.__class__)).parent
+        self.test_helpers_dir = self._source_dir / "helpers"
         self.path = path
         self.timeout = timeout
         self.argument_lists = argument_lists
@@ -144,7 +149,7 @@ class TestCase(ABC):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        submission_is_allowed: SubmissionFormatChecker,
+        submission_is_allowed: Callable,  # FIXME: It's actually the SubmissionFormatChecker but Submission class depends on TestCase ABC
         arglist: List[str],
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
@@ -175,7 +180,7 @@ class TestCase(ABC):
         return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self):
-        return TEST_HELPERS_DIR / self.helper_module
+        return self.test_helpers_dir / self.helper_module
 
     def run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """Returns student score and message to be displayed"""

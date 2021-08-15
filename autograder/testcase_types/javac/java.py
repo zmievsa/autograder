@@ -4,17 +4,14 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from autograder.testcase_utils.abstract_base_class import (
-    TEST_HELPERS_DIR,
-    ArgList,
-    TestCase as AbstractTestCase,
-)
+from autograder.testcase_utils.abstract_base_class import ArgList, TestCase as AbstractTestCase
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem, SubmissionFormatChecker
 from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
-PATH_TO_JNA_FILE = TEST_HELPERS_DIR / "extra" / "jna.jar"
-PATH_TO_SECURITY_MANAGER_FILE = TEST_HELPERS_DIR / "extra" / "NoReflectionAndEnvVarsSecurityManager.class"
+EXTRA_DIR = Path(__file__).parent
+PATH_TO_JNA_FILE = EXTRA_DIR / "jna.jar"
+PATH_TO_SECURITY_MANAGER_FILE = EXTRA_DIR / "NoReflectionAndEnvVarsSecurityManager.class"
 
 
 class TestCase(AbstractTestCase):
