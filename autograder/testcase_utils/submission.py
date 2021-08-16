@@ -1,16 +1,18 @@
 from pathlib import Path
 from typing import List, Optional, Type, Callable
 
-from .abstract_base_class import TestCase
+from .abstract_testcase import TestCase
 
-SubmissionFormatChecker = Callable[[Path], Optional[str]]
+# SubmissionFormatChecker = Callable[[Path], Optional[str]]
 
+class SubmissionFormatChecker:
+    """ This could be done using a decorator instead but then it wouldn't pickle, and we need pickling """
+    def __init__(self, possible_file_stems: List[str], name_is_case_insensitive: bool):
+        self.possible_file_stems = possible_file_stems
+        self.name_is_case_insensitive = name_is_case_insensitive
 
-def get_submission_format_checker(possible_file_stems: List[str], name_is_case_insensitive) -> SubmissionFormatChecker:
-    def submission_format_checker(f: Path) -> Optional[str]:
-        return find_appropriate_source_file_stem(f, possible_file_stems, name_is_case_insensitive)
-
-    return submission_format_checker
+    def __call__(self, f: Path) -> Optional[str]:
+        return find_appropriate_source_file_stem(f, self.possible_file_stems, self.name_is_case_insensitive)
 
 
 def find_appropriate_source_file_stem(

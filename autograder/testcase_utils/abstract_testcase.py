@@ -41,7 +41,7 @@ class TestCasePicker:
         for testcase_type in testcase_types_dir.iterdir():
             for path in testcase_type.iterdir():
                 if path.is_file() and path.suffix == ".py":
-                    testcase = import_from_path("testcase", path).TestCase
+                    testcase = import_from_path(f"testcase:{path.stem}{testcase_type.name}", path).TestCase
                     if self._is_installed(testcase_type.name, testcase):
                         testcase_types.append(testcase)
         return testcase_types
@@ -137,7 +137,7 @@ class TestCase(ABC):
         if anti_cheat_enabled:
             self.precompile_testcase()
 
-        # This is done to hide the contents of testcase_utils and exit codes to the student
+        # This is done to hide the contents of testcases to the student
         if anti_cheat_enabled:
             with self.path.open("rb") as f:
                 self.source_contents = f.read()

@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from autograder.testcase_utils.abstract_base_class import ArgList, TestCase as AbstractTestCase
+from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem, SubmissionFormatChecker
 from autograder.testcase_utils.shell import Command
 

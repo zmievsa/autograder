@@ -10,11 +10,11 @@ from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
 from typing import Callable, Dict, List, Set, Type
 
-from autograder.testcase_utils.abstract_base_class import (
+from autograder.testcase_utils.abstract_testcase import (
     ArgList,
     TestCase,
 )
-from .testcase_utils.submission import get_submission_format_checker, Submission
+from .testcase_utils.submission import SubmissionFormatChecker, Submission
 
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
@@ -53,7 +53,7 @@ class Grader:
                 self.paths.default_config,
                 self.paths.testcase_types_dir,
             )
-            self.submission_is_allowed = get_submission_format_checker(
+            self.submission_is_allowed = SubmissionFormatChecker(
                 self.config.possible_source_file_stems,
                 self.config.source_file_stem_is_case_insensitive,
             )
@@ -159,13 +159,13 @@ class Grader:
         default_weight = self.config.testcase_weights.get("ALL", 1)
         return [
             StdoutOnlyTestCase(
-                self.paths.temp_dir,
+                io.output_file,
                 self.config.timeouts.get(io.name, default_timeout),
-                {},
+                {}, # TODO: Why no argument lists here?
                 self.config.anti_cheat,
                 self.config.testcase_weights.get(io.name, default_weight),
                 io_choices,
-                testcase_picker=self.config.testcase_picker,
+                self.config.testcase_picker,
             )
             for io in io_choices.values()
             if io.expected_output

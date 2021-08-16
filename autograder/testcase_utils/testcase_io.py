@@ -9,8 +9,10 @@ class TestCaseIO:
     def __init__(self, testcase_name_stem, formatters, input_dir, output_dir):
         self.name = testcase_name_stem
         self.formatter = formatters.get(self.name, None) or formatters.get("ALL", None)
-
         self.output_file: Path = output_dir / f"{self.name}.txt"
+
+        exist = self.output_file.resolve().exists()
+        is_file = self.output_file.resolve().is_file()
         if self.output_file.exists() and self.output_file.is_file():
             with self.output_file.open() as f:
                 self.expected_output_backup = f.read()

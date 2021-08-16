@@ -6,7 +6,7 @@ import shutil
 from typing import List, Callable
 
 import sh
-from .abstract_base_class import TestCase
+from .abstract_testcase import TestCase
 from .shell import Command
 from .submission import SubmissionFormatChecker
 

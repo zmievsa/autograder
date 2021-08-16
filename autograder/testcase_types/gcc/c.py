@@ -2,7 +2,7 @@ from pathlib import Path
 
 import sh
 
-from autograder.testcase_utils.abstract_base_class import (
+from autograder.testcase_utils.abstract_testcase import (
     ArgList,
     ShCommand,
     TestCase as AbstractTestCase,

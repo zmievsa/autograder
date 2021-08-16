@@ -2,7 +2,7 @@ import configparser
 from pathlib import Path
 from typing import Any, Callable, Dict, List, TypeVar
 
-from .testcase_utils.abstract_base_class import ArgList, TestCasePicker
+from .testcase_utils.abstract_testcase import ArgList, TestCasePicker
 
 DEFAULT_FILE_STEM = "Homework"
 

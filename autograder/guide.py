@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from .autograder import AutograderPaths
-from .testcase_utils.abstract_base_class import TestCasePicker
+from .testcase_utils.abstract_testcase import TestCasePicker
 
 
 def create_dir(path: Path):

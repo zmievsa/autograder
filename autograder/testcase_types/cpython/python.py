@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 
-from autograder.testcase_utils.abstract_base_class import ArgList, TestCase as AbstractTestCase
+from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import Command
 from autograder.testcase_utils.submission import SubmissionFormatChecker
 
