@@ -27,13 +27,6 @@ def _create_parser():
 
 def _create_run_parser(subparsers: argparse._SubParsersAction):
     parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
-    parser.add_argument(
-        "submission_path",
-        type=Path,
-        nargs="?",
-        default=Path.cwd(),
-        help="Path to directory that contains student submissions",
-    )
     parser.add_argument("--no_output", action="store_true", help="Do not output any code to the console")
     parser.add_argument(
         "-s",
@@ -44,6 +37,7 @@ def _create_run_parser(subparsers: argparse._SubParsersAction):
         default=[],
         help="Only grade submissions with specified file names (without full path)",
     )
+    _add_submission_path_argument(parser)
 
 
 def _create_stats_parser(subparsers: argparse._SubParsersAction):
@@ -58,10 +52,22 @@ def _create_stats_parser(subparsers: argparse._SubParsersAction):
         metavar="min_score",
         help="Use after already graded to print assignments with score >= min_score",
     )
+    _add_submission_path_argument(parser)
 
 
 def _create_guide_parser(subparsers: argparse._SubParsersAction):
-    subparsers.add_parser("guide", help="Guide you through setting up a grading environment")
+    parser = subparsers.add_parser("guide", help="Guide you through setting up a grading environment")
+    _add_submission_path_argument(parser)
+
+
+def _add_submission_path_argument(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "submission_path",
+        type=Path,
+        nargs="?",
+        default=Path.cwd(),
+        help="Path to directory that contains student submissions",
+    )
 
 
 def _evaluate_args(args, current_dir):
@@ -79,20 +85,19 @@ def _evaluate_args(args, current_dir):
         exit(1)
     elif sys.platform.startswith("darwin"):
         print("OSX is not officially supported. Proceed with caution.")
-    from autograder.autograder import Grader  # That's some awful naming
+    from autograder.autograder import Grader, AutograderPaths  # That's some awful naming
     from autograder.util import AutograderError, print_results
 
     try:
-        grader = Grader(current_dir, no_output=args.no_output, submissions=args.submissions)
         if args.command == "stats":
             if args.print:
-                print_results(grader.paths, args.print)
+                print_results(AutograderPaths(current_dir), args.print)
         elif args.command == "guide":
             from autograder import guide
 
-            guide.main(grader.paths)
+            guide.main(AutograderPaths(current_dir))
         elif args.command == "run":
-            return grader.run()
+            return Grader(current_dir, no_output=args.no_output, submissions=args.submissions).run()
         else:
             raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
     except AutograderError as e:
