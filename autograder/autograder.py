@@ -71,7 +71,10 @@ class Grader:
             io_choices = self._gather_io()
             # also copies testcase_utils to temp dir
             self.tests = self._gather_testcases(io_choices)
-            self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
+            if self.config.stdout_only_submissions_enabled:
+                self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
+            else:
+                self.stdout_only_tests = []
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
@@ -235,7 +238,9 @@ class Grader:
         total_testcase_score = 0
         testcase_results = []
         # Note: self.stdout_only_tests are not included in self.tests
-        allowed_tests = self.tests.get(submission.type, []) + self.stdout_only_tests
+        allowed_tests = self.tests.get(submission.type, [])
+        if self.config.stdout_only_submissions_enabled:
+            allowed_tests += self.stdout_only_tests
         if not allowed_tests:
             # TODO: Replace all print statements with proper logging
             print(f"No testcase_utils suitable for the submission {submission.path.name} found.")
