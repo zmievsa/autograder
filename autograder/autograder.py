@@ -165,7 +165,6 @@ class Grader:
                 io.output_file,
                 self.config.timeouts.get(io.name, default_timeout),
                 {}, # TODO: Why no argument lists here?
-                self.config.anti_cheat,
                 self.config.testcase_weights.get(io.name, default_weight),
                 io_choices,
                 self.config.testcase_picker,
@@ -193,7 +192,6 @@ class Grader:
                     self.paths.temp_dir / test.name,
                     self.config.timeouts.get(test.name, default_timeout),
                     arglist,
-                    self.config.anti_cheat,
                     self.config.testcase_weights.get(test.name, default_weight),
                     io,
                     testcase_picker=self.config.testcase_picker,

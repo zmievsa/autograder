@@ -76,7 +76,6 @@ class TestCase(ABC):
     path: Path
     weight: float
     max_score: int
-    name: str
     io: TestCaseIO
     testcase_picker: TestCasePicker
     validating_string: str
@@ -111,7 +110,6 @@ class TestCase(ABC):
         path: Path,
         timeout: float,
         argument_lists: Dict[ArgList, List[str]],
-        anti_cheat_enabled: bool,
         weight: float,
         io: Dict[str, TestCaseIO],
         testcase_picker: TestCasePicker,
@@ -122,7 +120,6 @@ class TestCase(ABC):
         self.path = path
         self.timeout = timeout
         self.argument_lists = argument_lists
-        self.anti_cheat_enabled = anti_cheat_enabled
         self.weight = weight
         self.max_score = int(weight * 100)
         self.testcase_picker = testcase_picker
@@ -134,14 +131,7 @@ class TestCase(ABC):
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()
-        if anti_cheat_enabled:
-            self.precompile_testcase()
-
-        # This is done to hide the contents of testcases to the student
-        if anti_cheat_enabled:
-            with self.path.open("rb") as f:
-                self.source_contents = f.read()
-            self.path.unlink()
+        self.precompile_testcase()
 
     @classmethod
     def precompile_submission(
@@ -218,12 +208,8 @@ class TestCase(ABC):
 
     def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """Returns student score (without applying testcase weight) and message to be displayed"""
-        testcase_path = precompiled_submission.with_name(self.path.name)
-        if self.anti_cheat_enabled:
-            with testcase_path.open("wb") as f:
-                f.write(self.source_contents)
-        else:
-            shutil.copy(str(self.path), str(testcase_path))
+        testcase_path = precompiled_submission.with_name(self.path.name) # FIXME: Horrible name
+        shutil.copy(str(self.path), str(testcase_path))
 
         try:
             test_executable = self.compile_testcase(precompiled_submission)

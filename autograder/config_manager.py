@@ -37,7 +37,6 @@ class GradingConfig:
 
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
-        self.anti_cheat = cfg.getboolean("ANTI_CHEAT")
         self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
         self.stdout_only_submissions_enabled = cfg.getboolean("MULTIFILE_SUBMISSIONS_ENABLED")
 

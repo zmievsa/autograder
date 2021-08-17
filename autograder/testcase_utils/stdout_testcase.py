@@ -37,7 +37,6 @@ def contains_shebang(path: Path) -> bool:
     with open(path) as f:
         return f.readline().startswith("#!")
 
-
 class StdoutOnlyTestCase(TestCase):
 
     helper_module = ""
