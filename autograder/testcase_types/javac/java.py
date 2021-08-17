@@ -9,7 +9,7 @@ from autograder.testcase_utils.submission import find_appropriate_source_file_st
 from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
-EXTRA_DIR = Path(__file__).parent
+EXTRA_DIR = Path(__file__).parent / "extra"
 PATH_TO_JNA_FILE = EXTRA_DIR / "jna.jar"
 PATH_TO_SECURITY_MANAGER_FILE = EXTRA_DIR / "NoReflectionAndEnvVarsSecurityManager.class"
 

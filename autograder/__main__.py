@@ -2,8 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-# TODO: Re-write portions of it using https://stackoverflow.com/questions/8250010/argparse-identify-which-subparser-was-used/9286586#9286586
-#   to identify which subparser was ran
+
 def main(argv=None):
     """Returns the average score of the students"""
     if argv is None:
@@ -13,8 +12,7 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
     current_dir = (Path.cwd() / args.submission_path).resolve()
-    _evaluate_args(args, current_dir)
-    return -1
+    return _evaluate_args(args, current_dir)
 
 
 def _create_parser():
@@ -99,6 +97,7 @@ def _evaluate_args(args, current_dir):
             raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
     except AutograderError as e:
         print(e)
+    return -1
 
 
 if __name__ == "__main__":

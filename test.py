@@ -7,7 +7,7 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import Callable
 
-import autograder
+from autograder.__main__ import main as autograder
 
 
 class NonDaemonPool(Pool):
@@ -72,7 +72,7 @@ def FAIL(message):
 
 
 def run_silenced_grader(*args):
-    return autograder.__main__.main(["--no_output"] + list(args))
+    return autograder(["run", "--no_output"] + list(args))
 
 
 def test_example(args):

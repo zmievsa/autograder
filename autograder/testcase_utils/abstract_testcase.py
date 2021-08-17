@@ -17,8 +17,6 @@ from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
 
-EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
-
 
 class TestCasePicker:
     testcase_types: List[Type["TestCase"]]
@@ -127,7 +125,7 @@ class TestCase(ABC):
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
 
-        self.io = io.get(self.path.stem, EMPTY_TESTCASE_IO)
+        self.io = io
         self.validating_string = generate_validating_string()
 
         self.prepend_test_helper()

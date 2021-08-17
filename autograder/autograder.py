@@ -8,12 +8,9 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
-from typing import Callable, Dict, List, Set, Type
+from typing import Callable, Dict, List, Set, Type, Tuple
 
-from autograder.testcase_utils.abstract_testcase import (
-    ArgList,
-    TestCase,
-)
+from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.submission import SubmissionFormatChecker, Submission
 
 from .config_manager import GradingConfig
@@ -22,6 +19,8 @@ from .util import AutograderError, import_from_path, get_file_stems
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
 READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
+
+EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
 class Grader:
@@ -70,9 +69,9 @@ class Grader:
             self.submissions = self._gather_submissions()
             io_choices = self._gather_io()
             # also copies testcase_utils to temp dir
-            self.tests = self._gather_testcases(io_choices)
+            self.tests, unused_io_choices = self._gather_testcases(io_choices.copy())
             if self.config.stdout_only_submissions_enabled:
-                self.stdout_only_tests = self._generate_stdout_only_testcases(io_choices)
+                self.stdout_only_tests = self._generate_stdout_only_testcases(unused_io_choices)
             else:
                 self.stdout_only_tests = []
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
@@ -164,7 +163,7 @@ class Grader:
             StdoutOnlyTestCase(
                 io.output_file,
                 self.config.timeouts.get(io.name, default_timeout),
-                {}, # TODO: Why no argument lists here?
+                {},  # TODO: Why no argument lists here?
                 self.config.testcase_weights.get(io.name, default_weight),
                 io_choices,
                 self.config.testcase_picker,
@@ -173,7 +172,9 @@ class Grader:
             if io.expected_output
         ]
 
-    def _gather_testcases(self, io) -> Dict[Type[TestCase], List[TestCase]]:
+    def _gather_testcases(
+        self, io: Dict[str, TestCaseIO]
+    ) -> Tuple[Dict[Type[TestCase], List[TestCase]], Dict[str, TestCaseIO]]:
         """Returns sorted list of testcase_types from tests/testcases"""
         tests = {t: [] for t in self.config.testcase_picker.testcase_types}
         default_weight = self.config.testcase_weights.get("ALL", 1)
@@ -193,14 +194,14 @@ class Grader:
                     self.config.timeouts.get(test.name, default_timeout),
                     arglist,
                     self.config.testcase_weights.get(test.name, default_weight),
-                    io,
+                    io.pop(test.stem, EMPTY_TESTCASE_IO),
                     testcase_picker=self.config.testcase_picker,
                 )
             )
         # Allows consistent output
         for test_list in tests.values():
             test_list.sort(key=lambda t: t.path.name)
-        return tests
+        return tests, io
 
     @staticmethod
     def _import_formatters(
