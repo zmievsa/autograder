@@ -2,7 +2,7 @@ import configparser
 from pathlib import Path
 from typing import Any, Callable, Dict, List, TypeVar
 
-from .testcase_utils.abstract_testcase import ArgList, TestCasePicker
+from .testcase_utils.abstract_testcase import ArgList
 
 DEFAULT_FILE_STEM = "Homework"
 
@@ -11,11 +11,9 @@ class GradingConfig:
     timeouts: Dict[str, float]
     generate_results: bool
     parallel_grading_enabled: bool
-    stdout_only_submissions_enabled: bool
+    stdout_only_grading_enabled: bool
     total_points_possible: int
     total_score_to_100_ratio: float
-
-    testcase_picker: TestCasePicker
 
     assignment_name: str
     any_submission_file_name_is_allowed: bool
@@ -24,29 +22,27 @@ class GradingConfig:
     testcase_weights: Dict[str, float]
     cli_argument_lists: Dict[ArgList, Dict[str, List[str]]]
 
-    def __init__(self, config: Path, default_config: Path, testcase_types_dir: Path):
-        self._configure_grading(config, default_config, testcase_types_dir)
+    def __init__(self, config: Path, default_config: Path):
+        self._configure_grading(config, default_config)
 
     def _configure_grading(
         self,
         config_path: Path,
         default_config_path: Path,
-        testcase_types_dir: Path,
     ):
         cfg = self._read_config(config_path, default_config_path)
 
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
         self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
-        self.stdout_only_submissions_enabled = cfg.getboolean("MULTIFILE_SUBMISSIONS_ENABLED")
+        self.stdout_only_grading_enabled = cfg.getboolean("STDOUT_ONLY_GRADING_ENABLED")
 
         self.total_points_possible = cfg.getint("TOTAL_POINTS_POSSIBLE")
         self.total_score_to_100_ratio = self.total_points_possible / 100
 
         # TODO: Add support for choosing multiple programming languages
         language = cfg["PROGRAMMING_LANGUAGE"].strip()
-        allowed_testcase_types = None if language == "AUTO" else [language]
-        self.testcase_picker = TestCasePicker(testcase_types_dir, allowed_testcase_types)
+        self.allowed_testcase_types = None if language == "AUTO" else [language]
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
@@ -56,9 +52,7 @@ class GradingConfig:
             self.any_submission_file_name_is_allowed = True
         else:
             self.any_submission_file_name_is_allowed = False
-        self.source_file_stem_is_case_insensitive = cfg.getboolean(
-            "SOURCE_FILE_NAME_IS_CASE_INSENSITIVE"
-        )
+        self.source_file_stem_is_case_insensitive = cfg.getboolean("SOURCE_FILE_NAME_IS_CASE_INSENSITIVE")
         self.possible_source_file_stems = source.replace(" ", "").split(",")
 
         self.testcase_weights = parse_config_list(cfg["TESTCASE_WEIGHTS"], float)
@@ -67,9 +61,7 @@ class GradingConfig:
         self.cli_argument_lists = parse_arglists(cfg)
 
     @staticmethod
-    def _read_config(
-        path_to_user_config: Path, path_to_default_config: Path
-    ) -> configparser.SectionProxy:
+    def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
         default_parser.read(str(path_to_default_config))
 

@@ -1,9 +1,12 @@
 import os
+import stat
 import shutil
 from pathlib import Path
+from typing import Dict
 
 from .autograder import AutograderPaths
-from .testcase_utils.abstract_testcase import TestCasePicker
+from .testcase_utils.abstract_testcase import TestCase
+from .testcase_utils.testcase_picker import TestCasePicker
 
 
 def create_dir(path: Path):
@@ -21,9 +24,7 @@ def main(paths: AutograderPaths):
     print("Hello. I will now guide you through the initial setup of autograder.")
     ans = input(f"Would you like to grade submissions located in '{paths.current_dir}'? (Yes/No) ")
     if not ans.lower().startswith("y"):
-        print(
-            "You probably haven't specified a directory to the grader. Use 'autograder path/to/submissions/dir'"
-        )
+        print("You probably haven't specified a directory to the grader. Use 'autograder path/to/submissions/dir'")
         exit(0)
     create_dir(paths.tests_dir)
     create_dir(paths.testcases_dir)
@@ -48,21 +49,20 @@ def main(paths: AutograderPaths):
         "Would you like me to generate the testcase templates? (Yes/No) "
     )
     if ans.lower().startswith("y"):
-        allowed_languages = ", ".join(ALLOWED_LANGUAGES.keys())
+        supported_languages = _get_supported_languages(paths.testcase_types_dir)
+        allowed_languages = ", ".join(name for name in supported_languages.keys())
         while True:
             choice = input(
                 f"Choose a programming language you'd like to generate testcase templates for ({allowed_languages}): "
             )
-            lang = ALLOWED_LANGUAGES.get(choice, None)
+            lang = supported_languages.get(choice, None)
             if lang is None:
                 print(f"Couldn't find the language with name '{choice}'. Please, try again.")
             else:
                 break
-        safe_copytree(
-            Path(__file__).parent / "templates" / choice, paths.testcases_dir, dirs_exist_ok=True
-        )
+        safe_copytree(lang.get_template_dir(), paths.testcases_dir, dirs_exist_ok=True)
     print(
-        "\n\nNow if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
+        "\n\nNow if you want to grade your submissions, you can use 'autograder run path/to/submissions/dir' "
         "for this directory."
     )
     print(f"You can write your testcases in {paths.testcases_dir}")
@@ -72,6 +72,11 @@ def main(paths: AutograderPaths):
     print(f"You can put the extra files to be available for each testcase into {paths.extra_dir}")
     print(f"You can configure grading by editing {paths.config}")
     print("You can find readme at https://github.com/Ovsyanka83/autograder")
+
+
+def _get_supported_languages(testcase_types_dir: Path) -> Dict[str, TestCase]:
+    testcase_types = TestCasePicker.discover_testcase_types(testcase_types_dir)
+    return {t.type_source_file.stem: t for t in testcase_types if (t.get_template_dir()).exists()}
 
 
 def safe_copytree(
@@ -136,9 +141,7 @@ def safe_copytree(
                     else:
                         copy_function(src_obj, dst_name)
             elif srcentry.is_dir():
-                shutil.copytree(
-                    src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok
-                )
+                shutil.copytree(src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)
             else:
                 # Will raise a SpecialFileError for unsupported file types
                 copy_function(src_obj, dst_name)

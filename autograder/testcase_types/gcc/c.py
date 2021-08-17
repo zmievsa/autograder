@@ -23,6 +23,10 @@ class TestCase(AbstractTestCase):
         return cls.compiler is not None
 
     @classmethod
+    def get_template_dir(cls):
+        return cls.type_source_file.parent / "c_templates"
+
+    @classmethod
     def precompile_submission(
         cls,
         submission: Path,

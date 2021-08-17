@@ -37,6 +37,7 @@ def contains_shebang(path: Path) -> bool:
     with open(path) as f:
         return f.readline().startswith("#!")
 
+
 class StdoutOnlyTestCase(TestCase):
 
     helper_module = ""
@@ -46,6 +47,10 @@ class StdoutOnlyTestCase(TestCase):
     def is_installed(cls) -> bool:
         """We assume all utilities necessary are installed because we can't possibly check for all of them."""
         return cls.compiler is not None
+
+    @classmethod
+    def is_a_type_of(cls, file: Path, submission_is_allowed: SubmissionFormatChecker) -> bool:
+        return contains_shebang(file) or is_multifile_submission(file, submission_is_allowed)
 
     @classmethod
     def precompile_submission(

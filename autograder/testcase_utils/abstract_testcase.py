@@ -1,62 +1,20 @@
 import enum
 import shutil
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from io import StringIO
 from pathlib import Path
 from typing import List, Tuple, Callable
-from typing import Optional, Type, Dict
+from typing import Dict
 from inspect import getsourcefile
 
 import sh
 
 # TODO: Get rid of this horrible import
-from autograder.util import import_from_path, AutograderError
 from .shell import get_stderr, ShCommand
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-
-
-class TestCasePicker:
-    testcase_types: List[Type["TestCase"]]
-
-    def __init__(self, testcase_types_dir: Path, allowed_languages: List[str] = None):
-        registered_ttypes = self._discover_testcase_types(testcase_types_dir)
-        if allowed_languages is not None:
-            self.testcase_types = [t for t in registered_ttypes if t.name() in allowed_languages]
-        else:
-            self.testcase_types = registered_ttypes
-        if not self.testcase_types:
-            raise AutograderError(
-                "No acceptable testcase types were detected.\n"
-                f"Allowed languages: {allowed_languages}\n"
-                f"Registered testcase types: {registered_ttypes}"
-            )
-
-    def _discover_testcase_types(self, testcase_types_dir: Path) -> List[Type["TestCase"]]:
-        testcase_types = []
-        for testcase_type in testcase_types_dir.iterdir():
-            for path in testcase_type.iterdir():
-                if path.is_file() and path.suffix == ".py":
-                    testcase = import_from_path(f"testcase:{path.stem}{testcase_type.name}", path).TestCase
-                    if self._is_installed(testcase_type.name, testcase):
-                        testcase_types.append(testcase)
-        return testcase_types
-
-    def pick(self, file: Path) -> Optional[Type["TestCase"]]:
-        for testcase_type in self.testcase_types:
-            if testcase_type.is_a_type_of(file):
-                return testcase_type
-
-    @staticmethod
-    def _is_installed(language_name: str, testcase: Type["TestCase"]) -> bool:
-        """Useful for logging"""
-        if testcase.is_installed():
-            return True
-        else:
-            print(f"Utilities for running {language_name} are not installed. Disabling it.")
-            return False
 
 
 # TODO: Why is this not in config?
@@ -66,7 +24,18 @@ class ArgList(enum.Enum):
     TESTCASE_COMPILATION = "TESTCASE_COMPILATION_ARGS"
 
 
-class TestCase(ABC):
+class SourceDirSaver(ABCMeta, type):
+    """Useful in getting the resources associated with each testcase type"""
+
+    type_source_file: Path
+
+    def __new__(mcs, name, bases, dct):
+        cls = super().__new__(mcs, name, bases, dct)
+        cls.type_source_file = Path(getsourcefile(cls))
+        return cls
+
+
+class TestCase(ABC, metaclass=SourceDirSaver):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
 
@@ -75,11 +44,7 @@ class TestCase(ABC):
     weight: float
     max_score: int
     io: TestCaseIO
-    testcase_picker: TestCasePicker
     validating_string: str
-
-    # Useful in getting the resources associated with each testcase type
-    _source_dir: Path
 
     @property
     @abstractmethod
@@ -103,24 +68,25 @@ class TestCase(ABC):
     def name() -> str:
         return Path().stem
 
+    @classmethod
+    def get_template_dir(cls):
+        return cls.type_source_file.parent / "templates"
+
     def __init__(
         self,
         path: Path,
         timeout: float,
         argument_lists: Dict[ArgList, List[str]],
         weight: float,
-        io: Dict[str, TestCaseIO],
-        testcase_picker: TestCasePicker,
+        io: TestCaseIO,
     ):
         # We needed a way to get a source file based solely on __class__ to access its sibling directories
-        self._source_dir = Path(getsourcefile(self.__class__)).parent
-        self.test_helpers_dir = self._source_dir / "helpers"
+        self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
         self.timeout = timeout
         self.argument_lists = argument_lists
         self.weight = weight
         self.max_score = int(weight * 100)
-        self.testcase_picker = testcase_picker
 
         # Only really works if test name is in snake_case
         self.name = path.stem.replace("_", " ").capitalize()
@@ -164,10 +130,10 @@ class TestCase(ABC):
         pass
 
     @classmethod
-    def is_a_type_of(cls, file: Path):
+    def is_a_type_of(cls, file: Path, submission_is_allowed: Callable) -> bool:
         return file.suffix == cls.source_suffix
 
-    def get_path_to_helper_module(self):
+    def get_path_to_helper_module(self) -> Path:
         return self.test_helpers_dir / self.helper_module
 
     def run(self, precompiled_submission: Path) -> Tuple[float, str]:
@@ -206,7 +172,7 @@ class TestCase(ABC):
 
     def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """Returns student score (without applying testcase weight) and message to be displayed"""
-        testcase_path = precompiled_submission.with_name(self.path.name) # FIXME: Horrible name
+        testcase_path = precompiled_submission.with_name(self.path.name)  # FIXME: Horrible name
         shutil.copy(str(self.path), str(testcase_path))
 
         try:

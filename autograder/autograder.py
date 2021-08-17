@@ -1,7 +1,7 @@
 # TODO: Figure out what to do with testcase picker (i.e. make it work somehow)
 
 from autograder.testcase_utils.testcase_io import TestCaseIO
-from .testcase_utils.stdout_testcase import StdoutOnlyTestCase, is_multifile_submission, contains_shebang
+from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 import multiprocessing
 import os
 import shutil
@@ -15,6 +15,7 @@ from .testcase_utils.submission import SubmissionFormatChecker, Submission
 
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, import_from_path, get_file_stems
 
 READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
@@ -32,7 +33,8 @@ class Grader:
 
     logger: GradingOutputLogger
     config: GradingConfig
-    submission_is_allowed: Callable
+    submission_is_allowed: SubmissionFormatChecker
+    testcase_picker: TestCasePicker
     stdout_only_tests: list
 
     def __init__(self, current_dir, no_output=False, submissions=None):
@@ -50,11 +52,15 @@ class Grader:
             self.config = GradingConfig(
                 self.paths.config,
                 self.paths.default_config,
-                self.paths.testcase_types_dir,
             )
             self.submission_is_allowed = SubmissionFormatChecker(
                 self.config.possible_source_file_stems,
                 self.config.source_file_stem_is_case_insensitive,
+            )
+            self.testcase_picker = TestCasePicker(
+                self.paths.testcase_types_dir,
+                self.submission_is_allowed,
+                self.config.allowed_testcase_types,
             )
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
@@ -70,10 +76,8 @@ class Grader:
             io_choices = self._gather_io()
             # also copies testcase_utils to temp dir
             self.tests, unused_io_choices = self._gather_testcases(io_choices.copy())
-            if self.config.stdout_only_submissions_enabled:
-                self.stdout_only_tests = self._generate_stdout_only_testcases(unused_io_choices)
-            else:
-                self.stdout_only_tests = []
+            if self.config.stdout_only_grading_enabled:
+                self.tests[StdoutOnlyTestCase] = self._generate_stdout_only_testcases(unused_io_choices)
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
@@ -130,17 +134,12 @@ class Grader:
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
 
-            testcase_type = self.config.testcase_picker.pick(submission_path)
+            testcase_type = self.testcase_picker.pick(submission_path)
             if testcase_type is not None:
                 if self.config.any_submission_file_name_is_allowed or self.submission_is_allowed(submission_path):
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
                     self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
-            elif self.config.stdout_only_submissions_enabled and (
-                contains_shebang(submission_path)
-                or is_multifile_submission(submission_path, self.submission_is_allowed)
-            ):
-                submissions.append(Submission(submission_path, StdoutOnlyTestCase, self.paths.temp_dir))
 
         if not len(submissions):
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
@@ -165,8 +164,7 @@ class Grader:
                 self.config.timeouts.get(io.name, default_timeout),
                 {},  # TODO: Why no argument lists here?
                 self.config.testcase_weights.get(io.name, default_weight),
-                io_choices,
-                self.config.testcase_picker,
+                io,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -176,13 +174,13 @@ class Grader:
         self, io: Dict[str, TestCaseIO]
     ) -> Tuple[Dict[Type[TestCase], List[TestCase]], Dict[str, TestCaseIO]]:
         """Returns sorted list of testcase_types from tests/testcases"""
-        tests = {t: [] for t in self.config.testcase_picker.testcase_types}
+        tests = {t: [] for t in self.testcase_picker.testcase_types}
         default_weight = self.config.testcase_weights.get("ALL", 1)
         default_timeout = self.config.timeouts.get("ALL", 1)
         for test in self.paths.testcases_dir.iterdir():
             if not test.is_file():
                 continue
-            testcase_type = self.config.testcase_picker.pick(test)
+            testcase_type = self.testcase_picker.pick(test)
             if testcase_type is None:
                 self.logger(f"No appropriate language for {test} found.")
                 continue
@@ -195,7 +193,6 @@ class Grader:
                     arglist,
                     self.config.testcase_weights.get(test.name, default_weight),
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
-                    testcase_picker=self.config.testcase_picker,
                 )
             )
         # Allows consistent output
@@ -238,8 +235,6 @@ class Grader:
         testcase_results = []
         # Note: self.stdout_only_tests are not included in self.tests
         allowed_tests = self.tests.get(submission.type, [])
-        if self.config.stdout_only_submissions_enabled:
-            allowed_tests += self.stdout_only_tests
         if not allowed_tests:
             # TODO: Replace all print statements with proper logging
             print(f"No testcase_utils suitable for the submission {submission.path.name} found.")
