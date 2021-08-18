@@ -26,7 +26,7 @@ class TestCasePicker:
         else:
             self.testcase_types = registered_ttypes
         if stdout_only_grading_enabled:
-            self.testcase_types.append(StdoutOnlyTestCase)
+            self.testcase_types.insert(0, StdoutOnlyTestCase)
         if not self.testcase_types:
             raise AutograderError(
                 "No acceptable testcase types were detected.\n"

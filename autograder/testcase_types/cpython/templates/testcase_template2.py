@@ -3,7 +3,7 @@
 
 
 def main():
-    # You can call any non-static function from student's file like this.
+    # You can call any function from student's file like this.
     # It can have any arguments and return values -- use it like any other function.
     student_submission.some_student_function()
 

@@ -1,5 +1,7 @@
 import stat
 from collections import namedtuple
+from traceback import print_exc
+import traceback
 from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from pathlib import Path
 import shutil
@@ -9,12 +11,14 @@ import sh
 from .abstract_testcase import TestCase
 from .shell import Command
 from .submission import SubmissionFormatChecker
-
+from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
 
 
 def is_multifile_submission(submission_dir: Path, submission_is_allowed: Callable) -> bool:
+    if not submission_dir.is_dir():
+        return False
     contents = list(submission_dir.iterdir())
     # Seek the innermost non-single-file directory
     # in case the directory contains another directory with the project (common issue when zipping directories)
@@ -80,7 +84,7 @@ class StdoutOnlyTestCase(TestCase):
             return _find_submission_executable(student_dir, submission_is_allowed)
 
     def compile_testcase(self, precompiled_submission: Path):
-        return lambda *a, **kw: _run_multifile_testcase(precompiled_submission, *a, **kw)
+        return lambda *a, **kw: self._run_stdout_only_testcase(precompiled_submission, *a, **kw)
 
     def prepend_test_helper(self):
         """We don't need TestHelper when we are only checking inputs/outputs"""
@@ -92,10 +96,20 @@ class StdoutOnlyTestCase(TestCase):
         """There is no testcase file"""
 
 
-def _run_multifile_testcase(precompiled_submission: Path, *args, **kwargs):
+    def _run_stdout_only_testcase(self, precompiled_submission: Path, *args, **kwargs):
+        # Abstract testcase changes the default ok code from (0,) to (3, 4, 5),
+        # making running any regular program viewed as crashing.
+        if kwargs.get("_ok_code", None) is not None:
+            kwargs.pop("_ok_code")
+        try:
+            sh.Command(precompiled_submission)(*args, **kwargs)
+        except Exception as e:
+            traceback.print_exc()
+            raise e
 
-    sh.Command(precompiled_submission)(*args, **kwargs)
-    return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_STDOUT)
+        # We fake the validation string because there is no way we can truly validate such testcases
+        kwargs["_out"].write(f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}")
+        return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_STDOUT)
 
 
 def _copy_multifile_submission_contents_into_student_dir(submission: Path, student_dir: Path):

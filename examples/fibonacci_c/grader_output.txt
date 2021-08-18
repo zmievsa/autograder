@@ -1,14 +1,12 @@
-/home/ovsyanka/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required file name. Skipping it.
+/mnt/c/Users/szmie/Documents/code/autograder/examples/fibonacci_c/student_with_wrong_assignment_name.c does not contain the required file name. Skipping it.
 Grading failing_student_homework.c
 Failed to precompile:
-/home/ovsyanka/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c: In function ‘fibonacci’:
-/home/ovsyanka/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:15: error: ‘P’ undeclared (first use in this function)
+/mnt/c/Users/szmie/Documents/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c: In function ‘fibonacci’:
+/mnt/c/Users/szmie/Documents/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:15: error: ‘P’ undeclared (first use in this function)
     2 |    if (n <= 1)P
       |               ^
-/home/ovsyanka/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:15: note: each undeclared identifier is reported only once for each function it appears in
-/home/ovsyanka/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:16: error: expected ‘;’ before ‘return’
-    2 |    if (n <= 1)P
-... (363 more, please see e.stderr)
+/mnt/c/Users/szmie/Documents/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:15: note: each undeclared identifier is reported only once for each function it appears in
+/mnt/c/Users/szmie/Documents/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c:2:16: error: expec... (433 more, please see e.stderr)
 Result: 0/100
 
 Grading perfect_student_homework.c

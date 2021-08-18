@@ -61,6 +61,7 @@ class Grader:
                 self.paths.testcase_types_dir,
                 self.submission_is_allowed,
                 self.config.allowed_testcase_types,
+                self.config.stdout_only_grading_enabled
             )
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
@@ -86,9 +87,9 @@ class Grader:
             self.logger(f"\nAverage score: {round(class_average)}/{self.config.total_points_possible}")
             self.logger.print_key()
         finally:
-            self.cleanup()
             for io in io_choices.values():
                 io.cleanup()
+            self.cleanup()
         return class_average
 
     def run_on_single_submission(self, submission: Submission, lock):

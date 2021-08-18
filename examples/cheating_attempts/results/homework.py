@@ -10,7 +10,7 @@ Test exit                               Crashed due to signal 103:
 
 Test import                             None of the helper functions have been called.
 Instead, exit() has been called with exit_code 5.
-It could indicate student cheating or testcases being written incorrectly.
+It could indicate student cheating or testcase_utils being written incorrectly.
 ================================================================
 Result: 0/100
 

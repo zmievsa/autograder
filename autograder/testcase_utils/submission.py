@@ -3,10 +3,10 @@ from typing import List, Optional, Type, Callable
 
 from .abstract_testcase import TestCase
 
-# SubmissionFormatChecker = Callable[[Path], Optional[str]]
 
 class SubmissionFormatChecker:
-    """ This could be done using a decorator instead but then it wouldn't pickle, and we need pickling """
+    """This could be done using a decorator instead but then it wouldn't pickle, and we need pickling"""
+
     def __init__(self, possible_file_stems: List[str], name_is_case_insensitive: bool):
         self.possible_file_stems = possible_file_stems
         self.name_is_case_insensitive = name_is_case_insensitive
@@ -16,7 +16,9 @@ class SubmissionFormatChecker:
 
 
 def find_appropriate_source_file_stem(
-    file: Path, possible_source_file_stems: List[str], source_is_case_insensitive: bool
+    file: Path,
+    possible_source_file_stems: List[str],
+    source_is_case_insensitive: bool,
 ) -> Optional[str]:
     file_stem = file.stem
     if source_is_case_insensitive:
