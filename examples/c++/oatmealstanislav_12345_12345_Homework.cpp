@@ -31,6 +31,5 @@ int numberSaver()
 int main()
 {
     numberSaver();
-    cout << "Random stuff1\n";
     return 0;
 }

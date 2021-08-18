@@ -1,10 +1,10 @@
 Homework Test Results
 
+TestCase                                Result
 ================================================================
-Failed to precompile:
-makefile:2: *** missing separator.  Stop.
+Test output                             100/100
 ================================================================
-Result: 0/100
+Result: 100/100
 
 Key:
 	Failed to Compile: Your submission did not compile due to a syntax or naming error

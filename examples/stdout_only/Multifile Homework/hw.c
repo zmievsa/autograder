@@ -29,6 +29,5 @@ int numberSaver()
 int main()
 {
     numberSaver();
-    printf("Random stuff1\n");
     return 0;
 }

@@ -36,6 +36,7 @@ TEST_DIRS = {
     "java": 100,
     "python": 100,
     "multiple_languages": 100,
+    "stdout_only": 100,
     "extra_files": 100,
     "fibonacci_c": 58,
     "cheating_attempts": 0,  # All cheaters shall fail

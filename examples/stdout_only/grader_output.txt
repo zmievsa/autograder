@@ -6,10 +6,9 @@ Running 'Test output'
 Result: 100/100
 
 Grading Multifile Homework
-Failed to precompile:
-makefile:2: *** missing separator.  Stop.
-
-Result: 0/100
+Running 'Test output'
+100/100
+Result: 100/100
 
 Grading PythonHomeworkWithShebang.py
 Running 'Test output'
@@ -22,7 +21,7 @@ Running 'Test output'
 Result: 100/100
 
 
-Average score: 75/100
+Average score: 100/100
 
 
 Key:

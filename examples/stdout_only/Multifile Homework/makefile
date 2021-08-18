@@ -1,2 +1,2 @@
-homework:
-    gcc hw.c -o HomeworkExecutable.out
+all:
+	gcc hw.c -o HomeworkExecutable.out

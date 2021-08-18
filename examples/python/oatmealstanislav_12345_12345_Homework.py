@@ -19,4 +19,3 @@ def numberSaver():
 
 def main():
     numberSaver()
-    print("Random stuff1")
