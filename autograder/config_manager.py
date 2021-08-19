@@ -17,7 +17,6 @@ class GradingConfig:
 
     assignment_name: str
     any_submission_file_name_is_allowed: bool
-    source_file_stem_is_case_insensitive: bool
     possible_source_file_stems: List[str]
     testcase_weights: Dict[str, float]
     cli_argument_lists: Dict[ArgList, Dict[str, List[str]]]
@@ -48,7 +47,6 @@ class GradingConfig:
             self.any_submission_file_name_is_allowed = True
         else:
             self.any_submission_file_name_is_allowed = False
-        self.source_file_stem_is_case_insensitive = cfg.getboolean("SOURCE_FILE_NAME_IS_CASE_INSENSITIVE")
         self.possible_source_file_stems = source.replace(" ", "").split(",")
 
         self.testcase_weights = parse_config_list(cfg["TESTCASE_WEIGHTS"], float)

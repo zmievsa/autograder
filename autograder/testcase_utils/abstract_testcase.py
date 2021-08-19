@@ -103,7 +103,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        submission_is_allowed: Callable,  # FIXME: It's actually the SubmissionFormatChecker but Submission class depends on TestCase ABC
         arglist: List[str],
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
@@ -130,7 +129,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         pass
 
     @classmethod
-    def is_a_type_of(cls, file: Path, submission_is_allowed: Callable) -> bool:
+    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
         return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self) -> Path:
@@ -180,7 +179,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(e, "Failed to compile")
         self.delete_source_file(testcase_path)
-        
+
         with StringIO() as runtime_output, self.io.input() as runtime_input:
             try:
                 result = test_executable(

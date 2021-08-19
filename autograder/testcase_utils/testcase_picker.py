@@ -4,7 +4,6 @@ from typing import List, Type, Optional
 from autograder.util import AutograderError, import_from_path
 from .abstract_testcase import TestCase
 from .stdout_testcase import StdoutOnlyTestCase
-from .submission import SubmissionFormatChecker
 
 
 class TestCasePicker:
@@ -13,10 +12,10 @@ class TestCasePicker:
     def __init__(
         self,
         testcase_types_dir: Path,
-        submission_is_allowed: SubmissionFormatChecker,
+        possible_source_file_stems: List[str],
         stdout_only_grading_enabled: bool = False,
     ):
-        self.submission_is_allowed = submission_is_allowed
+        self.possible_source_file_stems = possible_source_file_stems
         self.testcase_types = self.discover_testcase_types(testcase_types_dir)
         if stdout_only_grading_enabled:
             self.testcase_types.insert(0, StdoutOnlyTestCase)
@@ -45,5 +44,5 @@ class TestCasePicker:
 
     def pick(self, file: Path) -> Optional[Type[TestCase]]:
         for testcase_type in self.testcase_types:
-            if testcase_type.is_a_type_of(file, self.submission_is_allowed):
+            if testcase_type.is_a_type_of(file, self.possible_source_file_stems):
                 return testcase_type

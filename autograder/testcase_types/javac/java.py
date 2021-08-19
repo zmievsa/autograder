@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
-from autograder.testcase_utils.submission import find_appropriate_source_file_stem, SubmissionFormatChecker
+from autograder.testcase_utils.submission import find_appropriate_source_file_stem
 from autograder.testcase_utils.shell import Command
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
@@ -37,17 +37,14 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
-        stem = submission_is_allowed(submission)
+        stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
         if stem is None:
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = super().precompile_submission(
-            submission, student_dir, [stem], submission_is_allowed, arglist
-        )
+        copied_submission = super().precompile_submission(submission, student_dir, [stem], arglist)
         try:
             cls.compiler(copied_submission, *arglist)
         finally:

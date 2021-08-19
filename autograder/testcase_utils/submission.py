@@ -1,36 +1,13 @@
 from pathlib import Path
-from typing import List, Optional, Type, Callable
+from typing import List, Optional, Type
 
 from .abstract_testcase import TestCase
 
 
-class SubmissionFormatChecker:
-    """This could be done using a decorator instead but then it wouldn't pickle, and we need pickling"""
-
-    def __init__(self, possible_file_stems: List[str], name_is_case_insensitive: bool):
-        self.possible_file_stems = possible_file_stems
-        self.name_is_case_insensitive = name_is_case_insensitive
-
-    def __call__(self, f: Path) -> Optional[str]:
-        return find_appropriate_source_file_stem(f, self.possible_file_stems, self.name_is_case_insensitive)
-
-
-def find_appropriate_source_file_stem(
-    file: Path,
-    possible_source_file_stems: List[str],
-    source_is_case_insensitive: bool,
-) -> Optional[str]:
-    file_stem = file.stem
-    if source_is_case_insensitive:
-        file_stem = file_stem.lower()
+def find_appropriate_source_file_stem(file: Path, possible_source_file_stems: List[str]) -> Optional[str]:
     for s in possible_source_file_stems:
-        if source_is_case_insensitive:
-            if s.lower() in file_stem:
-                return s
-        else:
-            # FIXME: Wait... Is this a bug?
-            if s in file_stem:
-                return s
+        if s in file.stem:
+            return s
 
 
 class Submission:

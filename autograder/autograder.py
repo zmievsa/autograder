@@ -7,19 +7,15 @@ import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
-from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IWUSR, S_IXUSR
 from typing import Callable, Dict, List, Set, Type, Tuple
 
 from .testcase_utils.abstract_testcase import ArgList, TestCase
-from .testcase_utils.submission import SubmissionFormatChecker, Submission
+from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
 
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, import_from_path, get_file_stems
-
-READ_EXECUTE_PERMISSION = S_IRUSR ^ S_IRGRP ^ S_IROTH ^ S_IXUSR
-READ_EXECUTE_WRITE_PERMISSION = READ_EXECUTE_PERMISSION ^ S_IWUSR
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -33,7 +29,6 @@ class Grader:
 
     logger: GradingOutputLogger
     config: GradingConfig
-    submission_is_allowed: SubmissionFormatChecker
     testcase_picker: TestCasePicker
     stdout_only_tests: list
 
@@ -50,13 +45,9 @@ class Grader:
         try:
             self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
             self.config = GradingConfig(self.paths.config, self.paths.default_config)
-            self.submission_is_allowed = SubmissionFormatChecker(
-                self.config.possible_source_file_stems,
-                self.config.source_file_stem_is_case_insensitive,
-            )
             self.testcase_picker = TestCasePicker(
                 self.paths.testcase_types_dir,
-                self.submission_is_allowed,
+                self.config.possible_source_file_stems,
                 self.config.stdout_only_grading_enabled,
             )
             self.logger = GradingOutputLogger(
@@ -133,7 +124,11 @@ class Grader:
 
             testcase_type = self.testcase_picker.pick(submission_path)
             if testcase_type is not None:
-                if self.config.any_submission_file_name_is_allowed or self.submission_is_allowed(submission_path):
+                if (
+                    self.config.any_submission_file_name_is_allowed
+                    or find_appropriate_source_file_stem(submission_path, self.config.possible_source_file_stems)
+                    is not None
+                ):
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
                     self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
@@ -214,7 +209,6 @@ class Grader:
                 submission.path,
                 submission.dir,
                 self.config.possible_source_file_stems,
-                self.submission_is_allowed,
                 arglists[ArgList.SUBMISSION_PRECOMPILATION],
             )
         except Exception as e:  # type: ignore

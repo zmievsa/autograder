@@ -1,22 +1,22 @@
 import stat
 from collections import namedtuple
-from traceback import print_exc
 import traceback
 from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from pathlib import Path
 import shutil
-from typing import List, Callable
+from typing import List
 
 import sh
 from .abstract_testcase import TestCase
 from .shell import Command
-from .submission import SubmissionFormatChecker
+from .submission import find_appropriate_source_file_stem
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
+
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
 
 
-def is_multifile_submission(submission_dir: Path, submission_is_allowed: Callable) -> bool:
+def is_multifile_submission(submission_dir: Path, possible_source_file_stems: List[str]) -> bool:
     if not submission_dir.is_dir():
         return False
     contents = list(submission_dir.iterdir())
@@ -26,7 +26,7 @@ def is_multifile_submission(submission_dir: Path, submission_is_allowed: Callabl
         contents = list(contents[0].iterdir())
 
     for f in submission_dir.iterdir():
-        if _is_makefile(f) or submission_is_allowed(f):
+        if _is_makefile(f) or find_appropriate_source_file_stem(f, possible_source_file_stems) is not None:
             return True
     return False
 
@@ -53,8 +53,8 @@ class StdoutOnlyTestCase(TestCase):
         return cls.compiler is not None
 
     @classmethod
-    def is_a_type_of(cls, file: Path, submission_is_allowed: SubmissionFormatChecker) -> bool:
-        return contains_shebang(file) or is_multifile_submission(file, submission_is_allowed)
+    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
+        return contains_shebang(file) or is_multifile_submission(file, possible_source_file_stems)
 
     @classmethod
     def precompile_submission(
@@ -62,7 +62,6 @@ class StdoutOnlyTestCase(TestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
         """pwd is temp/student_dir"""
@@ -81,7 +80,7 @@ class StdoutOnlyTestCase(TestCase):
             except sh.ErrorReturnCode as e:
                 if "no makefile found" not in str(e):
                     raise e
-            return _find_submission_executable(student_dir, submission_is_allowed)
+            return _find_submission_executable(student_dir, possible_source_file_stems)
 
     def compile_testcase(self, precompiled_submission: Path):
         return lambda *a, **kw: self._run_stdout_only_testcase(precompiled_submission, *a, **kw)
@@ -94,7 +93,6 @@ class StdoutOnlyTestCase(TestCase):
 
     def delete_source_file(self, source_path: Path):
         """There is no testcase file"""
-
 
     def _run_stdout_only_testcase(self, precompiled_submission: Path, *args, **kwargs):
         # Abstract testcase changes the default ok code from (0,) to (3, 4, 5),
@@ -125,9 +123,9 @@ def _copy_multifile_submission_contents_into_student_dir(submission: Path, stude
         op(str(f), new_path)
 
 
-def _find_submission_executable(student_dir: Path, submission_is_allowed: SubmissionFormatChecker):
+def _find_submission_executable(student_dir: Path, possible_source_file_stems: List[str]):
     for f in student_dir.iterdir():
-        if submission_is_allowed(f):
+        if find_appropriate_source_file_stem(f, possible_source_file_stems):
             return f
 
 

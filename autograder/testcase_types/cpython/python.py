@@ -6,7 +6,6 @@ from pathlib import Path
 
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import Command
-from autograder.testcase_utils.submission import SubmissionFormatChecker
 
 PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
 PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"
@@ -36,12 +35,9 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: str,
-        submission_is_allowed: SubmissionFormatChecker,
         arglist,
     ):
-        copied_submission = super().precompile_submission(
-            submission, student_dir, [submission.stem], submission_is_allowed, arglist
-        )
+        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], arglist)
         kwargs = {}
         if "-O" in arglist:
             kwargs["optimize"] = 1
