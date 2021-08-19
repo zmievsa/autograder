@@ -1,5 +1,3 @@
-# TODO: Add a point in docs that ALLOWED_LANGUAGES does not affect stdout_only grading
-
 from pathlib import Path
 from typing import List, Type, Optional
 
@@ -16,23 +14,14 @@ class TestCasePicker:
         self,
         testcase_types_dir: Path,
         submission_is_allowed: SubmissionFormatChecker,
-        allowed_languages: List[str] = None,
         stdout_only_grading_enabled: bool = False,
     ):
         self.submission_is_allowed = submission_is_allowed
-        registered_ttypes = self.discover_testcase_types(testcase_types_dir)
-        if allowed_languages is not None:
-            self.testcase_types = [t for t in registered_ttypes if t.name() in allowed_languages]
-        else:
-            self.testcase_types = registered_ttypes
+        self.testcase_types = self.discover_testcase_types(testcase_types_dir)
         if stdout_only_grading_enabled:
             self.testcase_types.insert(0, StdoutOnlyTestCase)
         if not self.testcase_types:
-            raise AutograderError(
-                "No acceptable testcase types were detected.\n"
-                f"Allowed languages: {allowed_languages}\n"
-                f"Registered testcase types: {registered_ttypes}"
-            )
+            raise AutograderError("No acceptable testcase types were detected.\n")
 
     @classmethod
     def discover_testcase_types(cls, testcase_types_dir: Path) -> List[Type[TestCase]]:
