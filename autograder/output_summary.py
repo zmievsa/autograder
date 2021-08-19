@@ -1,7 +1,6 @@
 # Controls output to stdout and to output file
 
 
-from .testcase_utils.submission import Submission
 import logging
 import re
 import sys
@@ -10,15 +9,17 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Deque
 
-from .testcase_utils.shell import get_stderr
 import sh
+
+from .testcase_utils.shell import get_stderr
+from .testcase_utils.submission import Submission
 
 KEY = """
 \nKey:
 \tFailed to Compile: Your submission did not compile due to a syntax or naming error
 \tCompiled with warnings: Your submission uses unchecked or unsafe operations
 \tCrashed due to signal SIGNAL_CODE: Your submission threw an uncaught exception.
-\tAll signal error codes are described here: http://man7.org/linux/man-pages/man7/signal.7.html
+\tAll signal error codes are described here: https://man7.org/linux/man-pages/man7/signal.7.html
 \tExceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
 """
 STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_.+")
@@ -73,13 +74,9 @@ class GradingOutputLogger(SynchronizedLogger):
             if path_to_output_summary.exists():
                 # TODO: Input should be optional because we might ask this question in GUI.
                 #   Or not? Maybe we just check it to exist separately in GUI?
-                ans = input(
-                    "Output summary file already exists. Would you like to overwrite it? (Yes/No) "
-                )
+                ans = input("Output summary file already exists. Would you like to overwrite it? (Yes/No) ")
                 if ans.lower().startswith("y"):
-                    self.logger.addHandler(
-                        logging.FileHandler(str(path_to_output_summary), mode="w")
-                    )
+                    self.logger.addHandler(logging.FileHandler(str(path_to_output_summary), mode="w"))
                 else:
                     print(
                         "If you don't want to remove the summary, simply use the --no_output command line option "
@@ -91,9 +88,7 @@ class GradingOutputLogger(SynchronizedLogger):
         if not generate_results:
             self._silence_generating_results()
 
-    def print_precompilation_error_to_results_file(
-        self, submission: Submission, max_score, error, buffer_logger
-    ):
+    def print_precompilation_error_to_results_file(self, submission: Submission, max_score, error, buffer_logger):
         if isinstance(error, sh.ErrorReturnCode):
             stderr = get_stderr(error, "Failed to precompile")
         else:

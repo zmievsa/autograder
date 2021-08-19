@@ -1,8 +1,8 @@
 import os
-import stat
 import shutil
+import stat
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Type
 
 from .autograder import AutograderPaths
 from .testcase_utils.abstract_testcase import TestCase
@@ -74,7 +74,7 @@ def main(paths: AutograderPaths):
     print("You can find readme at https://github.com/Ovsyanka83/autograder")
 
 
-def _get_supported_languages(testcase_types_dir: Path) -> Dict[str, TestCase]:
+def _get_supported_languages(testcase_types_dir: Path) -> Dict[str, Type[TestCase]]:
     testcase_types = TestCasePicker.discover_testcase_types(testcase_types_dir)
     return {t.type_source_file.stem: t for t in testcase_types if (t.get_template_dir()).exists()}
 

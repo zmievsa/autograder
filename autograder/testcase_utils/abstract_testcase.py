@@ -1,17 +1,16 @@
 import enum
 import shutil
 from abc import ABC, abstractmethod, ABCMeta
+from inspect import getsourcefile
 from io import StringIO
 from pathlib import Path
-from typing import List, Tuple, Callable
 from typing import Dict
-from inspect import getsourcefile
+from typing import List, Tuple
 
 import sh
 
-# TODO: Get rid of this horrible import
-from .shell import get_stderr, ShCommand
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from .shell import get_stderr, ShCommand
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
@@ -31,7 +30,11 @@ class SourceDirSaver(ABCMeta, type):
 
     def __new__(mcs, name, bases, dct):
         cls = super().__new__(mcs, name, bases, dct)
-        cls.type_source_file = Path(getsourcefile(cls))
+        # We needed a way to get a source file based solely on __class__ to access its sibling directories
+        source_file = getsourcefile(cls)
+        if source_file is None:
+            raise FileNotFoundError(f"Source file for class {cls} has not been found.")
+        cls.type_source_file = Path(source_file)
         return cls
 
 
@@ -39,6 +42,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     source_suffix = ".source_suffix"  # dummy value
     executable_suffix = ".executable_suffix"  # dummy value
 
+    type_source_file: Path
     test_helpers_dir: Path
     path: Path
     weight: float
@@ -64,10 +68,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         pwd = temp/student_dir
         """
 
-    @staticmethod
-    def name() -> str:
-        return Path().stem
-
     @classmethod
     def get_template_dir(cls):
         return cls.type_source_file.parent / "templates"
@@ -80,7 +80,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         weight: float,
         io: TestCaseIO,
     ):
-        # We needed a way to get a source file based solely on __class__ to access its sibling directories
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
         self.timeout = timeout
@@ -107,7 +106,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
-        copied submission if no precompilation is necesessary
+        copied submission if no precompilation is necessary
 
         pwd = temp/student_dir
         """
@@ -171,14 +170,14 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
     def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
         """Returns student score (without applying testcase weight) and message to be displayed"""
-        testcase_path = precompiled_submission.with_name(self.path.name)  # FIXME: Horrible name
-        shutil.copy(str(self.path), str(testcase_path))
+        testcase_copy_in_student_dir = precompiled_submission.with_name(self.path.name)
+        shutil.copy(str(self.path), str(testcase_copy_in_student_dir))
 
         try:
             test_executable = self.compile_testcase(precompiled_submission)
         except sh.ErrorReturnCode as e:
             return 0, get_stderr(e, "Failed to compile")
-        self.delete_source_file(testcase_path)
+        self.delete_source_file(testcase_copy_in_student_dir)
 
         with StringIO() as runtime_output, self.io.input() as runtime_input:
             try:

@@ -1,12 +1,13 @@
-import stat
-from collections import namedtuple
-import traceback
-from autograder.testcase_utils.exit_codes import ExitCodeEventType
-from pathlib import Path
 import shutil
+import stat
+import traceback
+from collections import namedtuple
+from pathlib import Path
 from typing import List
 
 import sh
+
+from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from .abstract_testcase import TestCase
 from .shell import Command
 from .submission import find_appropriate_source_file_stem

@@ -25,6 +25,8 @@ def print_results(paths, min_score: int, *args, **kwargs):
 
 def import_from_path(module_name: str, path: Path):
     spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise TypeError(f"File loader for {path} was not found. Please, refer to importlib docs.")
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     # TODO: Loader has no attribute exec_module. What's up with that?

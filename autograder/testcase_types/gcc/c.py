@@ -7,7 +7,7 @@ from autograder.testcase_utils.abstract_testcase import (
     ShCommand,
     TestCase as AbstractTestCase,
 )
-from autograder.testcase_utils.shell import Command
+from autograder.testcase_utils.shell import Command, EMPTY_COMMAND
 
 
 class TestCase(AbstractTestCase):
@@ -19,7 +19,7 @@ class TestCase(AbstractTestCase):
 
     @classmethod
     def is_installed(cls) -> bool:
-        return cls.compiler is not None
+        return cls.compiler is not EMPTY_COMMAND
 
     @classmethod
     def get_template_dir(cls):

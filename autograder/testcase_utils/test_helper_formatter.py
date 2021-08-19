@@ -1,8 +1,9 @@
-from pathlib import Path
-from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 import re
+from pathlib import Path
 from typing import Dict, Any
+
 from .exit_codes import ExitCodeEventType
+from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
 template_matcher = re.compile("{ *% *([A-Za-z0-9_]+) *% *}")
 
@@ -27,6 +28,6 @@ def format_template(template: str, safe=True, **kwargs: Dict[str, Any]):
     return template
 
 
-def get_formatted_test_helper(path_to_testhelper: Path) -> str:
-    with path_to_testhelper.open() as helper_file:
+def get_formatted_test_helper(path_to_test_helper: Path) -> str:
+    with path_to_test_helper.open() as helper_file:
         return format_template(helper_file.read(), safe=False, **FORMAT_KWARGS)

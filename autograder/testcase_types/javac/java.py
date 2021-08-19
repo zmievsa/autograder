@@ -1,12 +1,12 @@
-from autograder.util import AutograderError
 import re
 import shutil
 from pathlib import Path
 from typing import List
 
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
-from autograder.testcase_utils.submission import find_appropriate_source_file_stem
 from autograder.testcase_utils.shell import Command
+from autograder.testcase_utils.submission import find_appropriate_source_file_stem
+from autograder.util import AutograderError
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
 EXTRA_DIR = Path(__file__).parent / "extra"

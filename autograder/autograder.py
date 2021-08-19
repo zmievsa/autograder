@@ -1,7 +1,3 @@
-# TODO: Figure out what to do with testcase picker (i.e. make it work somehow)
-
-from autograder.testcase_utils.testcase_io import TestCaseIO
-from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 import multiprocessing
 import os
 import shutil
@@ -9,11 +5,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Dict, List, Set, Type, Tuple
 
-from .testcase_utils.abstract_testcase import ArgList, TestCase
-from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
-
+from autograder.testcase_utils.testcase_io import TestCaseIO
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .testcase_utils.abstract_testcase import ArgList, TestCase
+from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
+from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
 from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, import_from_path, get_file_stems
 
@@ -154,7 +151,7 @@ class Grader:
             StdoutOnlyTestCase(
                 io.output_file,
                 self.config.timeouts.get(io.name, default_timeout),
-                {},  # TODO: Why no argument lists here?
+                self.config.generate_arglists(io.name),
                 self.config.testcase_weights.get(io.name, default_weight),
                 io,
             )

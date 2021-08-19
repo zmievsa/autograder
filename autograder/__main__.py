@@ -25,7 +25,7 @@ def _create_parser():
     return parser
 
 
-def _create_run_parser(subparsers: argparse._SubParsersAction):
+def _create_run_parser(subparsers):
     parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
     parser.add_argument("--no_output", action="store_true", help="Do not output any code to the console")
     parser.add_argument(
@@ -40,7 +40,7 @@ def _create_run_parser(subparsers: argparse._SubParsersAction):
     _add_submission_path_argument(parser)
 
 
-def _create_stats_parser(subparsers: argparse._SubParsersAction):
+def _create_stats_parser(subparsers):
     parser = subparsers.add_parser("stats", help="Display statistics on student grades")
     parser.add_argument(
         "-p",
@@ -55,7 +55,7 @@ def _create_stats_parser(subparsers: argparse._SubParsersAction):
     _add_submission_path_argument(parser)
 
 
-def _create_guide_parser(subparsers: argparse._SubParsersAction):
+def _create_guide_parser(subparsers):
     parser = subparsers.add_parser("guide", help="Guide you through setting up a grading environment")
     _add_submission_path_argument(parser)
 

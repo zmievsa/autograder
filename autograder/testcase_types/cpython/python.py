@@ -3,9 +3,8 @@ import shutil
 import sys
 from pathlib import Path
 
-
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import Command
+from autograder.testcase_utils.shell import Command, EMPTY_COMMAND
 
 PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
 PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"
@@ -27,7 +26,7 @@ class TestCase(AbstractTestCase):
 
     @classmethod
     def is_installed(cls) -> bool:
-        return cls.interpreter is not None
+        return cls.interpreter is not EMPTY_COMMAND
 
     @classmethod
     def precompile_submission(

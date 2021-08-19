@@ -25,12 +25,17 @@ class TestCasePicker:
     @classmethod
     def discover_testcase_types(cls, testcase_types_dir: Path) -> List[Type[TestCase]]:
         testcase_types = []
-        for testcase_type in testcase_types_dir.iterdir():
-            for path in testcase_type.iterdir():
+        for testcase_type_dir in testcase_types_dir.iterdir():
+            for path in testcase_type_dir.iterdir():
                 if path.is_file() and path.suffix == ".py":
-                    testcase = import_from_path(f"testcase:{path.stem}{testcase_type.name}", path).TestCase
-                    if cls._is_installed(testcase_type.name, testcase):
-                        testcase_types.append(testcase)
+                    module = import_from_path(f"testcase:{path.stem}{testcase_type_dir.name}", path)
+                    testcase_type = getattr(module, "TestCase", None)
+                    if testcase_type is None:
+                        print(f"Testcase type '{path}' does not define a 'TestCase' class, skipping.")
+                        continue
+
+                    if cls._is_installed(testcase_type_dir.name, testcase_type):
+                        testcase_types.append(testcase_type)
         return testcase_types
 
     @staticmethod
