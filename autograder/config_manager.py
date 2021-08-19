@@ -40,10 +40,6 @@ class GradingConfig:
         self.total_points_possible = cfg.getint("TOTAL_POINTS_POSSIBLE")
         self.total_score_to_100_ratio = self.total_points_possible / 100
 
-        # TODO: Add support for choosing multiple programming languages
-        language = cfg["PROGRAMMING_LANGUAGE"].strip()
-        self.allowed_testcase_types = None if language == "AUTO" else [language]
-
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
         source = cfg["POSSIBLE_SOURCE_FILE_STEMS"].strip()

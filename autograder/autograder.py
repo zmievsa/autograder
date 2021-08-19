@@ -49,10 +49,7 @@ class Grader:
         io_choices = {}
         try:
             self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
-            self.config = GradingConfig(
-                self.paths.config,
-                self.paths.default_config,
-            )
+            self.config = GradingConfig(self.paths.config, self.paths.default_config)
             self.submission_is_allowed = SubmissionFormatChecker(
                 self.config.possible_source_file_stems,
                 self.config.source_file_stem_is_case_insensitive,
@@ -60,8 +57,7 @@ class Grader:
             self.testcase_picker = TestCasePicker(
                 self.paths.testcase_types_dir,
                 self.submission_is_allowed,
-                self.config.allowed_testcase_types,
-                self.config.stdout_only_grading_enabled
+                self.config.stdout_only_grading_enabled,
             )
             self.logger = GradingOutputLogger(
                 self.paths.current_dir,
