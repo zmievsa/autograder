@@ -26,7 +26,7 @@ class Token:
         return cls(base_url, token, file_with_token_info)
 
     def save(self):
-        with open(self.file) as f:
+        with open(self.file, "w") as f:
             f.write(f"{self.base_url}\n{self.token}")
 
     def delete(self):

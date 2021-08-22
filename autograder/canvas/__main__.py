@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 import argparse
 
-from .auth import Token, FILE_WITH_TOKEN_INFO
-from .submissions import upload_results
+from autograder.canvas.auth import Token, FILE_WITH_TOKEN_INFO
+from autograder.canvas.submissions import upload_results
 
 
 def main(argv=None):
