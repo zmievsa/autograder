@@ -1,46 +1,52 @@
 import configparser
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Type, TypeVar
+from typing import Any, Callable, Dict, List, TypeVar
 
-from .testcases import ALLOWED_LANGUAGES, ArgList, TestCase, get_testcase_type
-from .util import AutograderError
+from .testcase_utils.abstract_testcase import ArgList
 
 DEFAULT_FILE_STEM = "Homework"
 
 
 class GradingConfig:
-    def __init__(self, testcases_dir: Path, config: Path, default_config: Path):
-        self.testcases_dir = testcases_dir
+    timeouts: Dict[str, float]
+    generate_results: bool
+    parallel_grading_enabled: bool
+    stdout_only_grading_enabled: bool
+    total_points_possible: int
+    total_score_to_100_ratio: float
+
+    assignment_name: str
+    any_submission_file_name_is_allowed: bool
+    possible_source_file_stems: List[str]
+    testcase_weights: Dict[str, float]
+    cli_argument_lists: Dict[ArgList, Dict[str, List[str]]]
+
+    def __init__(self, config: Path, default_config: Path):
         self._configure_grading(config, default_config)
 
-    def _configure_grading(self, config_path: Path, default_config_path: Path):
+    def _configure_grading(
+        self,
+        config_path: Path,
+        default_config_path: Path,
+    ):
         cfg = self._read_config(config_path, default_config_path)
 
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
-        self.anti_cheat = cfg.getboolean("ANTI_CHEAT")
         self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
-        self.multifile_submissions_enabled = cfg.getboolean("MULTIFILE_SUBMISSIONS_ENABLED")
+        self.stdout_only_grading_enabled = cfg.getboolean("STDOUT_ONLY_GRADING_ENABLED")
 
         self.total_points_possible = cfg.getint("TOTAL_POINTS_POSSIBLE")
         self.total_score_to_100_ratio = self.total_points_possible / 100
-
-        language = cfg["PROGRAMMING_LANGUAGE"]
-        if language == "AUTO":
-            self.testcase_types = self._figure_out_testcase_types()
-        else:
-            testcase_type = ALLOWED_LANGUAGES[language.lower().strip()]
-            self.testcase_types = {testcase_type.source_suffix: testcase_type}
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]
 
         source = cfg["POSSIBLE_SOURCE_FILE_STEMS"].strip()
         if source == "AUTO":
             source = DEFAULT_FILE_STEM
-            self.auto_source_file_name_enabled = True
+            self.any_submission_file_name_is_allowed = True
         else:
-            self.auto_source_file_name_enabled = False
-        self.source_file_stem_is_case_insensitive = cfg.getboolean("SOURCE_FILE_NAME_IS_CASE_INSENSITIVE")
+            self.any_submission_file_name_is_allowed = False
         self.possible_source_file_stems = source.replace(" ", "").split(",")
 
         self.testcase_weights = parse_config_list(cfg["TESTCASE_WEIGHTS"], float)
@@ -51,11 +57,11 @@ class GradingConfig:
     @staticmethod
     def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.SectionProxy:
         default_parser = configparser.ConfigParser()
-        default_parser.read(path_to_default_config)
+        default_parser.read(str(path_to_default_config))
 
         user_parser = configparser.ConfigParser()
         user_parser.read_dict(default_parser)
-        user_parser.read(path_to_user_config)
+        user_parser.read(str(path_to_user_config))
 
         return user_parser["CONFIG"]
 
@@ -69,18 +75,6 @@ class GradingConfig:
             else:
                 arglist[arglist_index] = tuple()
         return arglist
-
-    def _figure_out_testcase_types(self) -> Dict[str, Type[TestCase]]:
-        testcase_types = {}
-        for testcase in self.testcases_dir.iterdir():
-            testcase_type = get_testcase_type(testcase)
-            if testcase_type is not None:
-                testcase_types[testcase_type.source_suffix] = testcase_type
-
-        if testcase_types:
-            return testcase_types
-        else:
-            raise AutograderError(f"Couldn't discover any testcases with supported suffixes in {self.testcases_dir}")
 
 
 T = TypeVar("T")
@@ -100,9 +94,12 @@ def parse_config_list(config_line: str, value_type: Callable[[Any], T]) -> Dict[
 
 def parse_arglists(cfg: configparser.SectionProxy) -> Dict[ArgList, Dict[str, List[str]]]:
     argument_lists = {n: {} for n in ArgList}
-    convert_to_arglist = lambda s: str(s).replace("  ", " ").strip().split()
     for arg_list_enum in ArgList:
         arg_list = parse_config_list(cfg[arg_list_enum.value], convert_to_arglist)
         for testcase_name, args in arg_list.items():
             argument_lists[arg_list_enum][testcase_name] = args
     return argument_lists
+
+
+def convert_to_arglist(s: str) -> List[str]:
+    return str(s).replace("  ", " ").strip().split()

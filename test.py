@@ -7,7 +7,7 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import Callable
 
-import autograder
+from autograder.__main__ import main as autograder
 
 
 class NonDaemonPool(Pool):
@@ -36,6 +36,7 @@ TEST_DIRS = {
     "java": 100,
     "python": 100,
     "multiple_languages": 100,
+    "stdout_only": 100,
     "extra_files": 100,
     "fibonacci_c": 58,
     "cheating_attempts": 0,  # All cheaters shall fail
@@ -72,7 +73,7 @@ def FAIL(message):
 
 
 def run_silenced_grader(*args):
-    return autograder.__main__.main(["--no_output"] + list(args))
+    return autograder(["run", "--no_output"] + list(args))
 
 
 def test_example(args):
@@ -103,21 +104,6 @@ def test_extra_cli_args():
             PASS(s)
         else:
             FAIL(s)
-
-    old_config_path = testing_dir / "tests/config.ini"
-    with old_config_path.open() as f:
-        old_config = f.read()
-    with old_config_path.open("w") as f:
-        f.write(old_config + "\nANTI_CHEAT = false\n")
-    with ErrorHandler(testing_dir.name):
-        result = run_silenced_grader(str(testing_dir))
-        s = f"CHECKING TEST {testing_dir.name} without args to equal 0. Real result: {int(result)}"
-        if result == 0:
-            PASS(s)
-        else:
-            FAIL(s)
-    with old_config_path.open("w") as f:
-        f.write(old_config)
 
 
 if __name__ == "__main__":

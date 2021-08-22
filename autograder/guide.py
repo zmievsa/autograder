@@ -1,10 +1,12 @@
+import os
 import shutil
+import stat
 from pathlib import Path
-
-from autograder.config_manager import ALLOWED_LANGUAGES
+from typing import Dict, Type
 
 from .autograder import AutograderPaths
-from .testcases import ALLOWED_LANGUAGES
+from .testcase_utils.abstract_testcase import TestCase
+from .testcase_utils.testcase_picker import TestCasePicker
 
 
 def create_dir(path: Path):
@@ -38,7 +40,7 @@ def main(paths: AutograderPaths):
     stdout_formatters_path = paths.stdout_formatters
     if not stdout_formatters_path.exists():
         print(f"{stdout_formatters_path.name} not found. Creating a default file...")
-        shutil.copy(paths.default_stdout_formatters, str(paths.stdout_formatters))
+        shutil.copy(str(paths.default_stdout_formatters), str(paths.stdout_formatters))
     else:
         print("Found stdout_formatters.py")
 
@@ -47,19 +49,20 @@ def main(paths: AutograderPaths):
         "Would you like me to generate the testcase templates? (Yes/No) "
     )
     if ans.lower().startswith("y"):
-        allowed_languages = ", ".join(ALLOWED_LANGUAGES.keys())
+        supported_languages = _get_supported_languages(paths.testcase_types_dir)
+        allowed_languages = ", ".join(name for name in supported_languages.keys())
         while True:
             choice = input(
                 f"Choose a programming language you'd like to generate testcase templates for ({allowed_languages}): "
             )
-            lang = ALLOWED_LANGUAGES.get(choice, None)
+            lang = supported_languages.get(choice, None)
             if lang is None:
                 print(f"Couldn't find the language with name '{choice}'. Please, try again.")
             else:
                 break
-        shutil.copytree(Path(__file__).parent / "templates" / choice, paths.testcases_dir, dirs_exist_ok=True)
+        safe_copytree(lang.get_template_dir(), paths.testcases_dir, dirs_exist_ok=True)
     print(
-        "\n\nNow if you want to grade your submissions, you can use 'autograder path/to/submissions/dir' "
+        "\n\nNow if you want to grade your submissions, you can use 'autograder run path/to/submissions/dir' "
         "for this directory."
     )
     print(f"You can write your testcases in {paths.testcases_dir}")
@@ -69,3 +72,91 @@ def main(paths: AutograderPaths):
     print(f"You can put the extra files to be available for each testcase into {paths.extra_dir}")
     print(f"You can configure grading by editing {paths.config}")
     print("You can find readme at https://github.com/Ovsyanka83/autograder")
+
+
+def _get_supported_languages(testcase_types_dir: Path) -> Dict[str, Type[TestCase]]:
+    testcase_types = TestCasePicker.discover_testcase_types(testcase_types_dir)
+    return {t.type_source_file.stem: t for t in testcase_types if (t.get_template_dir()).exists()}
+
+
+def safe_copytree(
+    src,
+    dst,
+    symlinks=False,
+    ignore=None,
+    copy_function=shutil.copy2,
+    ignore_dangling_symlinks=False,
+    dirs_exist_ok=False,
+):
+    """This is a newer version of copytree only available for python3.8
+    We need it because it has a dirs_exist_ok keyword arg
+    """
+    with os.scandir(src) as itr:
+        entries = list(itr)
+    if ignore is not None:
+        ignored_names = ignore(os.fspath(src), [x.name for x in entries])
+    else:
+        ignored_names = set()
+
+    os.makedirs(dst, exist_ok=dirs_exist_ok)
+    errors = []
+    use_srcentry = copy_function is shutil.copy2 or copy_function is shutil.copy
+
+    for srcentry in entries:
+        if srcentry.name in ignored_names:
+            continue
+        src_name = os.path.join(src, srcentry.name)
+        dst_name = os.path.join(dst, srcentry.name)
+        src_obj = srcentry if use_srcentry else src_name
+        try:
+            is_symlink = srcentry.is_symlink()
+            if is_symlink and os.name == "nt":
+                # Special check for directory junctions, which appear as
+                # symlinks but we want to recurse.
+                lstat = srcentry.stat(follow_symlinks=False)
+                if lstat.st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT:
+                    is_symlink = False
+            if is_symlink:
+                linkto = os.readlink(src_name)
+                if symlinks:
+                    # We can't just leave it to `copy_function` because legacy
+                    # code with a custom `copy_function` may rely on copytree
+                    # doing the right thing.
+                    os.symlink(linkto, dst_name)
+                    shutil.copystat(src_obj, dst_name, follow_symlinks=not symlinks)
+                else:
+                    # ignore dangling symlink if the flag is on
+                    if not os.path.exists(linkto) and ignore_dangling_symlinks:
+                        continue
+                    # otherwise let the copy occur. copy2 will raise an error
+                    if srcentry.is_dir():
+                        shutil.copytree(
+                            src_obj,
+                            dst_name,
+                            symlinks,
+                            ignore,
+                            copy_function,
+                            dirs_exist_ok=dirs_exist_ok,
+                        )
+                    else:
+                        copy_function(src_obj, dst_name)
+            elif srcentry.is_dir():
+                shutil.copytree(src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)
+            else:
+                # Will raise a SpecialFileError for unsupported file types
+                copy_function(src_obj, dst_name)
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except shutil.Error as err:
+            errors.extend(err.args[0])
+        except OSError as why:
+            errors.append((src_name, dst_name, str(why)))
+    try:
+        shutil.copystat(src, dst)
+    except OSError as why:
+        # Copying file access times may fail on Windows
+        if getattr(why, "winerror", None) is None:
+            errors.append((src, dst, str(why)))
+    if errors:
+        raise shutil.Error(errors)
+    return dst
