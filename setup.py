@@ -17,6 +17,7 @@ setup(
         "autograder.testcase_utils",
     ],
     version=about["__version__"],
+    include_package_data=True,
     install_requires=requires,
     entry_points={"console_scripts": ["autograder=autograder.__main__:main"]},
     # metadata to display on PyPI
