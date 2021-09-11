@@ -163,6 +163,8 @@ class Grader:
         self, io: Dict[str, TestCaseIO]
     ) -> Tuple[Dict[Type[TestCase], List[TestCase]], Dict[str, TestCaseIO]]:
         """Returns sorted list of testcase_types from tests/testcases"""
+        if not self.paths.testcases_dir.exists():
+            return {}, io
         tests = {t: [] for t in self.testcase_picker.testcase_types}
         default_weight = self.config.testcase_weights.get("ALL", 1)
         default_timeout = self.config.timeouts.get("ALL", 1)
@@ -291,7 +293,7 @@ class AutograderPaths:
         self.stdout_formatters = self.tests_dir / "stdout_formatters.py"
         self.config = self.tests_dir / "config.ini"
 
-        self.required_dirs = (self.testcases_dir,)
+        self.required_dirs = ()
 
         autograder_dir = Path(__file__).parent
         self.testcase_types_dir = autograder_dir / "testcase_types"
