@@ -88,7 +88,12 @@ class GradingOutputLogger(SynchronizedLogger):
         if not generate_results:
             self._silence_generating_results()
 
-    def print_precompilation_error_to_results_file(self, submission: Submission, max_score, error, buffer_logger):
+    def print_precompilation_error_to_results_file(
+        self,
+        submission: Submission,
+        error: Exception,
+        buffer_logger: "BufferOutputLogger",
+    ):
         if isinstance(error, sh.ErrorReturnCode):
             stderr = get_stderr(error, "Failed to precompile")
         else:
@@ -97,31 +102,37 @@ class GradingOutputLogger(SynchronizedLogger):
         precompilation_error = stderr.strip().replace(str(submission.dir), "...")
         buffer_logger(stderr + f"\nResult: 0/{self.total_points_possible}\n")
         self._print_single_student_output_to_results_file(
-            submission.path,
-            assignment_name=self.assignment_name,
+            submission,
+            f"0/{self.total_points_possible}",
             precompilation_error=precompilation_error,
-            formatted_student_score=f"0/{max_score}",
         )
 
     def print_testcase_results_to_results_file(
         self,
-        submission,
-        testcase_results,
-        normalized_student_score,
-        buffer_logger,
+        submission: Submission,
+        normalized_student_score: float,
+        buffer_logger: "BufferOutputLogger",
     ):
         student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
         buffer_logger(f"Result: {student_final_result}\n")
-        self._print_single_student_output_to_results_file(
-            submission,
-            assignment_name=self.assignment_name,
-            testcase_results=testcase_results,
-            formatted_student_score=student_final_result,
-        )
+        self._print_single_student_output_to_results_file(submission, student_final_result)
 
-    def _print_single_student_output_to_results_file(self, submission, **kwargs):
-        with open(self.results_dir / submission.name, "w") as f:
-            f.write(format_output_for_student_file(**kwargs))
+    # FIXME: This needs better naming...
+    def _print_single_student_output_to_results_file(
+        self,
+        submission: Submission,
+        formatted_student_score: str,
+        precompilation_error: str = "",
+    ):
+        with open(self.results_dir / submission.path.name, "w") as f:
+            f.write(
+                format_output_for_student_file(
+                    submission,
+                    self.assignment_name,
+                    formatted_student_score,
+                    precompilation_error,
+                )
+            )
 
     def _silence_generating_results(self):
         self.print_precompilation_error_to_results_file = lambda *a, **kw: None  # type: ignore
@@ -143,23 +154,28 @@ class BufferOutputLogger:
         self.output.append(s)
 
 
-def format_output_for_student_file(**output_info):
+def format_output_for_student_file(
+    submission: Submission,
+    assignment_name: str,
+    formatted_student_score: str,
+    precompilation_error: str = "",
+):
     """Replace this function with anything else if you want the output
     to have a different style
     """
     str_builder = deque()
     b = str_builder.append
-    b(f"{output_info['assignment_name']} Test Results\n\n")
-    if "precompilation_error" not in output_info:
+    b(f"{assignment_name} Test Results\n\n")
+    if not precompilation_error:
         b("%-40s%s\n" % ("TestCase", "Result"))
     b("================================================================")
-    if "precompilation_error" in output_info:
+    if precompilation_error:
         b("\n")
-        b(output_info["precompilation_error"])
+        b(precompilation_error)
     else:
-        for test_output in output_info["testcase_results"]:
-            b("\n%-40s%s" % test_output)
+        for test_name, (test_grade, test_message) in submission.grades.items():
+            b("\n%-40s%s" % (test_name, test_message))
     b("\n================================================================\n")
-    b("Result: " + output_info["formatted_student_score"])
+    b("Result: " + formatted_student_score)
     b(KEY)
     return "".join(str_builder)

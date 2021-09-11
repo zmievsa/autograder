@@ -208,10 +208,8 @@ class Grader:
                 self.config.possible_source_file_stems,
                 arglists[ArgList.SUBMISSION_PRECOMPILATION],
             )
-        except Exception as e:  # type: ignore
-            self.logger.print_precompilation_error_to_results_file(
-                submission, self.config.total_points_possible, e, logger
-            )
+        except Exception as e:
+            self.logger.print_precompilation_error_to_results_file(submission, e, logger)
 
     def _get_testcase_output(self, submission: Submission, logger: BufferOutputLogger) -> float:
         """Returns grading info as a dict"""
@@ -220,7 +218,6 @@ class Grader:
         if precompiled_submission is None:
             return 0
         total_testcase_score = 0
-        testcase_results = []
         # Note: self.stdout_only_tests are not included in self.tests
         allowed_tests = self.tests.get(submission.type, [])
         if not allowed_tests:
@@ -230,13 +227,15 @@ class Grader:
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
+            submission.add_grade(test.name, testcase_score, message)
             logger(message)
-            testcase_results.append((test.name, message))
             total_testcase_score += testcase_score
         raw_student_score = total_testcase_score / (sum(t.weight for t in allowed_tests) or 1)
         normalized_student_score = raw_student_score * self.config.total_score_to_100_ratio
         self.logger.print_testcase_results_to_results_file(
-            submission.path, testcase_results, normalized_student_score, logger
+            submission,
+            normalized_student_score,
+            logger,
         )
         return normalized_student_score
 
