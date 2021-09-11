@@ -17,7 +17,6 @@ class Submission:
     file: Path
     type: Type[TestCase]
     dir: Path
-
     grades: Dict[str, Tuple[float, str]]
 
     def __init__(self, file: Path, testcase_type: Type[TestCase], temp_dir: Path):

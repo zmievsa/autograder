@@ -220,7 +220,6 @@ class Grader:
         if precompiled_submission is None:
             return 0
         total_testcase_score = 0
-        # Note: self.stdout_only_tests are not included in self.tests
         allowed_tests = self.tests.get(submission.type, [])
         if not allowed_tests:
             # TODO: Replace all print statements with proper logging
