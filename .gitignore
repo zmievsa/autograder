@@ -8,3 +8,4 @@ dist
 *venv
 .idea/*
 *.code-workplace
+*.lock
