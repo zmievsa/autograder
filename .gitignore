@@ -9,3 +9,4 @@ dist
 .idea/*
 *.code-workplace
 *.lock
+debug.py
