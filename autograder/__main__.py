@@ -11,6 +11,11 @@ def main(argv=None):
     parser = _create_parser()
 
     args = parser.parse_args(argv)
+    if args.version:
+        from autograder.__version__ import __version__
+
+        print(__version__)
+        exit(0)
     current_dir = (Path.cwd() / args.submission_path).resolve()
     return _evaluate_args(args, current_dir)
 
@@ -71,12 +76,6 @@ def _add_submission_path_argument(parser: argparse.ArgumentParser):
 
 
 def _evaluate_args(args, current_dir):
-    if args.version:
-        from autograder.__version__ import __version__
-
-        print(__version__)
-        exit(0)
-
     if sys.platform.startswith("win32"):
         print(
             "Windows is not supported by autograder. If you do not have Linux,"

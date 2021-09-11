@@ -1,1 +1,2 @@
-recursive-include autograder
+recursive-include autograder *
+recursive-exclude autograder *.pyc

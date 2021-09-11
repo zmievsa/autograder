@@ -8,3 +8,5 @@ dist
 *venv
 .idea/*
 *.code-workplace
+*.lock
+debug.py
