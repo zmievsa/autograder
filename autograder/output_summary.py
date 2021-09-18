@@ -34,11 +34,10 @@ def get_submission_name(submission: Path):
 class SynchronizedLogger:
     LOGGER_NAME = "SynchronizedLogger"
 
-    def __init__(self, enable_stdout):
+    def __init__(self):
         self.logger = logging.getLogger(self.LOGGER_NAME)
         self.logger.setLevel(logging.INFO)
-        if enable_stdout:
-            self.logger.addHandler(logging.StreamHandler(sys.stdout))
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
 
     def __call__(self, s: str) -> None:
         self.logger.info(s)
@@ -57,34 +56,15 @@ class GradingOutputLogger(SynchronizedLogger):
 
     def __init__(
         self,
-        current_dir: Path,
-        path_to_output_summary: Path,
         path_to_results_dir: Path,
         assignment_name: str,
         total_points_possible: int,
-        no_output: bool,
         generate_results: bool,
     ):
-        super().__init__(enable_stdout=(not no_output))
-        self.current_dir = current_dir
+        super().__init__()
         self.results_dir = path_to_results_dir
         self.assignment_name = assignment_name
         self.total_points_possible = total_points_possible
-        if not no_output:
-            if path_to_output_summary.exists():
-                # TODO: Input should be optional because we might ask this question in GUI.
-                #   Or not? Maybe we just check it to exist separately in GUI?
-                ans = input("Output summary file already exists. Would you like to overwrite it? (Yes/No) ")
-                if ans.lower().startswith("y"):
-                    self.logger.addHandler(logging.FileHandler(str(path_to_output_summary), mode="w"))
-                else:
-                    print(
-                        "If you don't want to remove the summary, simply use the --no_output command line option "
-                        "which will remove all stdout and file output except for --generate_results directory."
-                    )
-                    exit(0)
-            else:
-                self.logger.addHandler(logging.FileHandler(str(path_to_output_summary), mode="w"))
         if not generate_results:
             self._silence_generating_results()
 
@@ -92,7 +72,6 @@ class GradingOutputLogger(SynchronizedLogger):
         self,
         submission: Submission,
         error: Exception,
-        buffer_logger: "BufferOutputLogger",
     ):
         if isinstance(error, sh.ErrorReturnCode):
             stderr = get_stderr(error, "Failed to precompile")
@@ -111,7 +90,6 @@ class GradingOutputLogger(SynchronizedLogger):
         self,
         submission: Submission,
         normalized_student_score: float,
-        buffer_logger: "BufferOutputLogger",
     ):
         student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
         buffer_logger(f"Result: {student_final_result}\n")
@@ -140,18 +118,6 @@ class GradingOutputLogger(SynchronizedLogger):
 
     def print_key(self):
         self(KEY)
-
-
-# We use this to efficiently synchronize logger output
-# to make it thread-safe.
-class BufferOutputLogger:
-    output: Deque[str]
-
-    def __init__(self):
-        self.output = deque()
-
-    def __call__(self, s: str) -> None:
-        self.output.append(s)
 
 
 def format_output_for_student_file(

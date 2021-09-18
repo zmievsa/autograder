@@ -5,20 +5,20 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Dict, List, Set, Type, Tuple
 
-from autograder.testcase_utils.testcase_io import TestCaseIO
 from .config_manager import GradingConfig
 from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
 from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
 from .testcase_utils.testcase_picker import TestCasePicker
+from .testcase_utils.testcase_io import TestCaseIO
 from .util import AutograderError, import_from_path, get_file_stems
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
 class Grader:
-    no_output: bool
+    json_output: bool
     submissions: List[Submission]
     tests: Dict[Type[TestCase], List[TestCase]]
     raw_submissions: List[Path]
@@ -29,10 +29,10 @@ class Grader:
     testcase_picker: TestCasePicker
     stdout_only_tests: list
 
-    def __init__(self, current_dir, no_output=False, submissions=None):
+    def __init__(self, current_dir: Path, json_output: bool = False, submissions=None):
         if submissions is None:
             submissions = []
-        self.no_output = no_output
+        self.json_output = json_output
         self.raw_submissions = submissions
         self.stdout_formatters = {}
         self.paths = AutograderPaths(current_dir)
@@ -48,12 +48,10 @@ class Grader:
                 self.config.stdout_only_grading_enabled,
             )
             self.logger = GradingOutputLogger(
-                self.paths.current_dir,
                 self.paths.output_summary,
                 self.paths.results_dir,
                 self.config.assignment_name,
                 self.config.total_points_possible,
-                self.no_output,
                 self.config.generate_results,
             )
             self._prepare_directory_structure()
@@ -68,7 +66,7 @@ class Grader:
                 man = multiprocessing.Manager()
                 total_class_points = sum(pool.map(Runner(self, man.Lock()), self.submissions))
             class_average = total_class_points / len(self.submissions)
-            self.logger(f"\nAverage score: {round(class_average)}/{self.config.total_points_possible}")
+            self.logger.print_average_score(f"{round(class_average)}/{self.config.total_points_possible}")
             self.logger.print_key()
         finally:
             for io in io_choices.values():
@@ -201,7 +199,7 @@ class Grader:
         else:
             return {}
 
-    def _precompile_submission(self, submission: Submission, logger):
+    def _precompile_submission(self, submission: Submission):
         try:
             arglists = self.config.generate_arglists(submission.path.name)
             return submission.type.precompile_submission(
@@ -211,9 +209,9 @@ class Grader:
                 arglists[ArgList.SUBMISSION_PRECOMPILATION],
             )
         except Exception as e:
-            self.logger.print_precompilation_error_to_results_file(submission, e, logger)
+            self.logger.print_precompilation_error_to_results_file(submission, e)
 
-    def _get_testcase_output(self, submission: Submission, logger: BufferOutputLogger) -> float:
+    def _get_testcase_output(self, submission: Submission) -> float:
         """Returns grading info as a dict"""
         logger(f"Grading {get_submission_name(submission.path)}")
         precompiled_submission = self._precompile_submission(submission, logger)
@@ -223,7 +221,7 @@ class Grader:
         allowed_tests = self.tests.get(submission.type, [])
         if not allowed_tests:
             # TODO: Replace all print statements with proper logging
-            print(f"No testcase_utils suitable for the submission {submission.path.name} found.")
+            print(f"No testcases suitable for the submission {submission.path.name} found.")
         submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
         for test in allowed_tests:
             logger(f"Running '{test.name}'")
@@ -309,9 +307,9 @@ class AutograderPaths:
 
 # Grades single submissions. We use it because multiprocessing.pool only accepts top-level callable objects.
 class Runner:
-    def __init__(self, grader, lock):
+    def __init__(self, grader, stdout_lock):
         self.grader: Grader = grader
-        self.lock = lock
+        self.lock = stdout_lock
 
     def __call__(self, submission: Submission):
         return self.grader.run_on_single_submission(submission, self.lock)
