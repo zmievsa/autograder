@@ -2,6 +2,7 @@
 from antlr4 import *
 from io import StringIO
 import sys
+
 if sys.version_info[1] > 5:
     from typing import TextIO
 else:
@@ -11,12 +12,15 @@ else:
 from antlr4.Token import CommonToken
 import re
 import importlib
+
 # Allow languages to extend the lexer and parser, by loading the parser dynamically
 module_path = __name__[:-5]
-language_name = __name__.split('.')[-1]
+language_name = __name__.split(".")[-1]
 language_name = language_name[:-5]  # Remove Lexer from name
-LanguageParser = getattr(importlib.import_module('{}Parser'.format(module_path)), '{}Parser'.format(language_name))
-
+LanguageParser = getattr(
+    importlib.import_module("{}Parser".format(module_path)),
+    "{}Parser".format(language_name),
+)
 
 
 def serializedATN():
@@ -27,8 +31,8 @@ def serializedATN():
         buf.write("\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23")
         buf.write("\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30")
         buf.write("\4\31\t\31\4\32\t\32\4\33\t\33\4\34\t\34\4\35\t\35\4\36")
-        buf.write("\t\36\4\37\t\37\4 \t \4!\t!\4\"\t\"\4#\t#\4$\t$\4%\t%")
-        buf.write("\4&\t&\4\'\t\'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
+        buf.write('\t\36\4\37\t\37\4 \t \4!\t!\4"\t"\4#\t#\4$\t$\4%\t%')
+        buf.write("\4&\t&\4'\t'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
         buf.write("\t.\4/\t/\4\60\t\60\4\61\t\61\4\62\t\62\4\63\t\63\4\64")
         buf.write("\t\64\4\65\t\65\4\66\t\66\4\67\t\67\48\t8\49\t9\4:\t:")
         buf.write("\4;\t;\4<\t<\4=\t=\4>\t>\4?\t?\4@\t@\4A\tA\4B\tB\4C\t")
@@ -52,9 +56,9 @@ def serializedATN():
         buf.write("\3\30\3\30\3\30\3\30\3\31\3\31\3\31\3\32\3\32\3\32\3\32")
         buf.write("\3\33\3\33\3\33\3\33\3\34\3\34\3\34\3\35\3\35\3\35\3\35")
         buf.write("\3\35\3\36\3\36\3\36\3\36\3\36\3\37\3\37\3\37\3\37\3\37")
-        buf.write("\3\37\3 \3 \3 \3 \3 \3 \3!\3!\3!\3!\3!\3!\3\"\3\"\3\"")
-        buf.write("\3\"\3#\3#\3#\3#\3#\3$\3$\3$\3$\3$\3$\3$\3$\3$\3%\3%\3")
-        buf.write("%\3%\3%\3%\3&\3&\3&\3&\3&\3&\3\'\3\'\3\'\3\'\3\'\3\'\3")
+        buf.write('\3\37\3 \3 \3 \3 \3 \3 \3!\3!\3!\3!\3!\3!\3"\3"\3"')
+        buf.write('\3"\3#\3#\3#\3#\3#\3$\3$\3$\3$\3$\3$\3$\3$\3$\3%\3%\3')
+        buf.write("%\3%\3%\3%\3&\3&\3&\3&\3&\3&\3'\3'\3'\3'\3'\3'\3")
         buf.write("(\3(\3(\5(\u01cc\n(\3(\3(\5(\u01d0\n(\3(\5(\u01d3\n(\5")
         buf.write("(\u01d5\n(\3(\3(\3)\3)\7)\u01db\n)\f)\16)\u01de\13)\3")
         buf.write("*\3*\3*\3*\3*\5*\u01e5\n*\3*\3*\5*\u01e9\n*\3+\3+\3+\3")
@@ -90,8 +94,8 @@ def serializedATN():
         buf.write("\u0367\n{\3{\3{\5{\u036b\n{\3|\5|\u036e\n|\3}\3}\5}\u0372")
         buf.write("\n}\6\u02c7\u02d4\u0330\u033d\2~\3\3\5\4\7\5\t\6\13\7")
         buf.write("\r\b\17\t\21\n\23\13\25\f\27\r\31\16\33\17\35\20\37\21")
-        buf.write("!\22#\23%\24\'\25)\26+\27-\30/\31\61\32\63\33\65\34\67")
-        buf.write("\359\36;\37= ?!A\"C#E$G%I&K\'M(O)Q*S+U,W-Y.[/]\60_\61")
+        buf.write("!\22#\23%\24'\25)\26+\27-\30/\31\61\32\63\33\65\34\67")
+        buf.write("\359\36;\37= ?!A\"C#E$G%I&K'M(O)Q*S+U,W-Y.[/]\60_\61")
         buf.write("a\62c\63e\64g\65i\66k\67m8o9q:s;u<w=y>{?}@\177A\u0081")
         buf.write("B\u0083C\u0085D\u0087E\u0089F\u008bG\u008dH\u008fI\u0091")
         buf.write("J\u0093K\u0095L\u0097M\u0099N\u009bO\u009dP\u009fQ\u00a1")
@@ -105,8 +109,8 @@ def serializedATN():
         buf.write("QQqq\4\2ZZzz\4\2LLll\6\2\f\f\16\17))^^\6\2\f\f\16\17$")
         buf.write("$^^\3\2^^\3\2\63;\3\2\62;\3\2\629\5\2\62;CHch\3\2\62\63")
         buf.write("\4\2GGgg\4\2--//\7\2\2\13\r\16\20(*]_\u0081\7\2\2\13\r")
-        buf.write("\16\20#%]_\u0081\4\2\2]_\u0081\3\2\2\u0081\4\2\13\13\"")
-        buf.write("\"\4\2\f\f\16\17\u0129\2C\\aac|\u00ac\u00ac\u00b7\u00b7")
+        buf.write('\16\20#%]_\u0081\4\2\2]_\u0081\3\2\2\u0081\4\2\13\13"')
+        buf.write('"\4\2\f\f\16\17\u0129\2C\\aac|\u00ac\u00ac\u00b7\u00b7')
         buf.write("\u00bc\u00bc\u00c2\u00d8\u00da\u00f8\u00fa\u0243\u0252")
         buf.write("\u02c3\u02c8\u02d3\u02e2\u02e6\u02f0\u02f0\u037c\u037c")
         buf.write("\u0388\u0388\u038a\u038c\u038e\u038e\u0390\u03a3\u03a5")
@@ -208,7 +212,7 @@ def serializedATN():
         buf.write("\3\2\2\2\2\t\3\2\2\2\2\13\3\2\2\2\2\r\3\2\2\2\2\17\3\2")
         buf.write("\2\2\2\21\3\2\2\2\2\23\3\2\2\2\2\25\3\2\2\2\2\27\3\2\2")
         buf.write("\2\2\31\3\2\2\2\2\33\3\2\2\2\2\35\3\2\2\2\2\37\3\2\2\2")
-        buf.write("\2!\3\2\2\2\2#\3\2\2\2\2%\3\2\2\2\2\'\3\2\2\2\2)\3\2\2")
+        buf.write("\2!\3\2\2\2\2#\3\2\2\2\2%\3\2\2\2\2'\3\2\2\2\2)\3\2\2")
         buf.write("\2\2+\3\2\2\2\2-\3\2\2\2\2/\3\2\2\2\2\61\3\2\2\2\2\63")
         buf.write("\3\2\2\2\2\65\3\2\2\2\2\67\3\2\2\2\29\3\2\2\2\2;\3\2\2")
         buf.write("\2\2=\3\2\2\2\2?\3\2\2\2\2A\3\2\2\2\2C\3\2\2\2\2E\3\2")
@@ -233,7 +237,7 @@ def serializedATN():
         buf.write("\u0120\3\2\2\2\23\u0127\3\2\2\2\25\u012a\3\2\2\2\27\u0131")
         buf.write("\3\2\2\2\31\u013a\3\2\2\2\33\u0141\3\2\2\2\35\u0144\3")
         buf.write("\2\2\2\37\u0149\3\2\2\2!\u014e\3\2\2\2#\u0154\3\2\2\2")
-        buf.write("%\u0158\3\2\2\2\'\u015b\3\2\2\2)\u015f\3\2\2\2+\u0167")
+        buf.write("%\u0158\3\2\2\2'\u015b\3\2\2\2)\u015f\3\2\2\2+\u0167")
         buf.write("\3\2\2\2-\u016c\3\2\2\2/\u0173\3\2\2\2\61\u017a\3\2\2")
         buf.write("\2\63\u017d\3\2\2\2\65\u0181\3\2\2\2\67\u0185\3\2\2\2")
         buf.write("9\u0188\3\2\2\2;\u018d\3\2\2\2=\u0192\3\2\2\2?\u0198\3")
@@ -299,7 +303,7 @@ def serializedATN():
         buf.write("\7h\2\2\u0148\36\3\2\2\2\u0149\u014a\7g\2\2\u014a\u014b")
         buf.write("\7n\2\2\u014b\u014c\7u\2\2\u014c\u014d\7g\2\2\u014d \3")
         buf.write("\2\2\2\u014e\u014f\7y\2\2\u014f\u0150\7j\2\2\u0150\u0151")
-        buf.write("\7k\2\2\u0151\u0152\7n\2\2\u0152\u0153\7g\2\2\u0153\"")
+        buf.write('\7k\2\2\u0151\u0152\7n\2\2\u0152\u0153\7g\2\2\u0153"')
         buf.write("\3\2\2\2\u0154\u0155\7h\2\2\u0155\u0156\7q\2\2\u0156\u0157")
         buf.write("\7t\2\2\u0157$\3\2\2\2\u0158\u0159\7k\2\2\u0159\u015a")
         buf.write("\7p\2\2\u015a&\3\2\2\2\u015b\u015c\7v\2\2\u015c\u015d")
@@ -395,7 +399,7 @@ def serializedATN():
         buf.write("\2\2\2\u024a\u024b\7@\2\2\u024b\u024c\7@\2\2\u024c\u0084")
         buf.write("\3\2\2\2\u024d\u024e\7-\2\2\u024e\u0086\3\2\2\2\u024f")
         buf.write("\u0250\7/\2\2\u0250\u0088\3\2\2\2\u0251\u0252\7\61\2\2")
-        buf.write("\u0252\u008a\3\2\2\2\u0253\u0254\7\'\2\2\u0254\u008c\3")
+        buf.write("\u0252\u008a\3\2\2\2\u0253\u0254\7'\2\2\u0254\u008c\3")
         buf.write("\2\2\2\u0255\u0256\7\61\2\2\u0256\u0257\7\61\2\2\u0257")
         buf.write("\u008e\3\2\2\2\u0258\u0259\7\u0080\2\2\u0259\u0090\3\2")
         buf.write("\2\2\u025a\u025b\7}\2\2\u025b\u025c\bI\7\2\u025c\u0092")
@@ -413,7 +417,7 @@ def serializedATN():
         buf.write("\7?\2\2\u027d\u00aa\3\2\2\2\u027e\u027f\7,\2\2\u027f\u0280")
         buf.write("\7?\2\2\u0280\u00ac\3\2\2\2\u0281\u0282\7B\2\2\u0282\u0283")
         buf.write("\7?\2\2\u0283\u00ae\3\2\2\2\u0284\u0285\7\61\2\2\u0285")
-        buf.write("\u0286\7?\2\2\u0286\u00b0\3\2\2\2\u0287\u0288\7\'\2\2")
+        buf.write("\u0286\7?\2\2\u0286\u00b0\3\2\2\2\u0287\u0288\7'\2\2")
         buf.write("\u0288\u0289\7?\2\2\u0289\u00b2\3\2\2\2\u028a\u028b\7")
         buf.write("(\2\2\u028b\u028c\7?\2\2\u028c\u00b4\3\2\2\2\u028d\u028e")
         buf.write("\7~\2\2\u028e\u028f\7?\2\2\u028f\u00b6\3\2\2\2\u0290\u0291")
@@ -527,7 +531,7 @@ class Python3Lexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
-    decisionsToDFA = [ DFA(ds, i) for i, ds in enumerate(atn.decisionToState) ]
+    decisionsToDFA = [DFA(ds, i) for i, ds in enumerate(atn.decisionToState)]
 
     STRING = 1
     NUMBER = 2
@@ -627,79 +631,334 @@ class Python3Lexer(Lexer):
     SKIP_ = 96
     UNKNOWN_CHAR = 97
 
-    channelNames = [ u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN" ]
+    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
 
-    modeNames = [ "DEFAULT_MODE" ]
+    modeNames = ["DEFAULT_MODE"]
 
-    literalNames = [ "<INVALID>",
-            "'def'", "'return'", "'raise'", "'from'", "'import'", "'as'",
-            "'global'", "'nonlocal'", "'assert'", "'if'", "'elif'", "'else'",
-            "'while'", "'for'", "'in'", "'try'", "'finally'", "'with'",
-            "'except'", "'lambda'", "'or'", "'and'", "'not'", "'is'", "'None'",
-            "'True'", "'False'", "'class'", "'yield'", "'del'", "'pass'",
-            "'continue'", "'break'", "'async'", "'await'", "'.'", "'...'",
-            "'*'", "'('", "')'", "','", "':'", "';'", "'**'", "'='", "'['",
-            "']'", "'|'", "'^'", "'&'", "'<<'", "'>>'", "'+'", "'-'", "'/'",
-            "'%'", "'//'", "'~'", "'{'", "'}'", "'<'", "'>'", "'=='", "'>='",
-            "'<='", "'<>'", "'!='", "'@'", "'->'", "'+='", "'-='", "'*='",
-            "'@='", "'/='", "'%='", "'&='", "'|='", "'^='", "'<<='", "'>>='",
-            "'**='", "'//='" ]
+    literalNames = [
+        "<INVALID>",
+        "'def'",
+        "'return'",
+        "'raise'",
+        "'from'",
+        "'import'",
+        "'as'",
+        "'global'",
+        "'nonlocal'",
+        "'assert'",
+        "'if'",
+        "'elif'",
+        "'else'",
+        "'while'",
+        "'for'",
+        "'in'",
+        "'try'",
+        "'finally'",
+        "'with'",
+        "'except'",
+        "'lambda'",
+        "'or'",
+        "'and'",
+        "'not'",
+        "'is'",
+        "'None'",
+        "'True'",
+        "'False'",
+        "'class'",
+        "'yield'",
+        "'del'",
+        "'pass'",
+        "'continue'",
+        "'break'",
+        "'async'",
+        "'await'",
+        "'.'",
+        "'...'",
+        "'*'",
+        "'('",
+        "')'",
+        "','",
+        "':'",
+        "';'",
+        "'**'",
+        "'='",
+        "'['",
+        "']'",
+        "'|'",
+        "'^'",
+        "'&'",
+        "'<<'",
+        "'>>'",
+        "'+'",
+        "'-'",
+        "'/'",
+        "'%'",
+        "'//'",
+        "'~'",
+        "'{'",
+        "'}'",
+        "'<'",
+        "'>'",
+        "'=='",
+        "'>='",
+        "'<='",
+        "'<>'",
+        "'!='",
+        "'@'",
+        "'->'",
+        "'+='",
+        "'-='",
+        "'*='",
+        "'@='",
+        "'/='",
+        "'%='",
+        "'&='",
+        "'|='",
+        "'^='",
+        "'<<='",
+        "'>>='",
+        "'**='",
+        "'//='",
+    ]
 
-    symbolicNames = [ "<INVALID>",
-            "STRING", "NUMBER", "INTEGER", "DEF", "RETURN", "RAISE", "FROM",
-            "IMPORT", "AS", "GLOBAL", "NONLOCAL", "ASSERT", "IF", "ELIF",
-            "ELSE", "WHILE", "FOR", "IN", "TRY", "FINALLY", "WITH", "EXCEPT",
-            "LAMBDA", "OR", "AND", "NOT", "IS", "NONE", "TRUE", "FALSE",
-            "CLASS", "YIELD", "DEL", "PASS", "CONTINUE", "BREAK", "ASYNC",
-            "AWAIT", "NEWLINE", "NAME", "STRING_LITERAL", "BYTES_LITERAL",
-            "DECIMAL_INTEGER", "OCT_INTEGER", "HEX_INTEGER", "BIN_INTEGER",
-            "FLOAT_NUMBER", "IMAG_NUMBER", "DOT", "ELLIPSIS", "STAR", "OPEN_PAREN",
-            "CLOSE_PAREN", "COMMA", "COLON", "SEMI_COLON", "POWER", "ASSIGN",
-            "OPEN_BRACK", "CLOSE_BRACK", "OR_OP", "XOR", "AND_OP", "LEFT_SHIFT",
-            "RIGHT_SHIFT", "ADD", "MINUS", "DIV", "MOD", "IDIV", "NOT_OP",
-            "OPEN_BRACE", "CLOSE_BRACE", "LESS_THAN", "GREATER_THAN", "EQUALS",
-            "GT_EQ", "LT_EQ", "NOT_EQ_1", "NOT_EQ_2", "AT", "ARROW", "ADD_ASSIGN",
-            "SUB_ASSIGN", "MULT_ASSIGN", "AT_ASSIGN", "DIV_ASSIGN", "MOD_ASSIGN",
-            "AND_ASSIGN", "OR_ASSIGN", "XOR_ASSIGN", "LEFT_SHIFT_ASSIGN",
-            "RIGHT_SHIFT_ASSIGN", "POWER_ASSIGN", "IDIV_ASSIGN", "SKIP_",
-            "UNKNOWN_CHAR" ]
+    symbolicNames = [
+        "<INVALID>",
+        "STRING",
+        "NUMBER",
+        "INTEGER",
+        "DEF",
+        "RETURN",
+        "RAISE",
+        "FROM",
+        "IMPORT",
+        "AS",
+        "GLOBAL",
+        "NONLOCAL",
+        "ASSERT",
+        "IF",
+        "ELIF",
+        "ELSE",
+        "WHILE",
+        "FOR",
+        "IN",
+        "TRY",
+        "FINALLY",
+        "WITH",
+        "EXCEPT",
+        "LAMBDA",
+        "OR",
+        "AND",
+        "NOT",
+        "IS",
+        "NONE",
+        "TRUE",
+        "FALSE",
+        "CLASS",
+        "YIELD",
+        "DEL",
+        "PASS",
+        "CONTINUE",
+        "BREAK",
+        "ASYNC",
+        "AWAIT",
+        "NEWLINE",
+        "NAME",
+        "STRING_LITERAL",
+        "BYTES_LITERAL",
+        "DECIMAL_INTEGER",
+        "OCT_INTEGER",
+        "HEX_INTEGER",
+        "BIN_INTEGER",
+        "FLOAT_NUMBER",
+        "IMAG_NUMBER",
+        "DOT",
+        "ELLIPSIS",
+        "STAR",
+        "OPEN_PAREN",
+        "CLOSE_PAREN",
+        "COMMA",
+        "COLON",
+        "SEMI_COLON",
+        "POWER",
+        "ASSIGN",
+        "OPEN_BRACK",
+        "CLOSE_BRACK",
+        "OR_OP",
+        "XOR",
+        "AND_OP",
+        "LEFT_SHIFT",
+        "RIGHT_SHIFT",
+        "ADD",
+        "MINUS",
+        "DIV",
+        "MOD",
+        "IDIV",
+        "NOT_OP",
+        "OPEN_BRACE",
+        "CLOSE_BRACE",
+        "LESS_THAN",
+        "GREATER_THAN",
+        "EQUALS",
+        "GT_EQ",
+        "LT_EQ",
+        "NOT_EQ_1",
+        "NOT_EQ_2",
+        "AT",
+        "ARROW",
+        "ADD_ASSIGN",
+        "SUB_ASSIGN",
+        "MULT_ASSIGN",
+        "AT_ASSIGN",
+        "DIV_ASSIGN",
+        "MOD_ASSIGN",
+        "AND_ASSIGN",
+        "OR_ASSIGN",
+        "XOR_ASSIGN",
+        "LEFT_SHIFT_ASSIGN",
+        "RIGHT_SHIFT_ASSIGN",
+        "POWER_ASSIGN",
+        "IDIV_ASSIGN",
+        "SKIP_",
+        "UNKNOWN_CHAR",
+    ]
 
-    ruleNames = [ "STRING", "NUMBER", "INTEGER", "DEF", "RETURN", "RAISE",
-                  "FROM", "IMPORT", "AS", "GLOBAL", "NONLOCAL", "ASSERT",
-                  "IF", "ELIF", "ELSE", "WHILE", "FOR", "IN", "TRY", "FINALLY",
-                  "WITH", "EXCEPT", "LAMBDA", "OR", "AND", "NOT", "IS",
-                  "NONE", "TRUE", "FALSE", "CLASS", "YIELD", "DEL", "PASS",
-                  "CONTINUE", "BREAK", "ASYNC", "AWAIT", "NEWLINE", "NAME",
-                  "STRING_LITERAL", "BYTES_LITERAL", "DECIMAL_INTEGER",
-                  "OCT_INTEGER", "HEX_INTEGER", "BIN_INTEGER", "FLOAT_NUMBER",
-                  "IMAG_NUMBER", "DOT", "ELLIPSIS", "STAR", "OPEN_PAREN",
-                  "CLOSE_PAREN", "COMMA", "COLON", "SEMI_COLON", "POWER",
-                  "ASSIGN", "OPEN_BRACK", "CLOSE_BRACK", "OR_OP", "XOR",
-                  "AND_OP", "LEFT_SHIFT", "RIGHT_SHIFT", "ADD", "MINUS",
-                  "DIV", "MOD", "IDIV", "NOT_OP", "OPEN_BRACE", "CLOSE_BRACE",
-                  "LESS_THAN", "GREATER_THAN", "EQUALS", "GT_EQ", "LT_EQ",
-                  "NOT_EQ_1", "NOT_EQ_2", "AT", "ARROW", "ADD_ASSIGN", "SUB_ASSIGN",
-                  "MULT_ASSIGN", "AT_ASSIGN", "DIV_ASSIGN", "MOD_ASSIGN",
-                  "AND_ASSIGN", "OR_ASSIGN", "XOR_ASSIGN", "LEFT_SHIFT_ASSIGN",
-                  "RIGHT_SHIFT_ASSIGN", "POWER_ASSIGN", "IDIV_ASSIGN", "SKIP_",
-                  "UNKNOWN_CHAR", "SHORT_STRING", "LONG_STRING", "LONG_STRING_ITEM",
-                  "LONG_STRING_CHAR", "STRING_ESCAPE_SEQ", "NON_ZERO_DIGIT",
-                  "DIGIT", "OCT_DIGIT", "HEX_DIGIT", "BIN_DIGIT", "POINT_FLOAT",
-                  "EXPONENT_FLOAT", "INT_PART", "FRACTION", "EXPONENT",
-                  "SHORT_BYTES", "LONG_BYTES", "LONG_BYTES_ITEM", "SHORT_BYTES_CHAR_NO_SINGLE_QUOTE",
-                  "SHORT_BYTES_CHAR_NO_DOUBLE_QUOTE", "LONG_BYTES_CHAR",
-                  "BYTES_ESCAPE_SEQ", "SPACES", "COMMENT", "LINE_JOINING",
-                  "ID_START", "ID_CONTINUE" ]
+    ruleNames = [
+        "STRING",
+        "NUMBER",
+        "INTEGER",
+        "DEF",
+        "RETURN",
+        "RAISE",
+        "FROM",
+        "IMPORT",
+        "AS",
+        "GLOBAL",
+        "NONLOCAL",
+        "ASSERT",
+        "IF",
+        "ELIF",
+        "ELSE",
+        "WHILE",
+        "FOR",
+        "IN",
+        "TRY",
+        "FINALLY",
+        "WITH",
+        "EXCEPT",
+        "LAMBDA",
+        "OR",
+        "AND",
+        "NOT",
+        "IS",
+        "NONE",
+        "TRUE",
+        "FALSE",
+        "CLASS",
+        "YIELD",
+        "DEL",
+        "PASS",
+        "CONTINUE",
+        "BREAK",
+        "ASYNC",
+        "AWAIT",
+        "NEWLINE",
+        "NAME",
+        "STRING_LITERAL",
+        "BYTES_LITERAL",
+        "DECIMAL_INTEGER",
+        "OCT_INTEGER",
+        "HEX_INTEGER",
+        "BIN_INTEGER",
+        "FLOAT_NUMBER",
+        "IMAG_NUMBER",
+        "DOT",
+        "ELLIPSIS",
+        "STAR",
+        "OPEN_PAREN",
+        "CLOSE_PAREN",
+        "COMMA",
+        "COLON",
+        "SEMI_COLON",
+        "POWER",
+        "ASSIGN",
+        "OPEN_BRACK",
+        "CLOSE_BRACK",
+        "OR_OP",
+        "XOR",
+        "AND_OP",
+        "LEFT_SHIFT",
+        "RIGHT_SHIFT",
+        "ADD",
+        "MINUS",
+        "DIV",
+        "MOD",
+        "IDIV",
+        "NOT_OP",
+        "OPEN_BRACE",
+        "CLOSE_BRACE",
+        "LESS_THAN",
+        "GREATER_THAN",
+        "EQUALS",
+        "GT_EQ",
+        "LT_EQ",
+        "NOT_EQ_1",
+        "NOT_EQ_2",
+        "AT",
+        "ARROW",
+        "ADD_ASSIGN",
+        "SUB_ASSIGN",
+        "MULT_ASSIGN",
+        "AT_ASSIGN",
+        "DIV_ASSIGN",
+        "MOD_ASSIGN",
+        "AND_ASSIGN",
+        "OR_ASSIGN",
+        "XOR_ASSIGN",
+        "LEFT_SHIFT_ASSIGN",
+        "RIGHT_SHIFT_ASSIGN",
+        "POWER_ASSIGN",
+        "IDIV_ASSIGN",
+        "SKIP_",
+        "UNKNOWN_CHAR",
+        "SHORT_STRING",
+        "LONG_STRING",
+        "LONG_STRING_ITEM",
+        "LONG_STRING_CHAR",
+        "STRING_ESCAPE_SEQ",
+        "NON_ZERO_DIGIT",
+        "DIGIT",
+        "OCT_DIGIT",
+        "HEX_DIGIT",
+        "BIN_DIGIT",
+        "POINT_FLOAT",
+        "EXPONENT_FLOAT",
+        "INT_PART",
+        "FRACTION",
+        "EXPONENT",
+        "SHORT_BYTES",
+        "LONG_BYTES",
+        "LONG_BYTES_ITEM",
+        "SHORT_BYTES_CHAR_NO_SINGLE_QUOTE",
+        "SHORT_BYTES_CHAR_NO_DOUBLE_QUOTE",
+        "LONG_BYTES_CHAR",
+        "BYTES_ESCAPE_SEQ",
+        "SPACES",
+        "COMMENT",
+        "LINE_JOINING",
+        "ID_START",
+        "ID_CONTINUE",
+    ]
 
     grammarFileName = "Python3.g4"
 
-    def __init__(self, input=None, output:TextIO = sys.stdout):
+    def __init__(self, input=None, output: TextIO = sys.stdout):
         super().__init__(input, output)
         self.checkVersion("4.9.2")
-        self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
+        self._interp = LexerATNSimulator(
+            self, self.atn, self.decisionsToDFA, PredictionContextCache()
+        )
         self._actions = None
         self._predicates = None
-
 
     @property
     def tokens(self):
@@ -708,6 +967,7 @@ class Python3Lexer(Lexer):
         except AttributeError:
             self._tokens = []
             return self._tokens
+
     @property
     def indents(self):
         try:
@@ -715,6 +975,7 @@ class Python3Lexer(Lexer):
         except AttributeError:
             self._indents = []
             return self._indents
+
     @property
     def opened(self):
         try:
@@ -722,9 +983,11 @@ class Python3Lexer(Lexer):
         except AttributeError:
             self._opened = 0
             return self._opened
+
     @opened.setter
     def opened(self, value):
         self._opened = value
+
     @property
     def lastToken(self):
         try:
@@ -732,24 +995,28 @@ class Python3Lexer(Lexer):
         except AttributeError:
             self._lastToken = None
             return self._lastToken
+
     @lastToken.setter
     def lastToken(self, value):
         self._lastToken = value
+
     def reset(self):
         super().reset()
         self.tokens = []
         self.indents = []
         self.opened = 0
         self.lastToken = None
+
     def emitToken(self, t):
         super().emitToken(t)
         self.tokens.append(t)
+
     def nextToken(self):
         if self._input.LA(1) == Token.EOF and self.indents:
-            for i in range(len(self.tokens)-1,-1,-1):
+            for i in range(len(self.tokens) - 1, -1, -1):
                 if self.tokens[i].type == Token.EOF:
                     self.tokens.pop(i)
-            self.emitToken(self.commonToken(LanguageParser.NEWLINE, '\n'))
+            self.emitToken(self.commonToken(LanguageParser.NEWLINE, "\n"))
             while self.indents:
                 self.emitToken(self.createDedent())
                 self.indents.pop()
@@ -758,28 +1025,37 @@ class Python3Lexer(Lexer):
         if next.channel == Token.DEFAULT_CHANNEL:
             self.lastToken = next
         return next if not self.tokens else self.tokens.pop(0)
+
     def createDedent(self):
         dedent = self.commonToken(LanguageParser.DEDENT, "")
         dedent.line = self.lastToken.line
         return dedent
+
     def commonToken(self, type, text, indent=0):
-        stop = self.getCharIndex()-1-indent
+        stop = self.getCharIndex() - 1 - indent
         start = (stop - len(text) + 1) if text else stop
-        return CommonToken(self._tokenFactorySourcePair, type, super().DEFAULT_TOKEN_CHANNEL, start, stop)
+        return CommonToken(
+            self._tokenFactorySourcePair,
+            type,
+            super().DEFAULT_TOKEN_CHANNEL,
+            start,
+            stop,
+        )
+
     @staticmethod
     def getIndentationCount(spaces):
         count = 0
         for ch in spaces:
-            if ch == '\t':
+            if ch == "\t":
                 count += 8 - (count % 8)
             else:
                 count += 1
         return count
+
     def atStartOfInput(self):
         return Lexer.column.fget(self) == 0 and Lexer.line.fget(self) == 1
 
-
-    def action(self, localctx:RuleContext, ruleIndex:int, actionIndex:int):
+    def action(self, localctx: RuleContext, ruleIndex: int, actionIndex: int):
         if self._actions is None:
             actions = dict()
             actions[38] = self.NEWLINE_action
@@ -796,8 +1072,7 @@ class Python3Lexer(Lexer):
         else:
             raise Exception("No registered action for:" + str(ruleIndex))
 
-
-    def NEWLINE_action(self, localctx:RuleContext , actionIndex:int):
+    def NEWLINE_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 0:
 
             tempt = Lexer.text.fget(self)
@@ -806,8 +1081,8 @@ class Python3Lexer(Lexer):
             la_char = ""
             try:
                 la = self._input.LA(1)
-                la_char = chr(la)       # Python does not compare char to ints directly
-            except ValueError:          # End of file
+                la_char = chr(la)  # Python does not compare char to ints directly
+            except ValueError:  # End of file
                 pass
             # Strip newlines inside open clauses except if we are near EOF. We keep NEWLINEs near EOF to
             # satisfy the final newline needed by the single_put rule used by the REPL.
@@ -818,12 +1093,23 @@ class Python3Lexer(Lexer):
                 nextnext_eof = True
             else:
                 nextnext_eof = False
-            if self.opened > 0 or nextnext_eof is False and (la_char == '\r' or la_char == '\n' or la_char == '\f' or la_char == '#'):
+            if (
+                self.opened > 0
+                or nextnext_eof is False
+                and (
+                    la_char == "\r"
+                    or la_char == "\n"
+                    or la_char == "\f"
+                    or la_char == "#"
+                )
+            ):
                 self.skip()
             else:
                 indent = self.getIndentationCount(spaces)
                 previous = self.indents[-1] if self.indents else 0
-                self.emitToken(self.commonToken(self.NEWLINE, newLine, indent=indent))      # NEWLINE is actually the '\n' char
+                self.emitToken(
+                    self.commonToken(self.NEWLINE, newLine, indent=indent)
+                )  # NEWLINE is actually the '\n' char
                 if indent == previous:
                     self.skip()
                 elif indent > previous:
@@ -834,39 +1120,31 @@ class Python3Lexer(Lexer):
                         self.emitToken(self.createDedent())
                         self.indents.pop()
 
-
-
-    def OPEN_PAREN_action(self, localctx:RuleContext , actionIndex:int):
+    def OPEN_PAREN_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 1:
             self.opened += 1
 
-
-    def CLOSE_PAREN_action(self, localctx:RuleContext , actionIndex:int):
+    def CLOSE_PAREN_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 2:
             self.opened -= 1
 
-
-    def OPEN_BRACK_action(self, localctx:RuleContext , actionIndex:int):
+    def OPEN_BRACK_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 3:
             self.opened += 1
 
-
-    def CLOSE_BRACK_action(self, localctx:RuleContext , actionIndex:int):
+    def CLOSE_BRACK_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 4:
             self.opened -= 1
 
-
-    def OPEN_BRACE_action(self, localctx:RuleContext , actionIndex:int):
+    def OPEN_BRACE_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 5:
             self.opened += 1
 
-
-    def CLOSE_BRACE_action(self, localctx:RuleContext , actionIndex:int):
+    def CLOSE_BRACE_action(self, localctx: RuleContext, actionIndex: int):
         if actionIndex == 6:
             self.opened -= 1
 
-
-    def sempred(self, localctx:RuleContext, ruleIndex:int, predIndex:int):
+    def sempred(self, localctx: RuleContext, ruleIndex: int, predIndex: int):
         if self._predicates is None:
             preds = dict()
             preds[38] = self.NEWLINE_sempred
@@ -877,6 +1155,6 @@ class Python3Lexer(Lexer):
         else:
             raise Exception("No registered predicate for:" + str(ruleIndex))
 
-    def NEWLINE_sempred(self, localctx:RuleContext, predIndex:int):
-            if predIndex == 0:
-                return self.atStartOfInput()
+    def NEWLINE_sempred(self, localctx: RuleContext, predIndex: int):
+        if predIndex == 0:
+            return self.atStartOfInput()
