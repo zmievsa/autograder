@@ -86,7 +86,7 @@ class GradingOutputLogger(SynchronizedLogger):
             precompilation_error=precompilation_error,
         )
 
-    def print_testcase_results_to_results_file(
+    def log_grading_results(
         self,
         submission: Submission,
         normalized_student_score: float,
@@ -114,7 +114,7 @@ class GradingOutputLogger(SynchronizedLogger):
 
     def _silence_generating_results(self):
         self.print_precompilation_error_to_results_file = lambda *a, **kw: None  # type: ignore
-        self.print_testcase_results_to_results_file = lambda *a, **kw: None  # type: ignore
+        self.log_grading_results = lambda *a, **kw: None  # type: ignore
 
     def print_key(self):
         self(KEY)

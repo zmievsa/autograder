@@ -190,9 +190,7 @@ class Grader:
         return tests, io
 
     @staticmethod
-    def _import_formatters(
-        path_to_stdout_formatters: Path,
-    ) -> Dict[str, Callable[[str], str]]:
+    def _import_formatters(path_to_stdout_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_stdout_formatters.exists():
             module = import_from_path("stdout_formatters", path_to_stdout_formatters)
             return {k: v for k, v in module.__dict__.items() if callable(v)}
@@ -211,31 +209,26 @@ class Grader:
         except Exception as e:
             self.logger.print_precompilation_error_to_results_file(submission, e)
 
+    # TODO: rename to "_get_grading_output"
     def _get_testcase_output(self, submission: Submission) -> float:
         """Returns grading info as a dict"""
-        logger(f"Grading {get_submission_name(submission.path)}")
-        precompiled_submission = self._precompile_submission(submission, logger)
+        precompiled_submission = self._precompile_submission(submission)
         if precompiled_submission is None:
+            submission.precompilation_error(SOME MESSAGE)
             return 0
         total_testcase_score = 0
         allowed_tests = self.tests.get(submission.type, [])
         if not allowed_tests:
-            # TODO: Replace all print statements with proper logging
-            print(f"No testcases suitable for the submission {submission.path.name} found.")
+            submission.precompilation_error(f"No testcases suitable for the submission {submission.path.name} found.")
+
         submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
         for test in allowed_tests:
-            logger(f"Running '{test.name}'")
             testcase_score, message = test.run(precompiled_submission)
             submission.add_grade(test.name, testcase_score, message)
-            logger(message)
             total_testcase_score += testcase_score
         raw_student_score = total_testcase_score / (sum(t.weight for t in allowed_tests) or 1)
         normalized_student_score = raw_student_score * self.config.total_score_to_100_ratio
-        self.logger.print_testcase_results_to_results_file(
-            submission,
-            normalized_student_score,
-            logger,
-        )
+        self.logger.log_grading_results(submission, normalized_student_score)
         return normalized_student_score
 
 
