@@ -7,9 +7,10 @@ import sys
 from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Deque
+import multiprocessing.synchronize
+from typing import Deque, List
+import json
 
-import sh
 
 from .testcase_utils.shell import get_stderr
 from .testcase_utils.submission import Submission
@@ -22,36 +23,15 @@ KEY = """
 \tAll signal error codes are described here: https://man7.org/linux/man-pages/man7/signal.7.html
 \tExceeded Time Limit: Your submission took too much time to run (probably an infinite loop)
 """
-STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_.+")
 
 
-def get_submission_name(submission: Path):
-    match = STUDENT_NAME_MATCHER.match(submission.stem)
-    return submission.name if match is None else match["student_name"]
+def _empty_func(*a, **kw):
+    """Python can't pickle lambdas so we use this"""
+    pass
 
 
-# Composition is used instead of inheritance for simpler API.
-class SynchronizedLogger:
-    LOGGER_NAME = "SynchronizedLogger"
-
-    def __init__(self):
-        self.logger = logging.getLogger(self.LOGGER_NAME)
-        self.logger.setLevel(logging.INFO)
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
-
-    def __call__(self, s: str) -> None:
-        self.logger.info(s)
-
-    @contextmanager
-    def single_submission_output_logger(self, lock):
-        buffer = BufferOutputLogger()
-        yield buffer
-        with lock:
-            self("\n".join(buffer.output))
-
-
-# Yes, it does break Liskov's principle and I don't care
-class GradingOutputLogger(SynchronizedLogger):
+# TODO: Replace path_to_results_dir and generate_results with path_to_results_dir: Optional[Path]
+class GradingOutputLogger:
     LOGGER_NAME = "Autograder"
 
     def __init__(
@@ -61,87 +41,84 @@ class GradingOutputLogger(SynchronizedLogger):
         total_points_possible: int,
         generate_results: bool,
     ):
-        super().__init__()
         self.results_dir = path_to_results_dir
         self.assignment_name = assignment_name
         self.total_points_possible = total_points_possible
+
         if not generate_results:
             self._silence_generating_results()
 
-    def print_precompilation_error_to_results_file(
-        self,
-        submission: Submission,
-        error: Exception,
-    ):
-        if isinstance(error, sh.ErrorReturnCode):
-            stderr = get_stderr(error, "Failed to precompile")
-        else:
-            stderr = "Failed to precompile: " + str(error)
-        # Hide path to current dir
-        precompilation_error = stderr.strip().replace(str(submission.dir), "...")
-        buffer_logger(stderr + f"\nResult: 0/{self.total_points_possible}\n")
-        self._print_single_student_output_to_results_file(
-            submission,
-            f"0/{self.total_points_possible}",
-            precompilation_error=precompilation_error,
-        )
+    def print_single_student_grading_results(self, submission: Submission):
+        student_final_result = f"{submission.final_grade}/{self.total_points_possible}"
+        self._print_single_student_grading_results_to_stdout(submission, student_final_result)
+        self._print_single_student_grading_results_to_file(submission, student_final_result)
 
-    def log_grading_results(
-        self,
-        submission: Submission,
-        normalized_student_score: float,
-    ):
-        student_final_result = f"{round(normalized_student_score)}/{self.total_points_possible}"
-        buffer_logger(f"Result: {student_final_result}\n")
-        self._print_single_student_output_to_results_file(submission, student_final_result)
-
-    # FIXME: This needs better naming...
-    def _print_single_student_output_to_results_file(
-        self,
-        submission: Submission,
-        formatted_student_score: str,
-        precompilation_error: str = "",
-    ):
-        with open(self.results_dir / submission.path.name, "w") as f:
-            f.write(
-                format_output_for_student_file(
-                    submission,
-                    self.assignment_name,
-                    formatted_student_score,
-                    precompilation_error,
-                )
-            )
-
-    def _silence_generating_results(self):
-        self.print_precompilation_error_to_results_file = lambda *a, **kw: None  # type: ignore
-        self.log_grading_results = lambda *a, **kw: None  # type: ignore
+    def print_final_score(self, submissions, score: int):
+        print(f"\nAverage score: {score}/{self.total_points_possible}")
 
     def print_key(self):
-        self(KEY)
+        print(KEY)
+
+    def _print_single_student_grading_results_to_stdout(self, submission: Submission, formatted_student_score: str):
+        print(f"Grading {submission.name}")
+        if submission.precompilation_error:
+            print(f"{submission.precompilation_error}")
+        else:
+            for test_name, (test_grade, test_weight, test_message) in submission.grades.items():
+                print(f"{test_name}: {test_message}")
+        print(f"\nResult: {formatted_student_score}\n\n")
+
+    def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
+        with open(self.results_dir / submission.path.name, "w") as f:
+            f.write(self._format_output_for_student_file(submission, formatted_student_score))
+
+    def _silence_generating_results(self):
+        self._print_single_student_grading_results_to_stdout = _empty_func  # type: ignore
+
+    def _format_output_for_student_file(self, submission: Submission, formatted_student_score: str):
+        """Replace this function with anything else if you want the output to have a different style"""
+        str_builder = deque()
+        b = str_builder.append
+        b(f"{self.assignment_name} Test Results\n\n")
+        if not submission.precompilation_error:
+            b("%-40s%s\n" % ("TestCase", "Result"))
+        b("================================================================")
+        if submission.precompilation_error:
+            b("\n")
+            b(submission.precompilation_error)
+        else:
+            for test_name, (test_grade, test_weight, test_message) in submission.grades.items():
+                b("\n%-40s%s" % (test_name, test_message))
+        b("\n================================================================\n")
+        b("Result: " + formatted_student_score)
+        b(KEY)
+        return "".join(str_builder)
 
 
-def format_output_for_student_file(
-    submission: Submission,
-    assignment_name: str,
-    formatted_student_score: str,
-    precompilation_error: str = "",
-):
-    """Replace this function with anything else if you want the output
-    to have a different style
-    """
-    str_builder = deque()
-    b = str_builder.append
-    b(f"{assignment_name} Test Results\n\n")
-    if not precompilation_error:
-        b("%-40s%s\n" % ("TestCase", "Result"))
-    b("================================================================")
-    if precompilation_error:
-        b("\n")
-        b(precompilation_error)
-    else:
-        for test_name, (test_grade, test_message) in submission.grades.items():
-            b("\n%-40s%s" % (test_name, test_message))
-    b("\n================================================================\n")
-    b("Result: " + formatted_student_score)
-    b(KEY)
-    return "".join(str_builder)
+class JsonGradingOutputLogger(GradingOutputLogger):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._print_single_student_grading_results_to_stdout = _empty_func
+
+    def print_key(self):
+        pass
+
+    def print_final_score(self, submissions: List[Submission], score: int):
+
+        submission_results = [
+            {
+                str(s.path): {
+                    "final_grade": s.final_grade,
+                    "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
+                    "precompilation_error": s.precompilation_error,
+                }
+            }
+            for s in submissions
+        ]
+        output_dict = {
+            "average_score": score,
+            "total_points_possible": self.total_points_possible,
+            "submissions": submission_results,
+        }
+        print(json.dumps(output_dict, indent=4))

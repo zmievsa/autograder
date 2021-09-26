@@ -1,22 +1,25 @@
+from autograder.testcase_utils.shell import get_stderr
 import multiprocessing
 import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Dict, List, Set, Type, Tuple
+import sh
 
 from .config_manager import GradingConfig
-from .output_summary import BufferOutputLogger, GradingOutputLogger, get_submission_name
+from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
 from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
 from .testcase_utils.testcase_picker import TestCasePicker
 from .testcase_utils.testcase_io import TestCaseIO
-from .util import AutograderError, import_from_path, get_file_stems
+from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_stems
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
+# TODO: What if grader built a less complex object whose only purpose is actually grading? Should improve complexity.
 class Grader:
     json_output: bool
     submissions: List[Submission]
@@ -47,8 +50,8 @@ class Grader:
                 self.config.possible_source_file_stems,
                 self.config.stdout_only_grading_enabled,
             )
-            self.logger = GradingOutputLogger(
-                self.paths.output_summary,
+            logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
+            self.logger = logger_type(
                 self.paths.results_dir,
                 self.config.assignment_name,
                 self.config.total_points_possible,
@@ -64,9 +67,10 @@ class Grader:
             process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
             with multiprocessing.Pool(process_count) as pool:
                 man = multiprocessing.Manager()
-                total_class_points = sum(pool.map(Runner(self, man.Lock()), self.submissions))
-            class_average = total_class_points / len(self.submissions)
-            self.logger.print_average_score(f"{round(class_average)}/{self.config.total_points_possible}")
+                modified_submissions = pool.map(Runner(self, man.Lock()), self.submissions)
+                total_class_points = sum(s.final_grade for s in modified_submissions)
+            class_average = round(total_class_points / len(self.submissions))
+            self.logger.print_final_score(modified_submissions, class_average)
             self.logger.print_key()
         finally:
             for io in io_choices.values():
@@ -77,11 +81,11 @@ class Grader:
     def run_on_single_submission(self, submission: Submission, lock):
         with temporarily_change_dir(submission.dir):
             self._copy_extra_files(submission.dir)
-            with self.logger.single_submission_output_logger(lock) as logger:
-                result = self._get_testcase_output(submission, logger)
+            self._get_testcase_output(submission)
+            with lock:
+                self.logger.print_single_student_grading_results(submission)
         # Cleanup after running tests on student submission
         shutil.rmtree(submission.dir)
-        return result
 
     def cleanup(self):
         if self.paths.temp_dir.exists():
@@ -126,7 +130,9 @@ class Grader:
                 ):
                     submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
                 else:
-                    self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
+                    pass
+                    # TODO: Figure out what to do with this
+                    # self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
 
         if not len(submissions):
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
@@ -171,7 +177,8 @@ class Grader:
                 continue
             testcase_type = self.testcase_picker.pick(test)
             if testcase_type is None:
-                self.logger(f"No appropriate language for {test} found.")
+                # No logging is allowed because of json mode
+                # self.logger(f"No appropriate language for {test} found.")
                 continue
             arglist = self.config.generate_arglists(test.name)
             shutil.copy(str(test), str(self.paths.temp_dir))
@@ -197,39 +204,36 @@ class Grader:
         else:
             return {}
 
-    def _precompile_submission(self, submission: Submission):
-        try:
-            arglists = self.config.generate_arglists(submission.path.name)
-            return submission.type.precompile_submission(
-                submission.path,
-                submission.dir,
-                self.config.possible_source_file_stems,
-                arglists[ArgList.SUBMISSION_PRECOMPILATION],
-            )
-        except Exception as e:
-            self.logger.print_precompilation_error_to_results_file(submission, e)
+    def _precompile_submission(self, submission: Submission) -> Path:
+        arglists = self.config.generate_arglists(submission.path.name)
+        return submission.type.precompile_submission(
+            submission.path,
+            submission.dir,
+            self.config.possible_source_file_stems,
+            arglists[ArgList.SUBMISSION_PRECOMPILATION],
+        )
 
-    # TODO: rename to "_get_grading_output"
-    def _get_testcase_output(self, submission: Submission) -> float:
-        """Returns grading info as a dict"""
-        precompiled_submission = self._precompile_submission(submission)
-        if precompiled_submission is None:
-            submission.precompilation_error(SOME MESSAGE)
+    # TODO: rename to "_run_testcases_on_submission" or something
+    def _get_testcase_output(self, submission: Submission):
+        """Grades single submission and returns its normalized score
+
+        Note: Has side effects in submission instance
+        """
+        try:
+            precompiled_submission = self._precompile_submission(submission)
+        except sh.ErrorReturnCode as e:
+            error = hide_path_to_directory(get_stderr(e, "Failed to precompile:"), submission.dir)
+            submission.register_precompilation_error(error)
             return 0
-        total_testcase_score = 0
         allowed_tests = self.tests.get(submission.type, [])
         if not allowed_tests:
-            submission.precompilation_error(f"No testcases suitable for the submission {submission.path.name} found.")
-
+            submission.register_precompilation_error("No suitable testcases found.")
+            return 0
         submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
         for test in allowed_tests:
             testcase_score, message = test.run(precompiled_submission)
-            submission.add_grade(test.name, testcase_score, message)
-            total_testcase_score += testcase_score
-        raw_student_score = total_testcase_score / (sum(t.weight for t in allowed_tests) or 1)
-        normalized_student_score = raw_student_score * self.config.total_score_to_100_ratio
-        self.logger.log_grading_results(submission, normalized_student_score)
-        return normalized_student_score
+            submission.add_grade(test.name, testcase_score, test.weight, message)
+        submission.register_final_grade(self.config.total_score_to_100_ratio)
 
 
 class AutograderPaths:
@@ -300,12 +304,13 @@ class AutograderPaths:
 
 # Grades single submissions. We use it because multiprocessing.pool only accepts top-level callable objects.
 class Runner:
-    def __init__(self, grader, stdout_lock):
+    def __init__(self, grader, lock):
         self.grader: Grader = grader
-        self.lock = stdout_lock
+        self.lock = lock
 
-    def __call__(self, submission: Submission):
-        return self.grader.run_on_single_submission(submission, self.lock)
+    def __call__(self, submission: Submission) -> Submission:
+        self.grader.run_on_single_submission(submission, self.lock)
+        return submission
 
 
 @contextmanager

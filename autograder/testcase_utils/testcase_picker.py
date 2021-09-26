@@ -31,7 +31,8 @@ class TestCasePicker:
                     module = import_from_path(f"testcase:{path.stem}{testcase_type_dir.name}", path)
                     testcase_type = getattr(module, "TestCase", None)
                     if testcase_type is None:
-                        print(f"Testcase type '{path}' does not define a 'TestCase' class, skipping.")
+                        # All prints are disabled for json output
+                        # print(f"Testcase type '{path}' does not define a 'TestCase' class, skipping.")
                         continue
 
                     if cls._is_installed(testcase_type_dir.name, testcase_type):
@@ -44,7 +45,8 @@ class TestCasePicker:
         if testcase.is_installed():
             return True
         else:
-            print(f"Utilities for running {language_name} are not installed. Disabling it.")
+            # All prints are disabled for json output
+            # print(f"Utilities for running {language_name} are not installed. Disabling it.")
             return False
 
     def pick(self, file: Path) -> Optional[Type[TestCase]]:

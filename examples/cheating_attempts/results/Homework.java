@@ -4,7 +4,7 @@ TestCase                                Result
 ================================================================
 Testenv                                 Crashed due to signal 1:
 WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by TestEnv (file:/mnt/c/Users/szmie/Documents/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Illegal reflective access by TestEnv (file:/home/ovsyanka/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
 WARNING: Please consider reporting this to the maintainers of TestEnv
 WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
 WARNING: All illegal access operations will be denied in a future release
@@ -17,7 +17,7 @@ Exception in thread "main" java.lang.SecurityException: Using environ is not per
 
 Testexit                                Crashed due to signal 103:
 WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by TestExit (file:/mnt/c/Users/szmie/Documents/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Illegal reflective access by TestExit (file:/home/ovsyanka/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
 WARNING: Please consider reporting this to the maintainers of TestExit
 WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
 WARNING: All illegal access operations will be denied in a future release
@@ -25,7 +25,7 @@ WARNING: All illegal access operations will be denied in a future release
 
 Testreflection                          Crashed due to signal 103:
 WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by TestReflection (file:/mnt/c/Users/szmie/Documents/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Illegal reflective access by TestReflection (file:/home/ovsyanka/code/autograder/examples/cheating_attempts/temp/Homework.java/) to field java.util.Collections$UnmodifiableMap.m
 WARNING: Please consider reporting this to the maintainers of TestReflection
 WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
 WARNING: All illegal access operations will be denied in a future release
