@@ -16,10 +16,15 @@ def compare(files):
         files, lexerClass, ignoreList, numTokens
     )
     similarityMatrix = buildSimilarityMatrix(tokenFrequencies)
-    print(similarityMatrix)
+    self_similarities = buildSelfSimilarities(tokenStreams, similarityMatrix)
     for i in range(numFiles):
         for j in range(i + 1, numFiles):
-            similarity = getSimilarity(tokenStreams[i], tokenStreams[j])
+            similarity = getSimilarity(
+                tokenStreams[i],
+                tokenStreams[j],
+                similarityMatrix,
+                self_similarities[i] + self_similarities[j],
+            )
             similarityScores[i][j] = similarity
             similarityScores[j][i] = similarity
     return similarityScores
@@ -61,7 +66,7 @@ def parseFiles(files, lexerClass, ignoreList, numTokens):
         for token in tokens.tokens:
             # remove comments
             if token.type not in ignoreList:
-                array += [str(token.type)]
+                array += [token.type]
                 freq[token.type] += 1
                 totalTokens += 1
         tokenStreams += [array]
@@ -92,16 +97,33 @@ def buildSimilarityMatrix(freq):
     return matrix
 
 
-def getSimilarity(a, b):
-    minLen = min(len(a), len(b))
-    numberSame = 0
-    for i in range(minLen):
-        if a[i] == b[i]:
-            numberSame = numberSame + 1
-    return numberSame / minLen
+def buildSelfSimilarities(token_streams, matrix):
+    # print(matrix)
+    self_similarities = []
+    for i in range(len(token_streams)):
+        tokens = token_streams[i]
+        score = 0
+        for tok in tokens:
+            score += matrix[int(tok)][int(tok)]
+        self_similarities.append(score)
+    return self_similarities
 
 
-# first, find number of each token type - done
-# second, construct similarity matrix by finding penalty for each combo of tokens, plus gaps - done
-# third, construct dp for each comparison and take max of 0, gap on one, gap on other etc
-# finally normalize results
+def getSimilarity(a, b, matrix, self_similarity_sum):
+    dp = [[0 for i in range(len(b))] for i in range(len(a))]
+    dp[0][0] = matrix[a[0]][b[0]]
+    for i in range(len(a)):
+        for j in range(len(b)):
+            maxScore = 0
+            # score from matching both tokens
+            if i != 0 and j != 0:
+                maxScore = max(maxScore, dp[i - 1][j - 1] + matrix[a[i]][b[j]])
+            # score from matching i token with gap
+            if i != 0:
+                maxScore = max(maxScore, dp[i - 1][j] + matrix[a[i]][-1])
+            # score from matching j token with gap
+            if j != 0:
+                maxScore = max(maxScore, dp[i][j - 1] + matrix[-1][b[j]])
+            # print("" + str(i) + ", " + str(j) + "\n")
+            dp[i][j] = max(maxScore, dp[i][j])
+    return dp[-1][-1] * 2 / self_similarity_sum
