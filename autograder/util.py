@@ -1,6 +1,8 @@
 import importlib.util
+import os
 import re
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -40,3 +42,13 @@ def get_file_stems(dir_: Path):
 
 def hide_path_to_directory(string_to_hide_path_from: str, path_to_hide: Path, replacement_str: str = "...") -> str:
     return string_to_hide_path_from.replace(str(path_to_hide), replacement_str)
+
+
+@contextmanager
+def temporarily_change_dir(new_dir):
+    old_dir = Path.cwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    finally:
+        os.chdir(str(old_dir))

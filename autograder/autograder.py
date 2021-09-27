@@ -1,4 +1,3 @@
-from autograder.testcase_utils.shell import get_stderr
 import multiprocessing
 import os
 import shutil
@@ -9,12 +8,13 @@ import sh
 
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
+from .testcase_utils.shell import get_stderr
 from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
 from .testcase_utils.testcase_picker import TestCasePicker
 from .testcase_utils.testcase_io import TestCaseIO
-from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_stems
+from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_stems, temporarily_change_dir
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -78,15 +78,6 @@ class Grader:
             self.cleanup()
         return class_average
 
-    def run_on_single_submission(self, submission: Submission, lock):
-        with temporarily_change_dir(submission.dir):
-            self._copy_extra_files(submission.dir)
-            self._get_testcase_output(submission)
-            with lock:
-                self.logger.print_single_student_grading_results(submission)
-        # Cleanup after running tests on student submission
-        shutil.rmtree(submission.dir)
-
     def cleanup(self):
         if self.paths.temp_dir.exists():
             shutil.rmtree(self.paths.temp_dir)
@@ -98,12 +89,6 @@ class Grader:
         self._check_required_directories_exist()
         if self.config.generate_results:
             self.paths.results_dir.mkdir(exist_ok=True)
-
-    def _copy_extra_files(self, to_dir: Path):
-        if self.paths.extra_dir.exists():
-            for path in self.paths.extra_dir.iterdir():
-                new_path = to_dir / path.name
-                shutil.copy(str(path), str(new_path))
 
     def _check_required_directories_exist(self):
         for directory in self.paths.required_dirs:
@@ -204,37 +189,6 @@ class Grader:
         else:
             return {}
 
-    def _precompile_submission(self, submission: Submission) -> Path:
-        arglists = self.config.generate_arglists(submission.path.name)
-        return submission.type.precompile_submission(
-            submission.path,
-            submission.dir,
-            self.config.possible_source_file_stems,
-            arglists[ArgList.SUBMISSION_PRECOMPILATION],
-        )
-
-    # TODO: rename to "_run_testcases_on_submission" or something
-    def _get_testcase_output(self, submission: Submission):
-        """Grades single submission and returns its normalized score
-
-        Note: Has side effects in submission instance
-        """
-        try:
-            precompiled_submission = self._precompile_submission(submission)
-        except sh.ErrorReturnCode as e:
-            error = hide_path_to_directory(get_stderr(e, "Failed to precompile:"), submission.dir)
-            submission.register_precompilation_error(error)
-            return 0
-        allowed_tests = self.tests.get(submission.type, [])
-        if not allowed_tests:
-            submission.register_precompilation_error("No suitable testcases found.")
-            return 0
-        submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
-        for test in allowed_tests:
-            testcase_score, message = test.run(precompiled_submission)
-            submission.add_grade(test.name, testcase_score, test.weight, message)
-        submission.register_final_grade(self.config.total_score_to_100_ratio)
-
 
 class AutograderPaths:
     __slots__ = (
@@ -302,22 +256,59 @@ class AutograderPaths:
                 raise AutograderError(f"Failed to generate config:'{self.default_config}' not found.")
 
 
-# Grades single submissions. We use it because multiprocessing.pool only accepts top-level callable objects.
 class Runner:
+    """Grades single submissions"""
+
     def __init__(self, grader, lock):
         self.grader: Grader = grader
         self.lock = lock
 
     def __call__(self, submission: Submission) -> Submission:
-        self.grader.run_on_single_submission(submission, self.lock)
+        self.run_on_single_submission(submission, self.lock)
         return submission
 
+    def run_on_single_submission(self, submission: Submission, lock):
+        with temporarily_change_dir(submission.dir):
+            self._copy_extra_files(submission.dir)
+            self._get_testcase_output(submission)
+            with lock:
+                self.grader.logger.print_single_student_grading_results(submission)
+        # Cleanup after running tests on student submission
+        shutil.rmtree(submission.dir)
 
-@contextmanager
-def temporarily_change_dir(new_dir):
-    old_dir = Path.cwd()
-    os.chdir(new_dir)
-    try:
-        yield
-    finally:
-        os.chdir(str(old_dir))
+    def _copy_extra_files(self, to_dir: Path):
+        if self.grader.paths.extra_dir.exists():
+            for path in self.grader.paths.extra_dir.iterdir():
+                new_path = to_dir / path.name
+                shutil.copy(str(path), str(new_path))
+
+    # TODO: rename to "_run_testcases_on_submission" or something
+    def _get_testcase_output(self, submission: Submission):
+        """Grades single submission and returns its normalized score
+
+        Note: Has side effects in submission instance
+        """
+        try:
+            precompiled_submission = self._precompile_submission(submission)
+        except sh.ErrorReturnCode as e:
+            error = hide_path_to_directory(get_stderr(e, "Failed to precompile:"), submission.dir)
+            submission.register_precompilation_error(error)
+            return 0
+        allowed_tests = self.grader.tests.get(submission.type, [])
+        if not allowed_tests:
+            submission.register_precompilation_error("No suitable testcases found.")
+            return 0
+        submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
+        for test in allowed_tests:
+            testcase_score, message = test.run(precompiled_submission)
+            submission.add_grade(test.name, testcase_score, test.weight, message)
+        submission.register_final_grade(self.grader.config.total_score_to_100_ratio)
+
+    def _precompile_submission(self, submission: Submission) -> Path:
+        arglists = self.grader.config.generate_arglists(submission.path.name)
+        return submission.type.precompile_submission(
+            submission.path,
+            submission.dir,
+            self.grader.config.possible_source_file_stems,
+            arglists[ArgList.SUBMISSION_PRECOMPILATION],
+        )
