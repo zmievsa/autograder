@@ -32,7 +32,7 @@ def _create_parser():
 
 def _create_run_parser(subparsers):
     parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
-    parser.add_argument("--no_output", action="store_true", help="Do not output any code to the console")
+    parser.add_argument("-j", "--json_output", action="store_true", help="Output grades in json format")
     parser.add_argument(
         "-s",
         "--submissions",
@@ -46,18 +46,20 @@ def _create_run_parser(subparsers):
 
 
 def _create_stats_parser(subparsers):
-    parser = subparsers.add_parser("stats", help="Display statistics on student grades")
-    parser.add_argument(
-        "-p",
-        "--print",
-        type=float,
-        nargs="?",
-        default=None,
-        const=100,
-        metavar="min_score",
-        help="Use after already graded to print assignments with score >= min_score",
-    )
-    _add_submission_path_argument(parser)
+    # TODO: Rewrite stats parser to handle json output
+    # parser = subparsers.add_parser("stats", help="Display statistics on student grades")
+    # parser.add_argument(
+    #     "-p",
+    #     "--print",
+    #     type=float,
+    #     nargs="?",
+    #     default=None,
+    #     const=100,
+    #     metavar="min_score",
+    #     help="Use after already graded to print assignments with score >= min_score",
+    # )
+    # _add_submission_path_argument(parser)
+    pass
 
 
 def _create_guide_parser(subparsers):
@@ -75,32 +77,29 @@ def _add_submission_path_argument(parser: argparse.ArgumentParser):
     )
 
 
-def _evaluate_args(args, current_dir):
+def _evaluate_args(args: argparse.Namespace, current_dir: Path):
+    from autograder.util import AutograderError, print_results
+
     if sys.platform.startswith("win32"):
-        print(
+        raise AutograderError(
             "Windows is not supported by autograder. If you do not have Linux,"
             "try using it through utilities like Windows Subsystem For Linux."
         )
-        exit(1)
-    elif sys.platform.startswith("darwin"):
+    elif sys.platform.startswith("darwin") and not args.json_output:
         print("OSX is not officially supported. Proceed with caution.")
     from autograder.autograder import Grader, AutograderPaths  # That's some awful naming
-    from autograder.util import AutograderError, print_results
 
-    try:
-        if args.command == "stats":
-            if args.print:
-                print_results(AutograderPaths(current_dir), args.print)
-        elif args.command == "guide":
-            from autograder import guide
+    if args.command == "stats":
+        if args.print:
+            print_results(AutograderPaths(current_dir), args.print)
+    elif args.command == "guide":
+        from autograder import guide
 
-            guide.main(AutograderPaths(current_dir))
-        elif args.command == "run":
-            return Grader(current_dir, no_output=args.no_output, submissions=args.submissions).run()
-        else:
-            raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
-    except AutograderError as e:
-        print(e)
+        guide.main(AutograderPaths(current_dir))
+    elif args.command == "run":
+        return Grader(current_dir, json_output=args.json_output, submissions=args.submissions).run()
+    else:
+        raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
     return -1
 
 

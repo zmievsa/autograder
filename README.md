@@ -24,6 +24,7 @@ I consider it to be finished. Autograder has been tested on a real university cl
 * Grading submissions in multiple programming languages at once, as long as there are testcases written in each language.
 * Most of these features are described in detail in [default_config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and demonstrated in examples/ directory.
 * Stdout-only (language-agnostic) grading supported
+* JSON result output supported if autograder needs to be integrated as a part of a larger utility
 # Installation
 * Currently, Linux-only and Python >= 3.6. OS X has not been tested. Windows, Python < 3.6 are not supported at all.
 * Run `pip3 install assignment-autograder`
@@ -50,7 +51,7 @@ I consider it to be finished. Autograder has been tested on a real university cl
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
 * Assume that helper functions CHECK_STDOUT(), RESULT(int r), PASS(), FAIL() are predefined and use them to return student scores to the grader
 * Each helper function prints the student's score, __validation string__, terminates the execution of the program and returns its respective exit code that signifies to autograder if the testcase ended in a result, cheating attempt, or if stdout checking is necessary.
-* Each testcase is graded out of 100% and each grade is a 64bit double precision floating point number, which means that you can fully control how much partial credit is given.
+* Each testcase is graded out of 100% and each grade is a 64bit double precision floating point number, which means that you can fully control how much partial credit is given in non-stdout checking tests.
 ### Helper functions
   * CHECK_STDOUT() indicates that we do not check student's return values for the testcase and that we only care about their output (__stdout__) that will be checked by the autograder automatically using student's stdout and the output files with the same name stem as the testcase. (beware: printing anything within your testcase will break this functionality)
   * RESULT(double r) returns student's score r back to the grader (0 - 100)
@@ -59,19 +60,20 @@ I consider it to be finished. Autograder has been tested on a real university cl
 ## Limitations
 * At the point of writing this readme, stdout checking is a PASS or FAIL process (i.e. no partial credit possible). The reason is that allowing for 'partial similarity' of outputs is too error-prone and could yield too many points for students that did not actually complete the task properly. If you want to increase the chances of students' stdout matching, you should use stdout formatters described [above](#Usage).
 * If you don't prototype student functions you want to test in your C/C++ testcases, you will run into undefined behavior because of how C and C++ handle linking.
-* __Student's main functions ARE NOT meant to be accessed because testcase must be the starting point of the program.__ (they are, however, accessible if necessary but undocumented)
+* __Student's main functions ARE NOT meant to be accessed because testcase must be the starting point of the program.__ They are, however, accessible if necessary but undocumented in general case and always accessible in stdout-only grading.
 ## Anti Cheating
 One of the main weaknesses of automatic grading is how prone it is to cheating. Autograder tries to solve this problem with methods described in this section. Currently, (as far as I've read and tested), it is impossible to cheat autograder. However, Java might still have some weird ways of doing this but there are protections against all of the most popular scenarios (decompiling and parsing testcases, using System.exit, trying to read security key from environment variables, using reflection to use private members of the test helper)
 * To restrict the student from exiting the process himself and printing the grade of his/her choice, I validate testcase stdout using a pseudorandom key called __validation string__. Autograder gives the string to the testcase as an environment variable which is erased right after the testcase saves it, and then it is automatically printed on the last line of stdout before the testcase exits. The autograder, then, pops it from stdout and verifies that it is the same string it sent. If it is not, the student will get the respective error message and a 0 on the testcase.
 * To prevent students from simply importing the string from the testcase file, test helper files (described above) all have some way of disallowing imports. For C/C++, it is the static identifier, for Java, it is the private method modifiers and SecurityManager to protect against reflection, for python it is throwing an error if __name__ != "__main__". I assume that similar precautions can be implemented in almost any language added into autograder.
-* Simply parsing validating string from the testcase file is impossible because it is saved at runtime.
+* Simply parsing validating string from the testcase file is impossible because it is passed at runtime.
 * As an additional (and maybe unnecessary) security measure, autograder precompiles testcases without linking for all languages except for java, thus decreasing the possibility that the student will simply parse the testcase file and figure out the correct return values if the security measure above doesn't work.
 
 # Adding Programming Languages
 * If you want to add a new language for grading, you have to:
-  1. create a new module with subclass of TestCase in autograder/testcases/
-  2. add it into ALLOWED_LANGUAGES dictionary in autograder/testcases/\_\_init\_\_.py
-  3. write a respective test helper module in autograder/testcases/test_helpers directory.
+  1. Create a new directory in autograder/testcase_types/
+  2. Create a python module in that directory that contains a subclass of TestCase (from autograder/testcase_utils/abstract_testcase.py)
+  3. Create a helpers directory and write your test helper
+  4. Optionally, add the extra (extra files to be available to each testcase) and templates (examples of testcases written using the new language) directories
 * Use the other testcase subclasses and test helpers as reference
 * This point is optional but if you want full anti-cheating capabilities for your new language, you will need to consider three things:
               
