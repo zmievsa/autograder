@@ -101,7 +101,8 @@ void log_init()
     FILE *f = fopen(hu_log_file, "w");
     if (f)
     {
-      fprintf(f, "==%d== Heapusage - https://github.com/d99kris/heapusage\n", pid);
+      // fprintf(f, "==%d== Heapusage - https://github.com/d99kris/heapusage\n", pid);
+      fprintf(f, "==%d== Heapusage", pid);
       fprintf(f, "==%d== \n", pid);
       fclose(f);
     }

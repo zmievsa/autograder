@@ -7,6 +7,7 @@ TMPDIR=$(mktemp -d)
 # Run application
 ./heapusage -f -o ${TMPDIR}/out.txt ./ex002 > ${TMPDIR}/stdout.txt 2> ${TMPDIR}/stderr.txt
 
+# OLD 
 # Expected out.txt:
 # ==9662== Heapusage - https://github.com/d99kris/heapusage
 # ==9662== 
@@ -16,6 +17,13 @@ TMPDIR=$(mktemp -d)
 # ==9662==    at 0x00007f01c6d82b97: __libc_start_main + 231
 # ==9662==    at 0x0000555c7b6bf77a: _start + 42
 # ==9662== 
+
+# Expected:
+# double free or corruption (!prev)
+# /usr/local/bin/heapusage: line 175:  2534 Aborted                 (core dumped) HU_FREE="${FREE}" HU_FILE="${TMPLOG}${OUTFILE}" HU_MINLEAK="${MINLEAK}" HU_NOSYMS="${NOSYMS}" LD_PRELOAD="${LIBPATH}" DYLD_INSERT_LIBRARIES="${LIBPATH}" DYLD_FORCE_FLAT_NAMESPACE=1 "${@:1}"
+# ==2534== Heapusage - https://github.com/d99kris/heapusage
+# ==2534== 
+
 
 # Check result - header
 LINE=$(cat ${TMPDIR}/out.txt | cut -d'=' -f5 | head -1 | tail -1)
