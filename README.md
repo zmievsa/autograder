@@ -36,7 +36,7 @@ I consider it to be finished. Autograder has been tested on a real university cl
 * CPython (3.6-3.10)
 * Any programming language if stdout-only grading is used
 # Quickstart
-* Run `autograder path/to/directory/you'd/like/to/grade --guide`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
+* Run `autograder guide path/to/directory/you'd/like/to/grade`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
 * Read [Usage](#Usage) section
 # Usage
 1) Create tests directory in the same directory as student submissions. Its structure is shown in [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples). (can be automatically created using [--guide](#Quickstart))
@@ -45,7 +45,7 @@ I consider it to be finished. Autograder has been tested on a real university cl
     1) Create [config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and change configuration to fit your needs (If you do not include some fields, autograder will use the respective fields from default_config.ini)
     1) Create [stdout_formatters.py](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_stdout_formatters.py) and edit it to fit your needs. They will format student's stdout to allow you to give credit to students even if their stdout is not exactly the same as expected.
 1) Write testcases as described [below](#Writing-testcases) using [examples](https://github.com/Ovsyanka83/autograder/tree/master/examples) as reference.
-1) Run `autograder path/to/submissions/dir` from command line.
+1) Run `autograder run path/to/submissions/dir` from command line.
 ## Writing testcases
 * Write a main that follows the same structure as one of the examples in your programming language. The main should usually call student's code, check its result, and call one of the helper functions (when working with stdout, you don't check the result, and simply allow autograder to handle grading by calling CHECK_STDOUT())
 * Assume that student's code is available in your namespace. Examples demonstrate exactly how to call students' functions.
