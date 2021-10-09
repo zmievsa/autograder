@@ -42,12 +42,12 @@ Memory Leak Summary
 address : 0x5631d6af02a0
 size    : 10 bytes
 file    : test2.c
-line    : 14
+line    : 13
 -----------------------------------
 address : 0x5631d6af0940
 size    : 60 bytes
 file    : test2.c
-line    : 18
+line    : 17
 -----------------------------------
 ```
 
