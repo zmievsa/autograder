@@ -1,7 +1,7 @@
 import sys, math
-from antlr4 import *
-from lexers.Java8Lexer import JavaLexer
-from lexers.Python3Lexer import Python3Lexer
+from antlr4 import InputStream, CommonTokenStream
+from .lexers.Java8Lexer import JavaLexer
+from .lexers.Python3Lexer import Python3Lexer
 
 # entry point function that is called to compare a set of files with each other
 def compare(files):
@@ -13,9 +13,7 @@ def compare(files):
     # 2d array where [i][j] is the similarity score between the file at index i in files and the file at index j
     similarityScores = [[0 for x in range(numFiles)] for y in range(numFiles)]
     # get token stream for each file and total frequency for each token type
-    tokenStreams, tokenFrequencies = parseFiles(
-        files, lexerClass, ignoreList, numTokens
-    )
+    tokenStreams, tokenFrequencies = parseFiles(files, lexerClass, ignoreList, numTokens)
     # construct similarity matrix to weight the significance of matching tokens. Matching uncommon tokens
     # is weighted heavier as it is more likely to be a result of plagiarism
     similarityMatrix = buildSimilarityMatrix(tokenFrequencies)

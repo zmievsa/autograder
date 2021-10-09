@@ -27,6 +27,7 @@ def _create_parser():
     _create_run_parser(subparsers)
     _create_stats_parser(subparsers)
     _create_guide_parser(subparsers)
+    _create_plagiarism_parser(subparsers)
     return parser
 
 
@@ -67,6 +68,11 @@ def _create_guide_parser(subparsers):
     _add_submission_path_argument(parser)
 
 
+def _create_plagiarism_parser(subparsers):
+    parser = subparsers.add_parser("plagiarism", help="Checks how similar the submissions are to each other")
+    _add_submission_path_argument(parser)
+
+
 def _add_submission_path_argument(parser: argparse.ArgumentParser):
     parser.add_argument(
         "submission_path",
@@ -98,6 +104,12 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         guide.main(AutograderPaths(current_dir))
     elif args.command == "run":
         return Grader(current_dir, json_output=args.json_output, submissions=args.submissions).run()
+    elif args.command == "plagiarism":
+        from . import plagiarism_detection
+        import json
+
+        files = [f.open() for f in current_dir.iterdir() if f.is_file() and f.suffix != ".txt"]
+        print(json.dumps(plagiarism_detection.compare(files)))
     else:
         raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
     return -1
