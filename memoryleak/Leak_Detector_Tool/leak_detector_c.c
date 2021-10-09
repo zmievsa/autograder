@@ -46,32 +46,66 @@ void add(MEM_INFO alloc_info)
  * erases memory info. from the list
  *
  */
+// void erase(unsigned pos)
+// {
+
+// 	unsigned index = 0;
+// 	MEM_LEAK * alloc_info, * temp;
+
+// 	if(pos == 0)
+// 	{
+// 		MEM_LEAK * temp = ptr_start;
+// 		ptr_start = ptr_start->next;
+// 		free(temp);
+// 	}
+// 	else
+// 	{
+// 		for(index = 0, alloc_info = ptr_start; index < pos;
+// 			alloc_info = alloc_info->next, ++index)
+// 		{
+// 			if(pos == index + 1)
+// 			{
+// 				temp = alloc_info->next;
+// 				alloc_info->next =  temp->next;
+// 				free(temp);
+// 				break;
+// 			}
+// 		}
+// 	}
+// }
+
 void erase(unsigned pos)
 {
+    unsigned index = 0;
+    MEM_LEAK* alloc_info, * temp;
 
-	unsigned index = 0;
-	MEM_LEAK * alloc_info, * temp;
+    temp = ptr_start;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
+    ptr_next = temp;
 
-	if(pos == 0)
-	{
-		MEM_LEAK * temp = ptr_start;
-		ptr_start = ptr_start->next;
-		free(temp);
-	}
-	else
-	{
-		for(index = 0, alloc_info = ptr_start; index < pos;
-			alloc_info = alloc_info->next, ++index)
-		{
-			if(pos == index + 1)
-			{
-				temp = alloc_info->next;
-				alloc_info->next =  temp->next;
-				free(temp);
-				break;
-			}
-		}
-	}
+    if (pos == 0) {
+        MEM_LEAK * temp = ptr_start;
+        ptr_start = ptr_start->next;
+        free(temp);
+    } else {
+        for (index = 0, alloc_info = ptr_start; index < pos;
+            alloc_info = alloc_info->next, ++index)
+        {
+            if (pos == index + 1) {
+                temp = alloc_info->next;
+                if (ptr_next == temp) {
+                    ptr_next = alloc_info;
+                    alloc_info->next =  NULL;
+                } else {
+                    alloc_info->next = temp->next;
+                }
+                free(temp);
+                break;
+            }
+        }
+    }
 }
 
 /*
