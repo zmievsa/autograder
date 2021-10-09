@@ -1,9 +1,8 @@
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "leak_detector_c.h"
 
-int main() 
+int main(void)
 {
     char * ptr1; 
     int * ptr2; 

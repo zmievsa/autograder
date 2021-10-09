@@ -6,14 +6,17 @@
 2. ./myscript.sh *file name*
    - Example: ./myscript.sh test2.c
 
+## Note These Following Details
+- You must `#include "leak_detector_c.h"` in your code
+- You must have `atexit(report_mem_leak)` as the first line in `main()`
+
 test2.c
 ```c
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "leak_detector_c.h" // Note this
 
-int main(void) 
+int main(void)
 {
     char * ptr1; 
     int * ptr2; 
@@ -30,14 +33,10 @@ int main(void)
     free(ptr2);
     return 0;
 }
-
 ```
 
 Expected Output after running `chmod +x myscript.sh && ./myscript.sh test2.c` (Note that "address" may differ)
 ```txt
-Banana
-Hello World
-Apple
 Memory Leak Summary
 -----------------------------------
 address : 0x5631d6af02a0
@@ -50,6 +49,5 @@ size    : 60 bytes
 file    : test2.c
 line    : 18
 -----------------------------------
-
 ```
 
