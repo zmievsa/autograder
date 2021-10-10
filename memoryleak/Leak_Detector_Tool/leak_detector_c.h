@@ -1,5 +1,5 @@
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #ifndef  LEAK_DETECTOR_C_H
@@ -12,10 +12,10 @@ extern "C"{
 #define  free(mem_ref)              xfree(mem_ref)
 
 typedef struct _MEM_INFO {
-	void			*address;
-	unsigned int	size;
-	char			file_name[FILE_NAME_LENGTH];
-	unsigned int	line;
+	void            *address;
+	unsigned int    size;
+	char            file_name[FILE_NAME_LENGTH];
+	unsigned int    line;
 } MEM_INFO;
 
 typedef struct _MEM_LEAK {
@@ -38,5 +38,4 @@ void report_mem_leak(void);
 #endif
 #ifdef __cplusplus
 }
-
 #endif
