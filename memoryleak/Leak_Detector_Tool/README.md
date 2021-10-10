@@ -3,12 +3,13 @@
 
 ## Terminal Commands
 1. chmod +x myscript.sh
-2. ./myscript.sh *file name*
+2. ./myscript.sh `file_name`
    - Example: ./myscript.sh test2.c
 
 ## Note These Following Details
 - You must `#include "leak_detector_c.h"` in your code
-- You must have `atexit(report_mem_leak)` as the first line in `main()`
+- You must have `atexit(report_mem_leak)` in `main()` function
+- All memory leak information/summary is located in `leak_info.txt`
 
 test2.c
 ```c
