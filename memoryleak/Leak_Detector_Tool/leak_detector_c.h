@@ -5,26 +5,23 @@ extern "C"{
 #ifndef  LEAK_DETECTOR_C_H
 #define  LEAK_DETECTOR_C_H
 
-#define  FILE_NAME_LENGTH   	   256
-#define  OUTPUT_FILE			   "leak_info.txt"
-#define  malloc(size) 	    	   	xmalloc (size, __FILE__, __LINE__)
-#define  calloc(elements, size)  	xcalloc (elements, size, __FILE__, __LINE__)
-#define  free(mem_ref) 		  	 	xfree(mem_ref)
+#define  FILE_NAME_LENGTH           256
+#define  OUTPUT_FILE                "leak_info.txt"
+#define  malloc(size)               xmalloc (size, __FILE__, __LINE__)
+#define  calloc(elements, size)     xcalloc (elements, size, __FILE__, __LINE__)
+#define  free(mem_ref)              xfree(mem_ref)
 
-struct _MEM_INFO
-{
+typedef struct _MEM_INFO {
 	void			*address;
 	unsigned int	size;
 	char			file_name[FILE_NAME_LENGTH];
 	unsigned int	line;
-};
-typedef struct _MEM_INFO MEM_INFO;
+} MEM_INFO;
 
-struct _MEM_LEAK {
+typedef struct _MEM_LEAK {
 	MEM_INFO mem_info;
 	struct _MEM_LEAK * next;
-};
-typedef struct _MEM_LEAK MEM_LEAK;
+} MEM_LEAK;
 
 void add(MEM_INFO alloc_info);
 void erase(unsigned pos);

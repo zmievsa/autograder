@@ -44,35 +44,35 @@ void add(MEM_INFO alloc_info) {
  *
  */
 void erase(unsigned pos) {
-    unsigned index = 0;
-    MEM_LEAK* alloc_info, * temp;
+	unsigned index = 0;
+	MEM_LEAK* alloc_info, * temp;
 
-    temp = ptr_start;
-    while (temp->next != NULL) {
-        temp = temp->next;
-    }
-    ptr_next = temp;
+	temp = ptr_start;
+	while (temp->next != NULL) {
+		temp = temp->next;
+	}
+	ptr_next = temp;
 
-    if (pos == 0) {
-        MEM_LEAK * temp = ptr_start;
-        ptr_start = ptr_start->next;
-        free(temp);
-    } else {
-        for (index = 0, alloc_info = ptr_start; index < pos;
-            alloc_info = alloc_info->next, ++index) {
-            if (pos == index + 1) {
-                temp = alloc_info->next;
-                if (ptr_next == temp) {
-                    ptr_next = alloc_info;
-                    alloc_info->next =  NULL;
-                } else {
-                    alloc_info->next = temp->next;
-                }
-                free(temp);
-                break;
-            }
-        }
-    }
+	if (pos == 0) {
+		MEM_LEAK * temp = ptr_start;
+		ptr_start = ptr_start->next;
+		free(temp);
+	} else {
+		for (index = 0, alloc_info = ptr_start; index < pos;
+			alloc_info = alloc_info->next, ++index) {
+			if (pos == index + 1) {
+				temp = alloc_info->next;
+				if (ptr_next == temp) {
+					ptr_next = alloc_info;
+					alloc_info->next =  NULL;
+				} else {
+					alloc_info->next = temp->next;
+				}
+				free(temp);
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -92,7 +92,7 @@ void clear() {
 /*
  * replacement of malloc
  */
-void * xmalloc (unsigned int size, const char * file, unsigned int line) {
+void * xmalloc(unsigned int size, const char * file, unsigned int line) {
 	void * ptr = malloc (size);
 	if (ptr != NULL) {
 		add_mem_info(ptr, size, file, line);
@@ -103,7 +103,7 @@ void * xmalloc (unsigned int size, const char * file, unsigned int line) {
 /*
  * replacement of calloc
  */
-void * xcalloc (unsigned int elements, unsigned int size, const char * file, unsigned int line) {
+void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsigned int line) {
 	unsigned total_size;
 	void * ptr = calloc(elements , size);
 	if (ptr != NULL) {
@@ -126,7 +126,7 @@ void xfree(void * mem_ref) {
  * gets the allocated memory info and adds it to a list
  *
  */
-void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line) {
+void add_mem_info(void * mem_ref, unsigned int size,  const char * file, unsigned int line) {
 	MEM_INFO mem_alloc_info;
 
 	/* fill up the structure with all info */
@@ -144,7 +144,7 @@ void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsign
  * if the allocated memory info is part of the list, removes it
  *
  */
-void remove_mem_info (void * mem_ref) {
+void remove_mem_info(void * mem_ref) {
 	unsigned short index;
 	MEM_LEAK  * leak_info = ptr_start;
 
