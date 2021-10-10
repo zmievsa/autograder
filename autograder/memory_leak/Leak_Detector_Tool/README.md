@@ -9,6 +9,7 @@
 ## Note These Following Details
 - You must `#include "leak_detector_c.h"` in your code
 - You must have `atexit(report_mem_leak)` in `main()` function
+  - Currently working on alternative ways of not requiring the atexit() function in main
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script)
 
 test2.c

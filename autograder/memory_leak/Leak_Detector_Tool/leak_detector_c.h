@@ -35,6 +35,8 @@ void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsign
 void remove_mem_info (void * mem_ref);
 void report_mem_leak(void);
 
+void __attribute__((destructor)) report_mem_leak();
+
 #endif
 #ifdef __cplusplus
 }
