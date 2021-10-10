@@ -12,15 +12,15 @@ extern "C" {
 #define  free(mem_ref)              xfree(mem_ref)
 
 typedef struct _MEM_INFO {
-	void            *address;
-	unsigned int    size;
-	char            file_name[FILE_NAME_LENGTH];
-	unsigned int    line;
+    void            *address;
+    unsigned int    size;
+    char            file_name[FILE_NAME_LENGTH];
+    unsigned int    line;
 } MEM_INFO;
 
 typedef struct _MEM_LEAK {
-	MEM_INFO mem_info;
-	struct _MEM_LEAK * next;
+    MEM_INFO mem_info;
+    struct _MEM_LEAK * next;
 } MEM_LEAK;
 
 void add(MEM_INFO alloc_info);
