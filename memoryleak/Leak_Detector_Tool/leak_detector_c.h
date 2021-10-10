@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #ifndef  LEAK_DETECTOR_C_H
 #define  LEAK_DETECTOR_C_H
 
@@ -33,5 +37,9 @@ void xfree(void * mem_ref);
 void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line);
 void remove_mem_info (void * mem_ref);
 void report_mem_leak(void);
+
+#endif
+#ifdef __cplusplus
+}
 
 #endif
