@@ -18,7 +18,8 @@ test2.c
 #include <stdlib.h>
 #include "leak_detector_c.h" // Note this
 
-int main(void) {
+int main(void)
+{
     char * ptr1; 
     int * ptr2; 
     float * ptr3;
@@ -43,12 +44,12 @@ Memory Leak Summary
 address : 0x5631d6af02a0
 size    : 10 bytes
 file    : test2.c
-line    : 12
+line    : 13
 -----------------------------------
 address : 0x5631d6af0940
 size    : 60 bytes
 file    : test2.c
-line    : 16
+line    : 17
 -----------------------------------
 ```
 
