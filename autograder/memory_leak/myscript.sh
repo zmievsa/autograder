@@ -10,7 +10,7 @@ case "$file" in
     cat leak_info.txt
     rm memtest leak_detector_c.o ${file%.*}.o
     ;;
-*.cpp | *.c++ | *.cc | *.cxx)
+*.cpp | *.c++ | *.cc | *.cxx | *.CPP | *.cp | *.C)
     g++ -c leak_detector_c.c
     g++ -c $file
     g++ -o memtest leak_detector_c.o ${file%.*}.o

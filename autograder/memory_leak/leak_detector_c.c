@@ -16,7 +16,7 @@ static MEM_LEAK * ptr_next =  NULL;
  */
 void add(MEM_INFO alloc_info) {
     MEM_LEAK * mem_leak_info = NULL;
-    mem_leak_info = (MEM_LEAK *) malloc (sizeof(MEM_LEAK));
+    mem_leak_info = (MEM_LEAK *) malloc(sizeof(MEM_LEAK));
     mem_leak_info->mem_info.address = alloc_info.address;
     mem_leak_info->mem_info.size = alloc_info.size;
     strcpy(mem_leak_info->mem_info.file_name, alloc_info.file_name);
@@ -42,6 +42,7 @@ void erase(unsigned pos) {
     MEM_LEAK* alloc_info, * temp;
 
     temp = ptr_start;
+
     while (temp->next != NULL) {
         temp = temp->next;
     }
@@ -87,7 +88,7 @@ void clear() {
  * replacement of malloc
  */
 void * xmalloc(unsigned int size, const char * file, unsigned int line) {
-    void * ptr = malloc (size);
+    void * ptr = malloc(size);
     if (ptr != NULL) {
         add_mem_info(ptr, size, file, line);
     }
@@ -99,7 +100,7 @@ void * xmalloc(unsigned int size, const char * file, unsigned int line) {
  */
 void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsigned int line) {
     unsigned total_size;
-    void * ptr = calloc(elements , size);
+    void * ptr = calloc(elements, size);
     if (ptr != NULL) {
         total_size = elements * size;
         add_mem_info(ptr, total_size, file, line);
@@ -125,7 +126,7 @@ void add_mem_info(void * mem_ref, unsigned int size,  const char * file, unsigne
 
     /* fill up the structure with all info */
     memset(&mem_alloc_info, 0, sizeof(mem_alloc_info));
-    mem_alloc_info.address 	= mem_ref;
+    mem_alloc_info.address = mem_ref;
     mem_alloc_info.size = size;
     strncpy(mem_alloc_info.file_name, file, FILE_NAME_LENGTH);
     mem_alloc_info.line = line;
@@ -144,8 +145,8 @@ void remove_mem_info(void * mem_ref) {
 
     /* check if allocate memory is in our list */
     for (index = 0; leak_info != NULL; ++index, leak_info = leak_info->next) {
-        if ( leak_info->mem_info.address == mem_ref ) {
-            erase ( index );
+        if (leak_info->mem_info.address == mem_ref) {
+            erase (index);
             break;
         }
     }

@@ -11,7 +11,7 @@ int main(void) {
     // another pointer allocation
     int *ptr2 = (int*) malloc(sizeof(int) * 20);
 
-    atexit(report_mem_leak);
+    // atexit(report_mem_leak);
 
     // assign the value 5 to allocated memory
     *ptr = 5;
