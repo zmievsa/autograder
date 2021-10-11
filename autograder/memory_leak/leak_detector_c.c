@@ -7,14 +7,9 @@
 #undef calloc
 #undef free
 
-
 static MEM_LEAK * ptr_start = NULL;
 static MEM_LEAK * ptr_next =  NULL;
 
-
-//void * xmalloc (unsigned int size, const char * file, unsigned int line);
-//void * xcalloc (unsigned int elements, unsigned int size, const char * file, unsigned int line);
-//void xfree(void * mem_ref);
 /*
  * adds allocated memory info. into the list
  *
@@ -31,8 +26,7 @@ void add(MEM_INFO alloc_info) {
     if (ptr_start == NULL) {
         ptr_start = mem_leak_info;
         ptr_next = ptr_start;
-    }
-    else {
+    } else {
         ptr_next->next = mem_leak_info;
         ptr_next = ptr_next->next;
     }
@@ -108,7 +102,7 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
     void * ptr = calloc(elements , size);
     if (ptr != NULL) {
         total_size = elements * size;
-        add_mem_info (ptr, total_size, file, line);
+        add_mem_info(ptr, total_size, file, line);
     }
     return ptr;
 }
