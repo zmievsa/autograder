@@ -1,6 +1,7 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import Dict, FrozenSet
 
 
 def main(argv=None):
@@ -108,8 +109,9 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         from . import plagiarism_detection
         import json
 
-        files = [f.open() for f in current_dir.iterdir() if f.is_file() and f.suffix != ".txt"]
-        print(json.dumps(plagiarism_detection.compare(files)))
+        files = [f for f in current_dir.iterdir() if f.is_file()]
+        result: Dict[FrozenSet[Path], float] = plagiarism_detection.compare(files)
+        print(json.dumps([(*k, v) for k, v in result.items()]))
     else:
         raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
     return -1
