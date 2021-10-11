@@ -24,7 +24,7 @@ int main(void) {
     int * ptr2; 
     float * ptr3;
 
-    atexit(report_mem_leak); // Note this
+    // atexit(report_mem_leak); // Note this
 
     ptr1 = (char *) malloc (10); // allocating 10 bytes        
     printf("Banana\n");

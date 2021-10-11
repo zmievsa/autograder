@@ -30,7 +30,6 @@ void add(MEM_INFO alloc_info) {
         ptr_next->next = mem_leak_info;
         ptr_next = ptr_next->next;
     }
-
 }
 
 /*

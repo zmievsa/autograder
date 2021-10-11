@@ -1,3 +1,5 @@
+# Note that script changes the leak_info.txt to something like test2_leak_info.txt
+
 #!/bin/bash
 file=$1
 
@@ -7,16 +9,18 @@ case "$file" in
     gcc -c $file
     gcc -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
-    cat leak_info.txt
     rm memtest leak_detector_c.o ${file%.*}.o
+    mv leak_info.txt ${file%.*}_leak_info.txt
+    cat ${file%.*}_leak_info.txt
     ;;
 *.cpp | *.c++ | *.cc | *.cxx | *.CPP | *.cp | *.C)
     g++ -c leak_detector_c.c
     g++ -c $file
     g++ -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
-    cat leak_info.txt
     rm memtest leak_detector_c.o ${file%.*}.o
+    mv leak_info.txt ${file%.*}_leak_info.txt
+    cat ${file%.*}_leak_info.txt
     ;;
 *)
     echo "Invalid source file name"
