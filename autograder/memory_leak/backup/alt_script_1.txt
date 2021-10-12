@@ -1,4 +1,5 @@
 # Note that script changes the leak_info.txt to something like test2_leak_info.txt
+# This will create multiple txt files instead of one
 
 #!/bin/bash
 file=$1
