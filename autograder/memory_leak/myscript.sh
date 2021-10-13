@@ -1,25 +1,22 @@
 #!/bin/bash
 file=$1
 
-cp $file ${file%.*}-source.${file##*.}
-temp=${file%.*}-source.${file##*.}
-
-case "$temp" in
+case "$file" in
 *.c)
     gcc -c leak_detector_c.c
-    gcc -c $temp
-    gcc -o memtest leak_detector_c.o ${temp%.*}.o
+    gcc -c $file
+    gcc -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
     cat leak_info.txt
-    rm memtest leak_detector_c.o ${temp%.*}.o $temp
+    rm memtest leak_detector_c.o ${file%.*}.o
     ;;
 *.cpp | *.c++ | *.cc | *.cxx | *.CPP | *.cp | *.C)
     g++ -c leak_detector_c.c
-    g++ -c $temp
-    g++ -o memtest leak_detector_c.o ${temp%.*}.o
+    g++ -c $file
+    g++ -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
     cat leak_info.txt
-    rm memtest leak_detector_c.o ${temp%.*}.o $temp
+    rm memtest leak_detector_c.o ${file%.*}.o
     ;;
 *)
     echo "Invalid source file name"
