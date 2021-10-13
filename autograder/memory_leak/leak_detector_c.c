@@ -5,6 +5,7 @@
 
 #undef malloc
 #undef calloc
+#undef realloc
 #undef free
 
 static MEM_LEAK * ptr_start = NULL;
@@ -107,6 +108,18 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
     return ptr;
 }
 
+/*
+ * replacement of realloc
+ */
+void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line) {
+    void *ptr_new = realloc(ptr, size);
+    
+    if (ptr_new != NULL) {
+        remove_mem_info(ptr);
+        add_mem_info(ptr_new, size, file, line);
+    }
+    return ptr_new;
+}
 
 /*
  * replacement of free

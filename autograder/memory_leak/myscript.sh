@@ -1,8 +1,8 @@
 #!/bin/bash
 file=$1
 
-cp $file tmp.${file##*.}
-temp=tmp.${file##*.}
+cp $file ${file%.*}-source.${file##*.}
+temp=${file%.*}-source.${file##*.}
 
 case "$temp" in
 *.c)
