@@ -2,9 +2,9 @@
 - This README is in works. Just a brief overview of the commands and output.
 
 ## Terminal Commands
-1. chmod +x myscript.sh
-2. ./myscript.sh `file_name`
-   - Example: ./myscript.sh source_codes/test2.c
+1. chmod +x memleak.sh
+2. ./memleak.sh `file_name`
+   - Example: ./memleak.sh source_codes/test2.c
 
 ## Note These Following Details
 - You must `#include "leak_detector_c.h"` in your code
@@ -38,7 +38,7 @@ int main(void) {
 }
 ```
 
-Expected Output after running `chmod +x myscript.sh && ./myscript.sh source_codes/test2.c` (Note that "address" may differ)
+Expected Output after running `chmod +x memleak.sh && ./memleak.sh source_codes/test2.c` (Note that "address" may differ)
 ```txt
 Memory Leak Summary
 -----------------------------------

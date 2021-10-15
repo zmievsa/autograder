@@ -7,9 +7,9 @@ extern "C" {
 
 #define  FILE_NAME_LENGTH           256
 #define  OUTPUT_FILE                "leak_info.txt"
-#define  malloc(size)               xmalloc (size, __FILE__, __LINE__)
-#define  calloc(elements, size)     xcalloc (elements, size, __FILE__, __LINE__)
-#define  realloc(ptr, size)         xrealloc (ptr, size, __FILE__, __LINE__)
+#define  malloc(size)               xmalloc(size, __FILE__, __LINE__)
+#define  calloc(elements, size)     xcalloc(elements, size, __FILE__, __LINE__)
+#define  realloc(ptr, size)         xrealloc(ptr, size, __FILE__, __LINE__)
 #define  free(mem_ref)              xfree(mem_ref)
 
 typedef struct _MEM_INFO {
