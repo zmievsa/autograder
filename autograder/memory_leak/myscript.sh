@@ -1,6 +1,9 @@
 #!/bin/bash
 file=$1
 
+cp $file ./
+file=$(basename $file)
+
 case "$file" in
 *.c)
     gcc -c leak_detector_c.c
@@ -8,7 +11,7 @@ case "$file" in
     gcc -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
     cat leak_info.txt
-    rm memtest leak_detector_c.o ${file%.*}.o
+    rm memtest leak_detector_c.o ${file%.*}.o $file
     ;;
 *.cpp | *.c++ | *.cc | *.cxx | *.CPP | *.cp | *.C)
     g++ -c leak_detector_c.c
@@ -16,7 +19,7 @@ case "$file" in
     g++ -o memtest leak_detector_c.o ${file%.*}.o
     ./memtest > /dev/null 2>&1
     cat leak_info.txt
-    rm memtest leak_detector_c.o ${file%.*}.o
+    rm memtest leak_detector_c.o ${file%.*}.o $file
     ;;
 *)
     echo "Invalid source file name"

@@ -4,7 +4,7 @@
 ## Terminal Commands
 1. chmod +x myscript.sh
 2. ./myscript.sh `file_name`
-   - Example: ./myscript.sh test2.c
+   - Example: ./myscript.sh source_codes/test2.c
 
 ## Note These Following Details
 - You must `#include "leak_detector_c.h"` in your code
@@ -12,6 +12,7 @@
   - Currently working on alternative ways of not requiring the `atexit()` function in `main()`
   - At this point in time, do **NOT** put `atexit(report_mem_leak)` in `main()`
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script)
+- All sources codes needs to be in a directory.
 
 Contents of `test2.c`
 ```c
@@ -37,7 +38,7 @@ int main(void) {
 }
 ```
 
-Expected Output after running `chmod +x myscript.sh && ./myscript.sh test2.c` (Note that "address" may differ)
+Expected Output after running `chmod +x myscript.sh && ./myscript.sh source_codes/test2.c` (Note that "address" may differ)
 ```txt
 Memory Leak Summary
 -----------------------------------
