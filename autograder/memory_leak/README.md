@@ -3,7 +3,7 @@
 
 ## Terminal Commands
 1. chmod +x memleak.sh
-2. ./memleak.sh `file_name`
+2. ./memleak.sh `path/to/file`
    - Example: ./memleak.sh source_codes/test2.c
 
 ## Note These Following Details
@@ -13,6 +13,8 @@
   - At this point in time, do **NOT** put `atexit(report_mem_leak)` in `main()`
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script)
 - All sources codes needs to be in a directory.
+- `free()` needs to be called at least once in the source code.
+  - NOTE: still need to double check this
 
 Contents of `test2.c`
 ```c
