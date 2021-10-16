@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import setup
 
-requires = ["sh==1.14.1"]
+requires = ["sh==1.14.1", "antlr4-python3-runtime==4.9.2"]
 here = Path(__file__).parent
 about = {}
 with (here / "autograder" / "__version__.py").open(encoding="utf-8") as f:
@@ -12,10 +12,7 @@ with (here / "README.md").open(encoding="utf-8") as f:
 
 setup(
     name=about["__title__"],
-    packages=[
-        "autograder",
-        "autograder.testcase_utils",
-    ],
+    packages=["autograder", "autograder.testcase_utils", "autograder.plagiarism_detection"],
     version=about["__version__"],
     include_package_data=True,
     install_requires=requires,

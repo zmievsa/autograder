@@ -6,8 +6,24 @@ from contextlib import contextmanager
 from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import Callable
+import contextlib
+import sys
 
 from autograder.__main__ import main as autograder
+
+
+# Both of these
+class DummyFile(object):
+    def write(self, x):
+        pass
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = DummyFile()
+    yield
+    sys.stdout = save_stdout
 
 
 class NonDaemonPool(Pool):
@@ -73,7 +89,8 @@ def FAIL(message):
 
 
 def run_silenced_grader(*args):
-    return autograder(["run", "--no_output"] + list(args))
+    with nostdout():
+        return autograder(["run"] + list(args))
 
 
 def test_example(args):

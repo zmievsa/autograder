@@ -1,11 +1,13 @@
 import importlib.util
+import os
 import re
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 
 class AutograderError(Exception):
-    pass
+    """The base class for all exceptions that are raised from the incorrect use of Autograder"""
 
 
 RESULT_REGEX = re.compile(r"Result: (\d+)/\d+")
@@ -36,3 +38,17 @@ def import_from_path(module_name: str, path: Path):
 
 def get_file_stems(dir_: Path):
     return (p.stem for p in dir_.iterdir()) if dir_.exists() else []
+
+
+def hide_path_to_directory(string_to_hide_path_from: str, path_to_hide: Path, replacement_str: str = "...") -> str:
+    return string_to_hide_path_from.replace(str(path_to_hide), replacement_str)
+
+
+@contextmanager
+def temporarily_change_dir(new_dir):
+    old_dir = Path.cwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    finally:
+        os.chdir(str(old_dir))
