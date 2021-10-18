@@ -5,6 +5,7 @@ import sh
 
 EMPTY_COMMAND = sh.Command("false")
 
+
 class ShCommand(Protocol):
     """We use this to imitate sh.Command by duck-typing it"""
 
@@ -12,11 +13,11 @@ class ShCommand(Protocol):
         raise NotImplementedError()
 
 
-def get_stderr(error: sh.ErrorReturnCode, string):
-    error_str = str(error)
+def get_stderr(error: sh.ErrorReturnCode, error_title: str):
+    error_str = str(error.stderr.decode("UTF-8"))
     # Remove all unrelated output
-    formatted_error = string + error_str[error_str.find("STDERR:") + len("STDERR") :]
-    return formatted_error
+    formatted_error = f"{error_title}\n{error_str[error_str.find('STDERR:') + len('STDERR') :]}"
+    return formatted_error.strip()
 
 
 def Command(command: str, *args: Any, **kwargs: Any) -> sh.Command:
