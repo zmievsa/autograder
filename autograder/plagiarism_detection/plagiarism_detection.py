@@ -1,11 +1,15 @@
-import sys, math, pathlib
+import sys, math, time
+from numba import jit
 import numpy as np
+import multiprocessing
+from multiprocessing import Pool
 from antlr4 import *
 from lexers.Java8Lexer import JavaLexer
 from lexers.Python3Lexer import Python3Lexer
 from lexers.CLexer import CLexer
 from lexers.CppLexer import CppLexer
-from comparison import getSimilarity
+
+from comparison import getSimilarity, getSimilarity2
 
 # entry point function that is called to compare a set of files with each other
 def compare(paths):
@@ -18,29 +22,26 @@ def compare(paths):
     similarity_scores = {}
     for language in language_map:
         files = language_map[language]["files"]
+        if len(files) == 0:
+            continue
         # get token stream for each file and total frequency for each token type
         parsed_file_map = parseFiles(language_map[language])
+        token_streams = parsed_file_map["token_streams"]
+        lengths = parsed_file_map["lengths"]
         # construct similarity matrix to weight the significance of matching tokens. Matching uncommon tokens
         # is weighted heavier as it is more likely to be a result of plagiarism
         similarityMatrix = buildSimilarityMatrix(parsed_file_map["freq"])
         # find the similarity score of comparing a file to itself. This is used to normalize the similarity score
         # calculated when comparing unique files
         self_similarities = buildSelfSimilarities(
-            parsed_file_map["token_streams"], similarityMatrix
+            token_streams, similarityMatrix, lengths
         )
-        token_streams = parsed_file_map["token_streams"]
-        # compare each file to every other file and return the resulting 2d array
-        for i in range(len(token_streams)):
-            for j in range(i + 1, len(token_streams)):
-                similarity = getSimilarity(
-                    token_streams[i],
-                    token_streams[j],
-                    similarityMatrix,
-                    self_similarities[i] + self_similarities[j],
-                )
-                similarity_scores[frozenset((files[i], files[j]))] = similarity
-        results[language] = similarity_scores
-    return similarity_scores
+        result = runComparisons(
+            token_streams, similarityMatrix, self_similarities, lengths
+        )
+        results[language] = result
+
+    return results
 
 
 # determine language of files and initialize language-specific variables
@@ -53,14 +54,31 @@ def initializeLanguage(paths):
     # format: "file ending": [Lexer class used to parse, [ignore list of token types to ignore when parsing],
     # number of unique tokens in language]
     language_mapper = {
-        "java": {"lexer": JavaLexer, "ignore_list": [-1, 106, 107], "num_tokens": 105},
-        "py": {"lexer": Python3Lexer, "ignore_list": [-1, 39], "num_tokens": 97},
-        "c": {"lexer": CLexer, "ignore_list": [-1, 117, 118], "num_tokens": 119},
-        "cpp": {"lexer": CppLexer, "ignore_list": [-1, 144, 145], "num_tokens": 146},
+        "java": {
+            "lexer": JavaLexer,
+            "ignore_list": np.array([-1, 106, 107]),
+            "num_tokens": 105,
+        },
+        "py": {
+            "lexer": Python3Lexer,
+            "ignore_list": np.array([-1, 39]),
+            "num_tokens": 97,
+        },
+        "c": {
+            "lexer": CLexer,
+            "ignore_list": np.array([-1, 117, 118]),
+            "num_tokens": 119,
+        },
+        "cpp": {
+            "lexer": CppLexer,
+            "ignore_list": np.array([-1, 144, 145]),
+            "num_tokens": 146,
+        },
     }
     # add files of each programming language to mapper object
     for key in language_mapper:
         language_mapper[key]["files"] = language_partition[key]
+    # print("end language mapping")
     return language_mapper
 
 
@@ -85,14 +103,23 @@ def parseFiles(language):
                     array += [token.type]
                     freq[token.type] += 1
                     totalTokens += 1
-            tokenStreams += [array]
+            tokenStreams += [np.array(array)]
     # find frequency of each token as percentage of total tokens
     if totalTokens == 0:
         freq = [1e-10 for x in range(len(freq))]
     else:
         for i in range(len(freq)):
             freq[i] = max(freq[i] / totalTokens, 1e-10)
-    return {"token_streams": tokenStreams, "freq": freq}
+    # print("end parse files")
+    lengths = np.array([len(x) for x in tokenStreams])
+    converted_token_stream = np.zeros((len(tokenStreams), np.max(lengths)), np.int32)
+    for i in range(len(tokenStreams)):
+        converted_token_stream[i, : lengths[i]] = tokenStreams[i]
+    return {
+        "token_streams": converted_token_stream,
+        "freq": np.array(freq),
+        "lengths": lengths,
+    }
 
 
 def buildSimilarityMatrix(freq):
@@ -119,16 +146,77 @@ def buildSimilarityMatrix(freq):
             # value of matching i and j is same as matching j and i
             matrix[i][j] = int(1000 * value)
             matrix[j][i] = int(1000 * value)
-    return matrix
+    # print("end similarity matrix")
+    return np.array(matrix)
 
 
-def buildSelfSimilarities(token_streams, matrix):
+def buildSelfSimilarities(token_streams, matrix, lengths):
     self_similarities = []
     for i in range(len(token_streams)):
-        tokens = token_streams[i]
         score = 0
         # for each token, find value of matching that token with itself and add to sum
-        for tok in tokens:
-            score += matrix[int(tok)][int(tok)]
+        for tok in token_streams[i, : lengths[i]]:
+            score += matrix[int(tok), int(tok)]
         self_similarities.append(score)
-    return self_similarities
+    # print("end self similarities")
+    return np.array(self_similarities, dtype=np.int32)
+
+
+# def runComparisons(token_streams, similarityMatrix, self_similarities):
+#     numPools = multiprocessing.cpu_count()
+#     p = multiprocessing.Pool(numPools)
+#     pairs = [
+#         (
+#             token_streams[i],
+#             token_streams[i + 1 :],
+#             similarityMatrix,
+#             self_similarities[i],
+#             self_similarities[i + 1 :],
+#         )
+#         for i in range(len(token_streams) - 1)
+#     ]
+#     results = p.starmap(func, pairs)
+# pairs = [
+#     (
+#         token_streams[i],
+#         token_streams[j],
+#         similarityMatrix,
+#         self_similarities[i] + self_similarities[j],
+#     )
+#     for i in range(len(token_streams))
+#     for j in range(i + 1, len(token_streams))
+# ]
+# results = []
+# for pair in pairs:
+#     results.append(getSimilarity2(pair[0], pair[1], pair[2], pair[3]))
+# results = p.starmap(getSimilarity2, pairs)
+#     return results
+
+
+# def func(a, arr, similarityMatrix, a_sim, similarities):
+#     print(len(arr))
+#     t = time.time()
+#     results = []
+#     for i in range(len(arr)):
+#         results.append(
+#             getSimilarity2(a, arr[i], similarityMatrix, a_sim + similarities[i])
+#         )
+#     print(time.time() - t)
+#     return results
+
+
+def runComparisons(token_streams, similarityMatrix, self_similarities, lengths):
+    numPools = multiprocessing.cpu_count()
+    p = multiprocessing.Pool(numPools)
+
+    similarity_scores = np.zeros((len(token_streams), len(token_streams)))
+    for i in range(len(token_streams)):
+        for j in range(i + 1, len(token_streams)):
+            similarity = getSimilarity2(
+                token_streams[i, : lengths[i]],
+                token_streams[j, : lengths[j]],
+                similarityMatrix,
+                self_similarities[i] + self_similarities[j],
+            )
+            similarity_scores[i, j] = similarity
+    return similarity_scores
