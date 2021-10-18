@@ -206,9 +206,6 @@ def buildSelfSimilarities(token_streams, matrix, lengths):
 
 
 def runComparisons(token_streams, similarityMatrix, self_similarities, lengths):
-    numPools = multiprocessing.cpu_count()
-    p = multiprocessing.Pool(numPools)
-
     similarity_scores = np.zeros((len(token_streams), len(token_streams)))
     for i in range(len(token_streams)):
         for j in range(i + 1, len(token_streams)):
