@@ -1,9 +1,0 @@
-void *xrealloc(void *ptr, size_t size, const char * file, unsigned int line) {
-    void *ptr_new = realloc(ptr, size);
-    
-    if (ptr_new != NULL) {
-        remove_mem_info(ptr);
-        add_mem_info(ptr_new, size, file, line);
-    }
-    return ptr_new;
-}

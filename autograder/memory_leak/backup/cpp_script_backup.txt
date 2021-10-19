@@ -1,5 +1,0 @@
-g++ -c leak_detector_c.c 
-g++ -c test1.cpp
-g++ -o memtest leak_detector_c.o test1.o
-./memtest 
-cat leak_info.txt
