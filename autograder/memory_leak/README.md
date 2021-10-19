@@ -4,55 +4,42 @@
 ## Terminal Commands
 1. chmod +x memleak.sh
 2. ./memleak.sh `path/to/file`
-   - Example: ./memleak.sh source_codes/test2.c
+   - Example: ./memleak.sh tests/example.c
 
 ## Note These Following Details
 - You must `#include "leak_detector_c.h"` in your code
-- ~~You must have `atexit(report_mem_leak)` in `main()` function~~
-  - Currently working on alternative ways of not requiring the `atexit()` function in `main()`
-  - At this point in time, do **NOT** put `atexit(report_mem_leak)` in `main()`
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script)
 - All sources codes needs to be in a directory.
-- `free()` needs to be called at least once in the source code.
-  - NOTE: still need to double check this
 
-Contents of `test2.c`
+Contents of `example.c`
 ```c
 #include <stdio.h>
 #include <stdlib.h>
-#include "leak_detector_c.h" // Note this
+#include "leak_detector_c.h"
 
 int main(void) {
-    char * ptr1; 
-    int * ptr2; 
-    float * ptr3;
+    char *ptr1; 
+    int *ptr2; 
 
-    // atexit(report_mem_leak); // Note this
-
-    ptr1 = (char *) malloc (10); // allocating 10 bytes        
-    printf("Banana\n");
-    ptr2 = (int *) calloc (10, sizeof(int)); 	// allocating 40 bytes 
-    ptr3 = (float *) calloc (15, sizeof(float)); // allocating 60 bytes
-    printf("Hello World\n");
-    printf("Apple\n");
-    free(ptr2);
+    ptr1 = (char *) malloc(sizeof(char) * 10); // allocating 10 bytes        
+    ptr2 = (int *) calloc(20, sizeof(int)); // allocating 80 bytes 
     return 0;
 }
 ```
 
-Expected Output after running `chmod +x memleak.sh && ./memleak.sh source_codes/test2.c` (Note that "address" may differ)
+Expected Output after running `chmod +x memleak.sh && ./memleak.sh tests/example.c` (Note that "address" may differ)
 ```txt
 Memory Leak Summary
 -----------------------------------
-address : 0x5631d6af02a0
+address : 0x558f200be2a0
 size    : 10 bytes
-file    : test2.c
-line    : 12
+file    : example.c
+line    : 9
 -----------------------------------
-address : 0x5631d6af0940
-size    : 60 bytes
-file    : test2.c
-line    : 16
+address : 0x558f200be3e0
+size    : 80 bytes
+file    : example.c
+line    : 10
 -----------------------------------
 ```
 
