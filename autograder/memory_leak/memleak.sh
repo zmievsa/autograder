@@ -21,5 +21,6 @@ case "$file" in
 esac
 
 ./memtest > /dev/null 2>&1
+sed -i 's/\x0//g' leak_info.txt
 cat leak_info.txt
 rm memtest leak_detector_c.o ${file%.*}.o $file

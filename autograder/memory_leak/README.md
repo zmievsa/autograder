@@ -21,8 +21,8 @@ int main(void) {
     char *ptr1; 
     int *ptr2; 
 
-    ptr1 = (char *) malloc(sizeof(char) * 10); // allocating 10 bytes        
-    ptr2 = (int *) calloc(20, sizeof(int)); // allocating 80 bytes 
+    ptr1 = malloc(sizeof(char) * 10); // allocating 10 bytes        
+    ptr2 = calloc(20, sizeof(int)); // allocating 80 bytes 
     return 0;
 }
 ```
@@ -31,12 +31,12 @@ Expected Output after running `chmod +x memleak.sh && ./memleak.sh tests/example
 ```txt
 Memory Leak Summary
 -----------------------------------
-address : 0x558f200be2a0
+address : 0x55890296b2a0
 size    : 10 bytes
 file    : example.c
 line    : 9
 -----------------------------------
-address : 0x558f200be3e0
+address : 0x55890296b3e0
 size    : 80 bytes
 file    : example.c
 line    : 10
