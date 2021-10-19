@@ -69,7 +69,7 @@ class GradingOutputLogger:
         print(f"\nResult: {formatted_student_score}\n\n")
 
     def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
-        with open(self.results_dir / submission.path.name, "w") as f:
+        with open(self.results_dir / submission.old_path.name, "w") as f:
             f.write(self._format_output_for_student_file(submission, formatted_student_score))
 
     def _silence_generating_results(self):
@@ -108,7 +108,7 @@ class JsonGradingOutputLogger(GradingOutputLogger):
 
         submission_results = [
             {
-                str(s.path): {
+                str(s.old_path): {
                     "final_grade": s.final_grade,
                     "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
                     "precompilation_error": s.precompilation_error,
