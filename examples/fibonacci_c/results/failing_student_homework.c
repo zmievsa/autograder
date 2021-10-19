@@ -2,7 +2,7 @@ Homework Test Results
 
 ================================================================
 Failed to precompile:
-/ovsyanka/code/autograder/examples/fibonacci_c/temp/failing_student_homework.c/failing_student_homework.c: In function ‘fibonacci’:
+.../failing_student_homework.c: In function ‘fibonacci’:
 .../failing_student_homework.c:2:15: error: ‘P’ undeclared (first use in this function)
     2 |    if (n <= 1)P
       |               ^
