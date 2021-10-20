@@ -7,7 +7,6 @@
    - Example: ./memleak.sh tests/example.c
 
 ## Note These Following Details
-- You must `#include "leak_detector_c.h"` in your code
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script)
 - All sources codes needs to be in a directory.
 
@@ -15,7 +14,6 @@ Contents of `example.c`
 ```c
 #include <stdio.h>
 #include <stdlib.h>
-#include "leak_detector_c.h"
 
 int main(void) {
     char *ptr1; 
@@ -34,12 +32,12 @@ Memory Leak Summary
 address : 0x55890296b2a0
 size    : 10 bytes
 file    : example.c
-line    : 9
+line    : 8
 -----------------------------------
 address : 0x55890296b3e0
 size    : 80 bytes
 file    : example.c
-line    : 10
+line    : 9
 -----------------------------------
 ```
 
