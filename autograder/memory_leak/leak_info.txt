@@ -1,12 +1,12 @@
 Memory Leak Summary
 -----------------------------------
-address : 0x7fd80f402820
+address : 0x7f9f18402820
 size    : 10 bytes
-file    : test2.c
-line    : 11
+file    : example.c
+line    : 9
 -----------------------------------
-address : 0x7fd80f402860
-size    : 60 bytes
-file    : test2.c
-line    : 15
+address : 0x7f9f18402830
+size    : 80 bytes
+file    : example.c
+line    : 10
 -----------------------------------
