@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include "leak_detector_c.h"
 
 int main(void) {
     char *ptr1; 

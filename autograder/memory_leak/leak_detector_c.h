@@ -2,6 +2,10 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifndef  LEAK_DETECTOR_C_H
 #define  LEAK_DETECTOR_C_H
 

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "leak_detector_c.h"
 
 int main () {
     char *str;

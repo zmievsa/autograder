@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cstdlib>
-#include "leak_detector_c.h"
 using namespace std;
 
 int main(void) {
