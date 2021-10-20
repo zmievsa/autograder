@@ -12,8 +12,8 @@ case "$file" in
     ;;
 *.cpp | *.c++ | *.cc | *.cxx | *.CPP | *.cp | *.C)
     gcc -c leak_detector_c.c
-    g++ --std=c++11 -c $file
-    g++ --std=c++11 -o memtest leak_detector_c.o ${file%.*}.o
+    g++ -c $file
+    g++ -o memtest leak_detector_c.o ${file%.*}.o
     ;;
 *)
     echo "Invalid source file name"
@@ -21,6 +21,5 @@ case "$file" in
 esac
 
 ./memtest > /dev/null 2>&1
-sed -i 's/\x0//g' leak_info.txt
 cat leak_info.txt
 rm memtest leak_detector_c.o ${file%.*}.o $file
