@@ -28,18 +28,18 @@ typedef struct _MEM_LEAK {
     struct _MEM_LEAK * next;
 } MEM_LEAK;
 
-void add(MEM_INFO alloc_info);
-void erase(unsigned pos);
-void clear(void);
+static void add(MEM_INFO alloc_info);
+static void erase(unsigned pos);
+static void clear(void);
 
 void * xmalloc(unsigned int size, const char * file, unsigned int line);
 void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsigned int line);
 void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line);
 void xfree(void * mem_ref);
 
-void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line);
-void remove_mem_info (void * mem_ref);
-void report_mem_leak(void);
+static void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line);
+static void remove_mem_info (void * mem_ref);
+static void report_mem_leak(void);
 
 void __attribute__((destructor)) report_mem_leak();
 

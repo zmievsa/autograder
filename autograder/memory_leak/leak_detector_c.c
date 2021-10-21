@@ -15,7 +15,7 @@ static MEM_LEAK * ptr_next = NULL;
  * adds allocated memory info. into the list
  *
  */
-void add(MEM_INFO alloc_info) {
+static void add(MEM_INFO alloc_info) {
     MEM_LEAK * mem_leak_info = NULL;
     mem_leak_info = (MEM_LEAK *) malloc(sizeof(MEM_LEAK));
     mem_leak_info->mem_info.address = alloc_info.address;
@@ -37,7 +37,7 @@ void add(MEM_INFO alloc_info) {
  * erases memory info. from the list
  *
  */
-void erase(unsigned pos) {
+static void erase(unsigned pos) {
     unsigned index = 0;
     MEM_LEAK * alloc_info, * temp;
 
@@ -73,7 +73,7 @@ void erase(unsigned pos) {
 /*
  * deletes all the elements from the list
  */
-void clear() {
+static void clear() {
     MEM_LEAK * temp = ptr_start;
     MEM_LEAK * alloc_info = ptr_start;
 
@@ -135,7 +135,7 @@ void xfree(void * mem_ref) {
  * gets the allocated memory info and adds it to a list
  *
  */
-void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned int line) {
+static void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned int line) {
     MEM_INFO mem_alloc_info;
 
     /* fill up the structure with all info */
@@ -153,7 +153,7 @@ void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned
  * if the allocated memory info is part of the list, removes it
  *
  */
-void remove_mem_info(void * mem_ref) {
+static void remove_mem_info(void * mem_ref) {
     unsigned short index;
     MEM_LEAK * leak_info = ptr_start;
 
@@ -169,7 +169,7 @@ void remove_mem_info(void * mem_ref) {
 /*
  * writes all info of the unallocated memory into a file
  */
-void report_mem_leak(void) {
+static void report_mem_leak(void) {
     unsigned short index;
     MEM_LEAK * leak_info;
 
