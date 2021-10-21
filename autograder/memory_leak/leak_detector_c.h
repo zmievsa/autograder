@@ -1,5 +1,8 @@
-// leak_detector_c.h: based on code by Rabinarayan Biswal, 27 Jun 2007
-// (http://www.codeproject.com/Articles/19361/Memory-Leak-Detection-in-C)
+/*
+ * leak_detector_c.h: based on code by Rabinarayan Biswal, 27 Jun 2007
+ * (http://www.codeproject.com/Articles/19361/Memory-Leak-Detection-in-C)
+ * Modified for Autograder purposes
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +47,7 @@ static void add_mem_info (void * mem_ref, unsigned int size,  const char * file,
 static void remove_mem_info (void * mem_ref);
 static void report_mem_leak(void);
 
-void __attribute__((destructor)) report_mem_leak();
+static void __attribute__((destructor)) report_mem_leak();
 
 #endif
 #ifdef __cplusplus
