@@ -1,3 +1,6 @@
+// leak_detector_c.h: based on code by Rabinarayan Biswal, 27 Jun 2007
+// (http://www.codeproject.com/Articles/19361/Memory-Leak-Detection-in-C)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

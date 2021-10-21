@@ -1,3 +1,6 @@
+// leak_detector_c.c: based on code by Rabinarayan Biswal, 27 Jun 2007
+// (http://www.codeproject.com/Articles/19361/Memory-Leak-Detection-in-C)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,6 +93,11 @@ static void clear() {
 void * xmalloc(unsigned int size, const char * file, unsigned int line) {
     void * ptr = malloc(size);
     
+    if (ptr == NULL && size != 0) {
+        fprintf(stderr, "ISSUE: memory exhausted\n");
+        exit(1);
+    }
+    
     if (ptr != NULL) {
         add_mem_info(ptr, size, file, line);
     }
@@ -103,6 +111,11 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
     unsigned total_size;
     void * ptr = calloc(elements, size);
     
+    if (ptr == NULL && size != 0) {
+        fprintf(stderr, "ISSUE: memory exhausted\n");
+        exit(1);
+    }
+    
     if (ptr != NULL) {
         total_size = elements * size;
         add_mem_info(ptr, total_size, file, line);
@@ -115,6 +128,11 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
  */
 void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line) {
     void *ptr_new = realloc(ptr, size);
+    
+    if (ptr_new == NULL && size != 0) {
+        fprintf(stderr, "ISSUE: memory exhausted\n");
+        exit(1);
+    }
     
     if (ptr_new != NULL) {
         remove_mem_info(ptr);
