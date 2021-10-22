@@ -108,17 +108,16 @@ class JsonGradingOutputLogger(GradingOutputLogger):
 
         submission_results = [
             {
-                str(s.old_path): {
-                    "final_grade": s.final_grade,
-                    "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
-                    "precompilation_error": s.precompilation_error,
-                }
+                "submission": str(s.old_path),
+                "final_grade": s.final_grade,
+                "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
+                "precompilation_error": s.precompilation_error,
             }
             for s in submissions
         ]
-        output_dict = {
+        output = {
             "average_score": score,
             "total_points_possible": self.total_points_possible,
             "submissions": submission_results,
         }
-        print(json.dumps(output_dict, indent=4))
+        print(json.dumps(output, indent=4))
