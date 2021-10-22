@@ -79,7 +79,7 @@ static void erase(unsigned pos) {
 /*
  * deletes all the elements from the list
  */
-static void clear() {
+static void clear(void) {
     MEM_LEAK * temp = ptr_start;
     MEM_LEAK * alloc_info = ptr_start;
 
@@ -152,11 +152,23 @@ void xfree(void * mem_ref) {
     free(mem_ref);
 }
 
+static const char *check_if_from_header(const char *filename) {
+    const char *dot = strrchr(filename, '.');
+    if(!dot || dot == filename) return "";
+    return dot + 1;
+}
+
 /*
  * gets the allocated memory info and adds it to a list
  *
  */
 static void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned int line) {
+    
+    /* check if the file is from .h file. If so, don't add it to leak summary */
+    if (strcmp(check_if_from_header(file),"h") == 0) {
+        return;
+    }
+    
     MEM_INFO mem_alloc_info;
 
     /* fill up the structure with all info */
