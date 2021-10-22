@@ -152,15 +152,6 @@ void xfree(void * mem_ref) {
     free(mem_ref);
 }
 
-static const char *check_if_from_header(const char *filename) {
-    const char *dot = strrchr(filename, '.');
-    
-    if (!dot || dot == filename) {
-        return "";
-    }
-    return dot + 1;
-}
-
 /*
  * gets the allocated memory info and adds it to a list
  *
@@ -168,8 +159,8 @@ static const char *check_if_from_header(const char *filename) {
 static void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned int line) {
     MEM_INFO mem_alloc_info;
     
-    /* check if the file is from .h file. If so, don't add it to leak summary */
-    if (strcmp(check_if_from_header(file), "h") == 0) {
+    /* if file is from a .h header, don't add it to list */
+    if (strcmp(strrchr(file, '.') + 1, "h") == 0) {
         return;
     }
 

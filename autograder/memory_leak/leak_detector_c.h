@@ -43,7 +43,6 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
 void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line);
 void xfree(void * mem_ref);
 
-static const char *check_if_from_header(const char *filename);
 static void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line);
 static void remove_mem_info (void * mem_ref);
 static void report_mem_leak(void);
