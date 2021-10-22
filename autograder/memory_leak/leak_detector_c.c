@@ -201,7 +201,12 @@ static void report_mem_leak(void) {
 
     FILE * fp_write = fopen(OUTPUT_FILE, "wt");
     
-    if (ptr_start == NULL) {
+    if (fp_write == NULL) {
+        fprintf(stderr, "ISSUE: cannot create file!\n");
+        exit(1);
+    }
+    
+    if (ptr_start == NULL && fp_write != NULL) {
         fprintf(fp_write, "%s\n", "No Memory Leak!");
         fclose(fp_write);
         exit(0);
