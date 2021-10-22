@@ -110,7 +110,7 @@ class JsonGradingOutputLogger(GradingOutputLogger):
             {
                 "submission": str(s.old_path),
                 "final_grade": s.final_grade,
-                "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
+                "testcase_scores": [{"name": n, "message": msg} for n, (_, _, msg) in s.grades.items()],
                 "precompilation_error": s.precompilation_error,
             }
             for s in submissions
