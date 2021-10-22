@@ -206,24 +206,23 @@ static void report_mem_leak(void) {
         exit(1);
     }
     
-    if (ptr_start == NULL && fp_write != NULL) {
+    if (ptr_start == NULL) {
         fprintf(fp_write, "%s\n", "No Memory Leak!");
         fclose(fp_write);
         exit(0);
     }
 
-    if (fp_write != NULL) {
-        fprintf(fp_write, "%s\n", "Memory Leak Summary");
-        fprintf(fp_write, "%s\n", "-----------------------------------");
+    fprintf(fp_write, "%s\n", "Memory Leak Summary");
+    fprintf(fp_write, "%s\n", "-----------------------------------");
 
-        for (leak_info = ptr_start; leak_info != NULL; leak_info = leak_info->next) {
-            fprintf(fp_write, "address : %p\n", leak_info->mem_info.address);
-            fprintf(fp_write, "size    : %d bytes\n", leak_info->mem_info.size);
-            fprintf(fp_write, "file    : %s\n", leak_info->mem_info.file_name);
-            fprintf(fp_write, "line    : %d\n", leak_info->mem_info.line);
-            fprintf(fp_write, "%s\n", "-----------------------------------");
-        }
-        fclose(fp_write);
+    for (leak_info = ptr_start; leak_info != NULL; leak_info = leak_info->next) {
+        fprintf(fp_write, "address : %p\n", leak_info->mem_info.address);
+        fprintf(fp_write, "size    : %d bytes\n", leak_info->mem_info.size);
+        fprintf(fp_write, "file    : %s\n", leak_info->mem_info.file_name);
+        fprintf(fp_write, "line    : %d\n", leak_info->mem_info.line);
+        fprintf(fp_write, "%s\n", "-----------------------------------");
     }
+    
+    fclose(fp_write);
     xclear();
 }
