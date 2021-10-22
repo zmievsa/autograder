@@ -21,7 +21,7 @@ static MEM_LEAK * ptr_next = NULL;
  * adds allocated memory info. into the list
  *
  */
-static void add(MEM_INFO alloc_info) {
+static void xadd(MEM_INFO alloc_info) {
     MEM_LEAK * mem_leak_info = NULL;
     mem_leak_info = (MEM_LEAK *) malloc(sizeof(MEM_LEAK));
     mem_leak_info->mem_info.address = alloc_info.address;
@@ -43,7 +43,7 @@ static void add(MEM_INFO alloc_info) {
  * erases memory info. from the list
  *
  */
-static void erase(unsigned pos) {
+static void xerase(unsigned pos) {
     unsigned index = 0;
     MEM_LEAK * alloc_info, * temp;
 
@@ -79,7 +79,7 @@ static void erase(unsigned pos) {
 /*
  * deletes all the elements from the list
  */
-static void clear(void) {
+static void xclear(void) {
     MEM_LEAK * temp = ptr_start;
     MEM_LEAK * alloc_info = ptr_start;
 
@@ -172,7 +172,7 @@ static void add_mem_info(void * mem_ref, unsigned int size, const char * file, u
     mem_alloc_info.line = line;
 
     /* add the above info to a list */
-    add(mem_alloc_info);
+    xadd(mem_alloc_info);
 }
 
 /*
@@ -186,7 +186,7 @@ static void remove_mem_info(void * mem_ref) {
     /* check if allocate memory is in our list */
     for (index = 0; leak_info != NULL; ++index, leak_info = leak_info->next) {
         if (leak_info->mem_info.address == mem_ref) {
-            erase (index);
+            xerase(index);
             break;
         }
     }
@@ -220,5 +220,5 @@ static void report_mem_leak(void) {
         }
         fclose(fp_write);
     }
-    clear();
+    xclear();
 }
