@@ -166,12 +166,12 @@ static const char *check_if_from_header(const char *filename) {
  *
  */
 static void add_mem_info(void * mem_ref, unsigned int size, const char * file, unsigned int line) {
+    MEM_INFO mem_alloc_info;
+    
     /* check if the file is from .h file. If so, don't add it to leak summary */
     if (strcmp(check_if_from_header(file), "h") == 0) {
         return;
     }
-    
-    MEM_INFO mem_alloc_info;
 
     /* fill up the structure with all info */
     memset(&mem_alloc_info, 0, sizeof(mem_alloc_info));
