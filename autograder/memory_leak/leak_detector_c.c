@@ -160,7 +160,7 @@ static void add_mem_info(void * mem_ref, unsigned int size, const char * file, u
     MEM_INFO mem_alloc_info;
     
     /* if file is from a .h header, don't add it to list */
-    if (strcmp(strrchr(file, '.') + 1, "h") == 0) {
+    if (strcmp(strrchr(file, '.'), ".h") == 0) {
         return;
     }
 
