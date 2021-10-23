@@ -101,7 +101,7 @@ void * xmalloc(unsigned int size, const char * file, unsigned int line) {
         exit(1);
     }
     
-    if (ptr != NULL) {
+    if (ptr != NULL && strcmp(strrchr(file, '.'), ".h") != 0) {
         add_mem_info(ptr, size, file, line);
     }
     return ptr;
@@ -119,7 +119,7 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
         exit(1);
     }
     
-    if (ptr != NULL) {
+    if (ptr != NULL && strcmp(strrchr(file, '.'), ".h") != 0) {
         total_size = elements * size;
         add_mem_info(ptr, total_size, file, line);
     }
@@ -137,7 +137,7 @@ void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line) {
         exit(1);
     }
     
-    if (ptr_new != NULL) {
+    if (ptr_new != NULL && strcmp(strrchr(file, '.'), ".h") != 0) {
         remove_mem_info(ptr);
         add_mem_info(ptr_new, size, file, line);
     }
