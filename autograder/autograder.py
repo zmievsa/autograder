@@ -1,14 +1,14 @@
 import multiprocessing
-import os
+from threading import Lock
 import shutil
-from contextlib import contextmanager
 from pathlib import Path
+import time
 from typing import Callable, Dict, List, Set, Type, Tuple
-import sh
+import sys
 
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
-from .testcase_utils.shell import get_stderr
+from .testcase_utils.shell import ShellError
 from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
@@ -30,7 +30,6 @@ class Grader:
     logger: GradingOutputLogger
     config: GradingConfig
     testcase_picker: TestCasePicker
-    stdout_only_tests: list
 
     def __init__(self, current_dir: Path, json_output: bool = False, submissions=None):
         if submissions is None:
@@ -64,10 +63,10 @@ class Grader:
             self.tests, unused_io_choices = self._gather_testcases(io_choices.copy())
             if self.config.stdout_only_grading_enabled:
                 self.tests[StdoutOnlyTestCase] = self._generate_stdout_only_testcases(unused_io_choices)
-            process_count = multiprocessing.cpu_count() if self.config.parallel_grading_enabled else 1
-            with multiprocessing.Pool(process_count) as pool:
-                man = multiprocessing.Manager()
-                modified_submissions = pool.map(Runner(self, man.Lock()), self.submissions)
+            with multiprocessing.Pool() as pool:
+                map_func = pool.map if self.config.parallel_grading_enabled else map
+                manager = multiprocessing.Manager()
+                modified_submissions = list(map_func(Runner(self, manager.Lock()), self.submissions))
                 total_class_points = sum(s.final_grade for s in modified_submissions)
             class_average = round(total_class_points / len(self.submissions))
             self.logger.print_final_score(modified_submissions, class_average)
@@ -123,7 +122,7 @@ class Grader:
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
 
         # Allows consistent output
-        submissions.sort(key=lambda s: s.path)
+        submissions.sort(key=lambda s: s.old_path)
         return submissions
 
     def _gather_io(self) -> Dict[str, TestCaseIO]:
@@ -143,6 +142,7 @@ class Grader:
                 self.config.generate_arglists(io.name),
                 self.config.testcase_weights.get(io.name, default_weight),
                 io,
+                self.config,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -174,6 +174,7 @@ class Grader:
                     arglist,
                     self.config.testcase_weights.get(test.name, default_weight),
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
+                    self.config,
                 )
             )
         # Allows consistent output
@@ -259,8 +260,11 @@ class AutograderPaths:
 class Runner:
     """Grades single submissions"""
 
-    def __init__(self, grader, lock):
-        self.grader: Grader = grader
+    grader: Grader
+    lock: Lock
+
+    def __init__(self, grader, lock: Lock):
+        self.grader = grader
         self.lock = lock
 
     def __call__(self, submission: Submission) -> Submission:
@@ -268,13 +272,15 @@ class Runner:
         return submission
 
     def run_on_single_submission(self, submission: Submission, lock):
-        with temporarily_change_dir(submission.dir):
-            self._copy_extra_files(submission.dir)
+        with temporarily_change_dir(submission.temp_dir):
+            self._copy_extra_files(submission.temp_dir)
             self._get_testcase_output(submission)
             with lock:
                 self.grader.logger.print_single_student_grading_results(submission)
-        # Cleanup after running tests on student submission
-        shutil.rmtree(submission.dir)
+        # Windows sucks at cleaning up processes early
+        if not sys.platform.startswith("win32"):
+            # Cleanup after running tests on student submission
+            shutil.rmtree(submission.temp_dir)
 
     def _copy_extra_files(self, to_dir: Path):
         if self.grader.paths.extra_dir.exists():
@@ -290,25 +296,27 @@ class Runner:
         """
         try:
             precompiled_submission = self._precompile_submission(submission)
-        except sh.ErrorReturnCode as e:
-            error = hide_path_to_directory(get_stderr(e, "Failed to precompile:"), submission.dir)
+        except ShellError as e:
+            error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
             submission.register_precompilation_error(error)
             return 0
         allowed_tests = self.grader.tests.get(submission.type, [])
         if not allowed_tests:
             submission.register_precompilation_error("No suitable testcases found.")
             return 0
-        submission.type.run_additional_testcase_operations_in_student_dir(submission.dir)
+        submission.type.run_additional_testcase_operations_in_student_dir(submission.temp_dir)
         for test in allowed_tests:
             testcase_score, message = test.run(precompiled_submission)
+            message = hide_path_to_directory(message, submission.temp_dir)
             submission.add_grade(test.name, testcase_score, test.weight, message)
         submission.register_final_grade(self.grader.config.total_score_to_100_ratio)
 
     def _precompile_submission(self, submission: Submission) -> Path:
-        arglists = self.grader.config.generate_arglists(submission.path.name)
+        arglists = self.grader.config.generate_arglists(submission.old_path.name)
         return submission.type.precompile_submission(
-            submission.path,
-            submission.dir,
+            submission.old_path,
+            submission.temp_dir,
             self.grader.config.possible_source_file_stems,
             arglists[ArgList.SUBMISSION_PRECOMPILATION],
+            self.grader.config,
         )

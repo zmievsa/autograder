@@ -1,18 +1,13 @@
 # Controls output to stdout and to output file
 
 
-import logging
-import re
-import sys
 from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
-import multiprocessing.synchronize
-from typing import Deque, List
+from typing import List
 import json
 
 
-from .testcase_utils.shell import get_stderr
 from .testcase_utils.submission import Submission
 
 KEY = """
@@ -69,7 +64,7 @@ class GradingOutputLogger:
         print(f"\nResult: {formatted_student_score}\n\n")
 
     def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
-        with open(self.results_dir / submission.path.name, "w") as f:
+        with open(self.results_dir / submission.old_path.name, "w") as f:
             f.write(self._format_output_for_student_file(submission, formatted_student_score))
 
     def _silence_generating_results(self):
@@ -108,17 +103,16 @@ class JsonGradingOutputLogger(GradingOutputLogger):
 
         submission_results = [
             {
-                str(s.path): {
-                    "final_grade": s.final_grade,
-                    "testcase_scores": {name: message for name, (_, _, message) in s.grades.items()},
-                    "precompilation_error": s.precompilation_error,
-                }
+                "submission": str(s.old_path),
+                "final_grade": s.final_grade,
+                "testcase_scores": [{"name": n, "message": msg} for n, (_, _, msg) in s.grades.items()],
+                "precompilation_error": s.precompilation_error,
             }
             for s in submissions
         ]
-        output_dict = {
+        output = {
             "average_score": score,
             "total_points_possible": self.total_points_possible,
             "submissions": submission_results,
         }
-        print(json.dumps(output_dict, indent=4))
+        print(json.dumps(output, indent=4))

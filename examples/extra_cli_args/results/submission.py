@@ -3,6 +3,7 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 Check result with assert                100.0/100
+Check result with runtime args          100.0/100
 ================================================================
 Result: 100/100
 

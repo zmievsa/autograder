@@ -1,20 +1,16 @@
 import shutil
 import stat
-import traceback
-from collections import namedtuple
 from pathlib import Path
+import sys
 from typing import List
-
-import sh
 
 from autograder.testcase_utils.exit_codes import ExitCodeEventType
 from .abstract_testcase import TestCase
-from .shell import Command
+from .shell import ShellCommand, get_shell_command, ShellError
 from .submission import find_appropriate_source_file_stem
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
-DUMMY_SH_COMMAND_RESULT_CLASS = namedtuple("ShCommandResult", "exit_code")
 
 
 def is_multifile_submission(submission_dir: Path, possible_source_file_stems: List[str]) -> bool:
@@ -39,6 +35,9 @@ def _is_makefile(path: Path):
 def contains_shebang(path: Path) -> bool:
     if not path.is_file():
         return False
+    # Windows does not support shebang lines
+    if sys.platform.startswith("win32"):
+        return False
     with open(path) as f:
         return f.readline().startswith("#!")
 
@@ -46,7 +45,7 @@ def contains_shebang(path: Path) -> bool:
 class StdoutOnlyTestCase(TestCase):
 
     helper_module = ""
-    compiler = Command("make")
+    compiler = get_shell_command("make")
 
     @classmethod
     def is_installed(cls) -> bool:
@@ -64,6 +63,7 @@ class StdoutOnlyTestCase(TestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         arglist,
+        config,
     ):
         """pwd is temp/student_dir"""
 
@@ -78,7 +78,7 @@ class StdoutOnlyTestCase(TestCase):
             _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
             try:
                 cls.compiler(*arglist)
-            except sh.ErrorReturnCode as e:
+            except ShellError as e:
                 if "no makefile found" not in str(e):
                     raise e
             return _find_submission_executable(student_dir, possible_source_file_stems)
@@ -96,19 +96,16 @@ class StdoutOnlyTestCase(TestCase):
         """There is no testcase file"""
 
     def _run_stdout_only_testcase(self, precompiled_submission: Path, *args, **kwargs):
-        # Abstract testcase changes the default ok code from (0,) to (3, 4, 5),
-        # making running any regular program viewed as crashing.
-        if kwargs.get("_ok_code", None) is not None:
-            kwargs.pop("_ok_code")
-        try:
-            sh.Command(precompiled_submission)(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            raise e
+        # Because student submissions do not play by our ExitCodeEventType rules,
+        # we allow them to return 0 at the end.
+        kwargs["allowed_exit_codes"] = (0,)
+        result = ShellCommand(precompiled_submission)(*args, **kwargs)
 
         # We fake the validation string because there is no way we can truly validate such testcases
-        kwargs["_out"].write(f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}")
-        return DUMMY_SH_COMMAND_RESULT_CLASS(ExitCodeEventType.CHECK_STDOUT)
+        result.stdout += f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}"
+        result.returncode = ExitCodeEventType.CHECK_STDOUT
+        print("STDOUTTEST:", result.returncode)
+        return result
 
 
 def _copy_multifile_submission_contents_into_student_dir(submission: Path, student_dir: Path):

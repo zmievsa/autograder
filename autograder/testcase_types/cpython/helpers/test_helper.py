@@ -32,4 +32,4 @@ if __name__ != "__main__" or VALIDATING_STRING is None:
     del VALIDATING_STRING
     CHEATING_ATTEMPT()
 
-student_submission = importlib.import_module(sys.argv[1])
+student_submission = importlib.import_module(os.environ.pop("STUDENT_SUBMISSION", None))

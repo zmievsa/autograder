@@ -6,8 +6,8 @@
 
 def main():
     result = student_submission.add(1, 2)
-    assert result == 3
-    if result <= 3:
+    assert result == 0
+    if result == 3:
         PASS()
     else:
         FAIL()

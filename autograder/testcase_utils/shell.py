@@ -1,25 +1,48 @@
+import os
+from pathlib import Path
 import shutil
-from typing import Protocol, Any, Optional
+import sys
+from typing import Any, Union
+from dataclasses import dataclass
+import subprocess
 
-import sh
 
-EMPTY_COMMAND = sh.Command("false")
-
-
-class ShCommand(Protocol):
+@dataclass(frozen=True)
+class ShellCommand:
     """We use this to imitate sh.Command by duck-typing it"""
 
-    def __call__(self, *args: str, **kwargs: Any) -> Optional[sh.RunningCommand]:
-        raise NotImplementedError()
+    command_name: Union[str, Path]
+
+    def __call__(self, *args, allowed_exit_codes=(0,), **kwargs: Any) -> subprocess.CompletedProcess:
+        if "env" in kwargs and sys.platform.startswith("win32"):
+            kwargs["env"].update({"SYSTEMROOT": os.environ["SYSTEMROOT"]})
+
+        result = subprocess.run(
+            # Linux handles non-string args well yet Windows doesn't
+            [str(self.command_name)] + [str(a) for a in args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **kwargs,
+        )
+        if result.returncode not in allowed_exit_codes:
+            raise ShellError(result.returncode, result.stderr)
+        return result
 
 
-def get_stderr(error: sh.ErrorReturnCode, error_title: str):
-    error_str = str(error.stderr.decode("UTF-8"))
-    # Remove all unrelated output
-    formatted_error = f"{error_title}\n{error_str[error_str.find('STDERR:') + len('STDERR') :]}"
-    return formatted_error.strip()
+EMPTY_COMMAND = ShellCommand("false")
 
 
-def Command(command: str, *args: Any, **kwargs: Any) -> sh.Command:
+class ShellError(Exception):
+    def __init__(self, returncode: int, stderr: str):
+        super().__init__(stderr)
+        self.returncode = returncode
+        self.stderr = stderr.strip()
+
+    def format(self, title: str) -> str:
+        return f"{title}\n{self.stderr}"
+
+
+def get_shell_command(command: str) -> ShellCommand:
     """An API for commands that postpone throwing non-existence errors from creation to runtime"""
-    return EMPTY_COMMAND if shutil.which(command) is None else sh.Command(command, *args, **kwargs)
+    return EMPTY_COMMAND if shutil.which(command) is None else ShellCommand(command)
