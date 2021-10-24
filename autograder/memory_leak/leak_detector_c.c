@@ -129,8 +129,8 @@ void * xcalloc(unsigned int elements, unsigned int size, const char * file, unsi
 /*
  * replacement of realloc
  */
-void * xrealloc(void *ptr, size_t size, const char * file, unsigned int line) {
-    void *ptr_new = realloc(ptr, size);
+void * xrealloc(void * ptr, size_t size, const char * file, unsigned int line) {
+    void * ptr_new = realloc(ptr, size);
     
     if (ptr_new == NULL && size != 0) {
         fprintf(stderr, "ISSUE: memory exhausted\n");
@@ -202,7 +202,7 @@ static void report_mem_leak(void) {
     FILE * fp_write = fopen(OUTPUT_FILE, "wt");
     
     if (fp_write == NULL) {
-        fprintf(stderr, "ISSUE: cannot create file!\n");
+        fprintf(stderr, "ISSUE: cannot create or open file!\n");
         exit(1);
     }
     
