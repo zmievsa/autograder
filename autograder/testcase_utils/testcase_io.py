@@ -23,29 +23,21 @@ class TestCaseIO:
 
         input_file: Path = input_dir / f"{self.name}.txt"
         if input_file.exists() and input_file.is_file():
-            with input_file.open() as f:
-                self._input = StringIO(f.read().strip())
+            self.input = input_file.read_text().strip()
         else:
-            self._input = StringIO("")
+            self.input = ""
 
     def format_output(self, output: str) -> str:
         return output if self.formatter is None else self.formatter(output)
-
-    @contextmanager
-    def input(self):
-        try:
-            yield self._input
-        finally:
-            self._input.seek(0)
 
     def expected_output_equals(self, output: str) -> bool:
         return self.format_output(output) == self.expected_output
 
     @classmethod
     def get_empty_io(cls):
-        io = TestCaseIO("/*", {}, Path(), Path())
+        io = cls("nonexistent", {}, Path(), Path())
         io.expected_output = ""
-        io._input = StringIO("")
+        io.input = ""
         return io
 
     def cleanup(self):

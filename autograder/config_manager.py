@@ -5,9 +5,12 @@ from typing import Any, Callable, Dict, List, TypeVar
 from .testcase_utils.abstract_testcase import ArgList
 
 DEFAULT_FILE_STEM = "Homework"
+MAIN_CONFIG_SECTION = "CONFIG"
 
 
 class GradingConfig:
+    file: configparser.ConfigParser
+
     timeouts: Dict[str, float]
     generate_results: bool
     parallel_grading_enabled: bool
@@ -29,8 +32,9 @@ class GradingConfig:
         config_path: Path,
         default_config_path: Path,
     ):
-        cfg = self._read_config(config_path, default_config_path)
-
+        configparser = self._read_config(config_path, default_config_path)
+        self.file = configparser
+        cfg = configparser[MAIN_CONFIG_SECTION]
         self.timeouts = parse_config_list(cfg["TIMEOUT"], float)
         self.generate_results = cfg.getboolean("GENERATE_RESULTS")
         self.parallel_grading_enabled = cfg.getboolean("PARALLEL_GRADING_ENABLED")
@@ -55,7 +59,7 @@ class GradingConfig:
         self.cli_argument_lists = parse_arglists(cfg)
 
     @staticmethod
-    def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.SectionProxy:
+    def _read_config(path_to_user_config: Path, path_to_default_config: Path) -> configparser.ConfigParser:
         default_parser = configparser.ConfigParser()
         default_parser.read(str(path_to_default_config))
 
@@ -63,7 +67,7 @@ class GradingConfig:
         user_parser.read_dict(default_parser)
         user_parser.read(str(path_to_user_config))
 
-        return user_parser["CONFIG"]
+        return user_parser
 
     def generate_arglists(self, file_name: str) -> Dict[ArgList, List[str]]:
         arglist = {}

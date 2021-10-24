@@ -1,14 +1,14 @@
 import multiprocessing
-import os
+from threading import Lock
 import shutil
-from contextlib import contextmanager
 from pathlib import Path
+import time
 from typing import Callable, Dict, List, Set, Type, Tuple
-import sh
+import sys
 
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
-from .testcase_utils.shell import get_stderr
+from .testcase_utils.shell import ShellError
 from .testcase_utils.abstract_testcase import ArgList, TestCase
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
@@ -30,7 +30,6 @@ class Grader:
     logger: GradingOutputLogger
     config: GradingConfig
     testcase_picker: TestCasePicker
-    stdout_only_tests: list
 
     def __init__(self, current_dir: Path, json_output: bool = False, submissions=None):
         if submissions is None:
@@ -143,6 +142,7 @@ class Grader:
                 self.config.generate_arglists(io.name),
                 self.config.testcase_weights.get(io.name, default_weight),
                 io,
+                self.config,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -174,6 +174,7 @@ class Grader:
                     arglist,
                     self.config.testcase_weights.get(test.name, default_weight),
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
+                    self.config,
                 )
             )
         # Allows consistent output
@@ -259,8 +260,11 @@ class AutograderPaths:
 class Runner:
     """Grades single submissions"""
 
-    def __init__(self, grader, lock):
-        self.grader: Grader = grader
+    grader: Grader
+    lock: Lock
+
+    def __init__(self, grader, lock: Lock):
+        self.grader = grader
         self.lock = lock
 
     def __call__(self, submission: Submission) -> Submission:
@@ -273,8 +277,10 @@ class Runner:
             self._get_testcase_output(submission)
             with lock:
                 self.grader.logger.print_single_student_grading_results(submission)
-        # Cleanup after running tests on student submission
-        shutil.rmtree(submission.temp_dir)
+        # Windows sucks at cleaning up processes early
+        if not sys.platform.startswith("win32"):
+            # Cleanup after running tests on student submission
+            shutil.rmtree(submission.temp_dir)
 
     def _copy_extra_files(self, to_dir: Path):
         if self.grader.paths.extra_dir.exists():
@@ -290,8 +296,8 @@ class Runner:
         """
         try:
             precompiled_submission = self._precompile_submission(submission)
-        except sh.ErrorReturnCode as e:
-            error = hide_path_to_directory(get_stderr(e, "Failed to precompile:"), submission.temp_dir)
+        except ShellError as e:
+            error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
             submission.register_precompilation_error(error)
             return 0
         allowed_tests = self.grader.tests.get(submission.type, [])
@@ -312,4 +318,5 @@ class Runner:
             submission.temp_dir,
             self.grader.config.possible_source_file_stems,
             arglists[ArgList.SUBMISSION_PRECOMPILATION],
+            self.grader.config,
         )

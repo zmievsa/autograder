@@ -1,18 +1,13 @@
 # Controls output to stdout and to output file
 
 
-import logging
-import re
-import sys
 from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
-import multiprocessing.synchronize
-from typing import Deque, List
+from typing import List
 import json
 
 
-from .testcase_utils.shell import get_stderr
 from .testcase_utils.submission import Submission
 
 KEY = """

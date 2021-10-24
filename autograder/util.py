@@ -14,7 +14,7 @@ class AutograderError(Exception):
 
 def import_from_path(module_name: str, path: Path) -> ModuleType:
     spec = importlib.util.spec_from_file_location(module_name, path)
-    if spec is None or spec.loader is None:
+    if not (spec and spec.loader):
         raise TypeError(f"File loader for {path} was not found. Please, refer to importlib docs.")
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module

@@ -3,13 +3,13 @@
 // https://blog.quirk.es/2009/11/setting-environment-variables-in-java.html
     private interface LibC extends Library {
         public int setenv(String name, String value, int overwrite);
-        public int unsetenv(String name);
+        public int {% SETENV %}(String name);
     }
-    private static LibC libc = (LibC) Native.loadLibrary("c", LibC.class);
+    private static LibC libc = (LibC) Native.loadLibrary("{% C_LIBRARY %}", LibC.class);
 
-    private static int unsetenv(String name) {
+    private static int setenv(String name) {
         getenv().remove(name);
-        return libc.unsetenv(name);
+        return libc.{% SETENV %}(name + "=NULL");
     }
 
     @SuppressWarnings("unchecked")
@@ -30,8 +30,7 @@
     private static String VALIDATING_STRING = ENABLE_ANTI_CHEAT();
     private static String ENABLE_ANTI_CHEAT() {
         String val = System.getenv("VALIDATING_STRING");
-        unsetenv("VALIDATING_STRING");
-        System.setSecurityManager(new NoReflectionAndEnvVarsSecurityManager());
+        setenv("VALIDATING_STRING");
         return val;
     }
     private static void CHECK_STDOUT() {

@@ -1,17 +1,44 @@
 import re
 import shutil
 from pathlib import Path
+import sys
 from typing import List
 
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import Command
+from autograder.testcase_utils.shell import ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem
+from autograder.testcase_utils.test_helper_formatter import get_formatted_test_helper
 from autograder.util import AutograderError
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
+
+# Previously, we used SecurityManager to prevent reflection but now
+# it's deprecated and we're forced to resort to this hack. It's not
+# perfect but java does not leave us any other options.
+REFLECTION_MATCHER = re.compile(r"import(\s+)java\.lang\.reflect\.")
+
+# Java does not allow us to properly unset environment variables
+# which is why we must use JNA to do so. However, because we are
+# forced to insert our TestHelper into TestCase class, we cannot
+# define any imports on top of it. Hence we have to use this hack.
+LIBRARIES_REQUIRED_FOR_UNSETENV = """
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.HashMap;
+
+"""
+if sys.platform.startswith("win32"):
+    ADDITIONAL_TEST_HELPER_KWARGS = {"SETENV": "_putenv", "C_LIBRARY": "msvcrt"}
+    CLASSPATH = ".;jna.jar"
+else:
+    ADDITIONAL_TEST_HELPER_KWARGS = {"SETENV": "setenv", "C_LIBRARY": "c"}
+    CLASSPATH = ".:*"
+
+# TODO: Generalize extra dir to all testcase types
 EXTRA_DIR = Path(__file__).parent / "extra"
 PATH_TO_JNA_FILE = EXTRA_DIR / "jna.jar"
-PATH_TO_SECURITY_MANAGER_FILE = EXTRA_DIR / "NoReflectionAndEnvVarsSecurityManager.class"
 
 
 class TestCase(AbstractTestCase):
@@ -23,9 +50,9 @@ class TestCase(AbstractTestCase):
 
     source_suffix = ".java"
     executable_suffix = ""
-    helper_module = "TestHelper.java"
-    compiler = Command("javac")
-    virtual_machine = Command("java")
+    helper_module = "TestHelper.java"  # type: ignore
+    compiler = get_shell_command("javac")
+    virtual_machine = get_shell_command("java")
 
     @classmethod
     def is_installed(cls) -> bool:
@@ -38,15 +65,19 @@ class TestCase(AbstractTestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         arglist,
+        config,
     ):
         stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
         if stem is None:
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = super().precompile_submission(submission, student_dir, [stem], arglist)
+        copied_submission = super().precompile_submission(submission, student_dir, [stem], arglist, config)
         try:
-            cls.compiler(copied_submission, *arglist)
+            if not REFLECTION_MATCHER.search(copied_submission.read_text()):
+                cls.compiler(copied_submission, *arglist)
+            else:
+                raise ShellError(1, "The use of reflection is forbidden in student submissions.")
         finally:
             copied_submission.unlink()
 
@@ -57,15 +88,14 @@ class TestCase(AbstractTestCase):
         self.compiler(
             new_self_path,
             "-cp",
-            f".:*",
+            CLASSPATH,
             *self.argument_lists[ArgList.TESTCASE_COMPILATION],
         )
-        return lambda *args, **kwargs: self.virtual_machine("-cp", ".:*", self.path.stem, *args, **kwargs)
+        return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
         shutil.copyfile(PATH_TO_JNA_FILE, student_dir / PATH_TO_JNA_FILE.name)
-        shutil.copyfile(PATH_TO_SECURITY_MANAGER_FILE, student_dir / PATH_TO_SECURITY_MANAGER_FILE.name)
 
     def delete_executable_files(self, precompiled_submission: Path):
         for p in precompiled_submission.parent.iterdir():
@@ -79,25 +109,17 @@ class TestCase(AbstractTestCase):
         """
         with open(self.path) as f:
             content = f.read()
-        final_content = self._add_at_the_beginning_of_public_class(self.get_formatted_test_helper(), content)
-        final_content = (
-            f"""import com.sun.jna.Library;
-                import com.sun.jna.Native;
-                import java.lang.reflect.Field;
-                import java.util.Map;
-                import java.util.HashMap;
-            """
-            + final_content
-        )
+        formatted_test_helper = self.get_formatted_test_helper(**ADDITIONAL_TEST_HELPER_KWARGS)
+        final_content = self._add_at_the_beginning_of_public_class(formatted_test_helper, content)
         with open(self.path, "w") as f:
-            f.write(final_content)
+            f.write(LIBRARIES_REQUIRED_FOR_UNSETENV + final_content)
 
     def _add_at_the_beginning_of_public_class(self, helper_class: str, java_file: str):
         """Looks for the first bracket of the first public class and inserts test helper next to it"""
         # This way is rather crude and can be prone to errors if left untested,
         # but java does not really leave us any other way to do it.
         match = PUBLIC_CLASS_MATCHER.search(java_file)
-        if match is None:
+        if not match:
             raise ValueError(f"Public class not found in {self.path}")
         else:
             main_class_index = match.end(1)

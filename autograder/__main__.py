@@ -93,12 +93,7 @@ def _add_submission_path_argument(parser: argparse.ArgumentParser):
 def _evaluate_args(args: argparse.Namespace, current_dir: Path):
     from autograder.util import AutograderError
 
-    if sys.platform.startswith("win32"):
-        raise AutograderError(
-            "Windows is not supported by autograder. If you do not have Linux,"
-            "try using it through utilities like Windows Subsystem For Linux."
-        )
-    elif sys.platform.startswith("darwin") and not args.json_output:
+    if sys.platform.startswith("darwin") and not args.json_output:
         print("OSX is not officially supported. Proceed with caution.")
     from autograder.autograder import Grader, AutograderPaths
 

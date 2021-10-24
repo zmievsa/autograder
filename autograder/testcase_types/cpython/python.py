@@ -4,14 +4,7 @@ import sys
 from pathlib import Path
 
 from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import Command, EMPTY_COMMAND
-
-PYTHON_VERSION_MAJOR_RELEASE, PYTHON_VERSION_MINOR_RELEASE, *_ = sys.version_info
-PYTHON_VERSION = f"{PYTHON_VERSION_MAJOR_RELEASE}.{PYTHON_VERSION_MINOR_RELEASE}"
-PYTHON_EXECUTABLE_NAME = f"python{PYTHON_VERSION}"
-
-if shutil.which(PYTHON_EXECUTABLE_NAME) is None:
-    PYTHON_EXECUTABLE_NAME = "python3"
+from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
 
 
 class TestCase(AbstractTestCase):
@@ -21,8 +14,8 @@ class TestCase(AbstractTestCase):
 
     source_suffix = ".py"
     executable_suffix = ".pyc"
-    helper_module = "test_helper.py"
-    interpreter = Command(PYTHON_EXECUTABLE_NAME)
+    helper_module = "test_helper.py"  # type: ignore
+    interpreter = get_shell_command(sys.executable)
 
     @classmethod
     def is_installed(cls) -> bool:
@@ -35,8 +28,9 @@ class TestCase(AbstractTestCase):
         student_dir: Path,
         possible_source_file_stems: str,
         arglist,
+        config,
     ):
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], arglist)
+        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], arglist, config)
         kwargs = {}
         if "-O" in arglist:
             kwargs["optimize"] = 1
@@ -46,13 +40,10 @@ class TestCase(AbstractTestCase):
         return executable_path
 
     def compile_testcase(self, precompiled_submission: Path):
-        # Argument lists do not seem to work here
-        # Test it, plz.
         return lambda *args, **kwargs: self.interpreter(
             self.make_executable_path(precompiled_submission),
-            precompiled_submission.stem,
-            *self.argument_lists[ArgList.TESTCASE_COMPILATION],
             *args,
+            env={"STUDENT_SUBMISSION": precompiled_submission.stem, **kwargs.pop("env")},
             **kwargs,
         )
 
