@@ -1,5 +1,5 @@
 #!/bin/bash
-file=$(python3 filename.py)
+file=$1
 
 cp $file ./
 file=$(basename $file)
@@ -21,5 +21,5 @@ case "$file" in
 esac
 
 ./memtest > /dev/null 2>&1
-cat leak_info.txt
+cat *.txt
 rm memtest leak_detector_c.o ${file%.*}.o $file

@@ -193,13 +193,13 @@ static void remove_mem_info(void * mem_ref) {
 }
 
 /*
- * writes all info of the unallocated memory into a file
+ * helper function to convert file descriptor into a file
  */
-static void report_mem_leak(void) {
+static void configure_memleak(int file_descriptor) {
     unsigned short index;
     MEM_LEAK * leak_info;
-
-    FILE * fp_write = fopen(OUTPUT_FILE, "wt");
+    
+    FILE * fp_write = fdopen(file_descriptor, "w+");
     
     if (fp_write == NULL) {
         fprintf(stderr, "ISSUE: cannot create or open file!\n");
@@ -222,7 +222,19 @@ static void report_mem_leak(void) {
         fprintf(fp_write, "line    : %d\n", leak_info->mem_info.line);
         fprintf(fp_write, "%s\n", "-----------------------------------");
     }
-    
     fclose(fp_write);
+}
+
+/*
+ * writes all info of the unallocated memory into a file
+ */
+static void report_mem_leak(void) {
+    FILE * test = fopen("test4.txt", "w+");
+    
+    int fd = fileno(test);
+    
+    configure_memleak(fd);
+    
+    fclose(test);
     xclear();
 }

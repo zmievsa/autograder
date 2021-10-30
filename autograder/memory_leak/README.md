@@ -3,7 +3,8 @@
 
 ## Terminal Commands
 1. chmod +x memleak.sh
-2. ./memleak.sh
+2. ./memleak.sh `path/to/file`
+   - Example: ./memleak.sh tests/example.c
 
 ## Note These Following Details
 - All memory leak information/summary is located in `leak_info.txt` (after running bash script).
@@ -25,7 +26,7 @@ int main(void) {
 }
 ```
 
-Expected Output after running `chmod +x memleak.sh && ./memleak.sh` (Note that "address" may differ)
+Expected Output after running `chmod +x memleak.sh && ./memleak.sh tests/example.c` (Note that "address" may differ)
 ```txt
 Memory Leak Summary
 -----------------------------------
@@ -40,4 +41,3 @@ file    : example.c
 line    : 9
 -----------------------------------
 ```
-

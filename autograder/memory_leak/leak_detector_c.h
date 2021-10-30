@@ -16,7 +16,6 @@ extern "C" {
 #define  LEAK_DETECTOR_C_H
 
 #define  FILE_NAME_LENGTH           256
-#define  OUTPUT_FILE                "leak_info.txt"
 #define  malloc(size)               xmalloc(size, __FILE__, __LINE__)
 #define  calloc(elements, size)     xcalloc(elements, size, __FILE__, __LINE__)
 #define  realloc(ptr, size)         xrealloc(ptr, size, __FILE__, __LINE__)
@@ -45,6 +44,7 @@ void xfree(void * mem_ref);
 
 static void add_mem_info(void * mem_ref, unsigned int size,  const char * file, unsigned int line);
 static void remove_mem_info(void * mem_ref);
+static void configure_memleak(int file_descriptor);
 static void report_mem_leak(void);
 
 static void __attribute__((destructor)) report_mem_leak();
