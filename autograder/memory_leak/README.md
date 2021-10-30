@@ -7,7 +7,7 @@
    - Example: ./memleak.sh tests/example.c
 
 ## Note These Following Details
-- All memory leak information/summary is located in `leak_info.txt` (after running bash script).
+- All memory leak information/summary is located in some .txt file (after running bash script).
 - All sources codes needs to be in a directory.
 - Person does not need to modify their source code in order to use this tool.
 
