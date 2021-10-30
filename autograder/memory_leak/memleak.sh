@@ -1,5 +1,5 @@
 #!/bin/bash
-file=$1
+file=$(python3 filename.py)
 
 cp $file ./
 file=$(basename $file)
