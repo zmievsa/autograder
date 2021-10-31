@@ -2,11 +2,7 @@ from pathlib import Path
 import sys
 
 
-from autograder.testcase_utils.abstract_testcase import (
-    ArgList,
-    ShellCommand,
-    TestCase as AbstractTestCase,
-)
+from autograder.testcase_utils.abstract_testcase import ShellCommand, TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
 
 
@@ -41,13 +37,13 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: str,
-        arglist,
+        cli_args: str,
         config,
     ) -> Path:
         """Compiles student submission without linking it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], arglist, config)
+        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], cli_args, config)
         precompiled_submission = copied_submission.with_suffix(".o")
 
         # TODO: Append INCLUDE_MEMLEAK to submission here
@@ -58,25 +54,25 @@ class TestCase(AbstractTestCase):
                 f"{copied_submission}",
                 "-o",
                 precompiled_submission,
-                *arglist,
+                *cli_args.split(),
                 *cls.SUBMISSION_COMPILATION_ARGS,
             )
         finally:
             copied_submission.unlink()
         return precompiled_submission
 
-    def precompile_testcase(self):
+    def precompile_testcase(self, cli_args: str):
         self.compiler(
             "-c",
             self.path,
             "-o",
             self.path.with_suffix(".o"),
-            *self.argument_lists[ArgList.TESTCASE_PRECOMPILATION],
+            *cli_args.split(),
         )
         self.path.unlink()
         self.path = self.path.with_suffix(".o")
 
-    def compile_testcase(self, precompiled_submission: Path) -> ShellCommand:
+    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         executable_path = self.make_executable_path(precompiled_submission)
         files_to_compile = [
             precompiled_submission.with_name(self.path.name),
@@ -88,7 +84,7 @@ class TestCase(AbstractTestCase):
             "-o",
             executable_path,
             *files_to_compile,
-            *self.argument_lists[ArgList.TESTCASE_COMPILATION],
+            *cli_args.split(),
             *self.TESTCASE_COMPILATION_ARGS,
         )
         return ShellCommand(executable_path)

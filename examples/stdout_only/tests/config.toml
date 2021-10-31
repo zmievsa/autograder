@@ -1,0 +1,4 @@
+[CONFIG]
+POSSIBLE_SOURCE_FILE_STEMS = ["Homework", "Executable"]
+STDOUT_ONLY_GRADING_ENABLED = true
+TESTCASE_WEIGHTS = { DEFAULT = 1, "wrong_output_with_zero_weight.txt" = 0 }

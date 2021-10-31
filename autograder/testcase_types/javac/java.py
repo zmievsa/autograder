@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 from typing import List
 
-from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
+from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem
 from autograder.testcase_utils.test_helper_formatter import get_formatted_test_helper
@@ -36,7 +36,7 @@ else:
     ADDITIONAL_TEST_HELPER_KWARGS = {"SETENV": "setenv", "C_LIBRARY": "c"}
     CLASSPATH = ".:*"
 
-# TODO: Generalize extra dir to all testcase types
+
 EXTRA_DIR = Path(__file__).parent / "extra"
 PATH_TO_JNA_FILE = EXTRA_DIR / "jna.jar"
 
@@ -64,7 +64,7 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        arglist,
+        cli_args: str,
         config,
     ):
         stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
@@ -72,10 +72,10 @@ class TestCase(AbstractTestCase):
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = super().precompile_submission(submission, student_dir, [stem], arglist, config)
+        copied_submission = super().precompile_submission(submission, student_dir, [stem], cli_args, config)
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):
-                cls.compiler(copied_submission, *arglist)
+                cls.compiler(copied_submission, *cli_args.split())
             else:
                 raise ShellError(1, "The use of reflection is forbidden in student submissions.")
         finally:
@@ -83,13 +83,13 @@ class TestCase(AbstractTestCase):
 
         return copied_submission.with_suffix(".class")
 
-    def compile_testcase(self, precompiled_submission: Path):
+    def compile_testcase(self, precompiled_submission: Path, cli_args: str):
         new_self_path = precompiled_submission.with_name(self.path.name)
         self.compiler(
             new_self_path,
             "-cp",
             CLASSPATH,
-            *self.argument_lists[ArgList.TESTCASE_COMPILATION],
+            *cli_args.split(),
         )
         return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
 

@@ -2,4 +2,4 @@
 # with default config so you can safely delete it.
 
 [CONFIG]
-TESTCASE_WEIGHTS = test_output.py:0.5, test_result.py:1
+TESTCASE_WEIGHTS = { "test_output.cpp" = 0.5, "test_result.cpp" = 1 }

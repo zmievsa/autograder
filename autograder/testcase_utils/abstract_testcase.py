@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod, ABCMeta
 from inspect import getsourcefile
 from pathlib import Path
 import subprocess
-from typing import Dict
 from typing import List, Tuple
 
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
@@ -12,14 +11,7 @@ from .shell import ShellCommand, ShellError
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-
-
-# TODO: Why is this not in config?
-class ArgList(enum.Enum):
-    SUBMISSION_PRECOMPILATION = "SUBMISSION_PRECOMPILATION_ARGS"
-    TESTCASE_PRECOMPILATION = "TESTCASE_PRECOMPILATION_ARGS"
-    TESTCASE_COMPILATION = "TESTCASE_COMPILATION_ARGS"
-    TESTCASE_RUNTIME = "TESTCASE_RUNTIME_ARGS"
+from ..config_manager import GradingConfig
 
 
 class SourceDirSaver(ABCMeta, type):
@@ -49,6 +41,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     io: TestCaseIO
     validating_string: str
 
+    config: GradingConfig
+
     # Note that this structure will not work for any children of this class until 3.9
     # because classmethod does not wrap property correctly until then.
     # See https://bugs.python.org/issue19072
@@ -68,7 +62,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         return cls.type_source_file.parent / "templates"
 
     @abstractmethod
-    def compile_testcase(self, precompiled_submission: Path) -> ShellCommand:
+    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         """Compiles student submission and testcase into a single executable
         (or simply returns the command to run the testcase if no further compilation is necessary)
 
@@ -79,20 +73,18 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         self,
         path: Path,
         timeout: float,
-        argument_lists: Dict[ArgList, List[str]],
         weight: float,
+        testcase_precompilation_args: str,
         io: TestCaseIO,
-        config,
+        config: GradingConfig,
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
         self.timeout = timeout
-        self.argument_lists = argument_lists
         self.weight = weight
         self.max_score = int(weight * 100)
 
-        # Only really works if test name is in snake_case
-        self.name = path.stem.replace("_", " ").capitalize()
+        self.name = path.name
 
         self.io = io
         self.validating_string = generate_validating_string()
@@ -100,7 +92,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         self.config = config
 
         self.prepend_test_helper()
-        self.precompile_testcase()
+        self.precompile_testcase(testcase_precompilation_args)
 
     @classmethod
     def precompile_submission(
@@ -108,8 +100,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        arglist: List[str],
-        config,
+        cli_args: str,
+        config: GradingConfig,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -121,7 +113,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         shutil.copy(str(submission), str(destination))
         return destination
 
-    def precompile_testcase(self):
+    def precompile_testcase(self, cli_args: str):
         """Replaces the original testcase file with its compiled version,
         thus making reading its contents as plaintext harder.
         Useful in preventing cheating.
@@ -141,9 +133,11 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     def get_path_to_helper_module(self) -> Path:
         return self.test_helpers_dir / self.helper_module
 
-    def run(self, precompiled_submission: Path) -> Tuple[float, str]:
+    def run(
+        self, precompiled_submission: Path, testcase_compilation_args: str, testcase_runtime_args: str
+    ) -> Tuple[float, str]:
         """Returns student score and message to be displayed"""
-        result, message = self._weightless_run(precompiled_submission)
+        result, message = self._weightless_run(precompiled_submission, testcase_compilation_args, testcase_runtime_args)
 
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
@@ -175,20 +169,24 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         if source_path.exists():
             source_path.unlink()
 
-    def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
+    def _weightless_run(
+        self,
+        precompiled_submission: Path,
+        testcase_compilation_args: str,
+        testcase_runtime_args: str,
+    ) -> Tuple[float, str]:
         """Returns student score (without applying testcase weight) and message to be displayed"""
         testcase_copy_in_student_dir = precompiled_submission.with_name(self.path.name)
         shutil.copy(str(self.path), str(testcase_copy_in_student_dir))
 
         try:
-            test_executable = self.compile_testcase(precompiled_submission)
+            test_executable = self.compile_testcase(precompiled_submission, testcase_compilation_args)
         except ShellError as e:
             return 0, e.format("Failed to compile")
         self.delete_source_file(testcase_copy_in_student_dir)
-
         try:
             result = test_executable(
-                *self.argument_lists[ArgList.TESTCASE_RUNTIME],
+                *testcase_runtime_args.split(),
                 input=self.io.input,
                 timeout=self.timeout,
                 env={"VALIDATING_STRING": self.validating_string},
@@ -198,10 +196,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         except subprocess.TimeoutExpired:
             return 0, "Exceeded Time Limit"
         except ShellError as e:
-            return (
-                0,
-                f"Crashed due to signal {e.returncode}:\n{e.stderr}\n",
-            )
+            return 0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"
         raw_output = result.stdout
         output, score, output_is_valid = validate_output(raw_output, self.validating_string)
         if not output_is_valid:

@@ -3,7 +3,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from autograder.testcase_utils.abstract_testcase import ArgList, TestCase as AbstractTestCase
+from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
 
 
@@ -27,19 +27,19 @@ class TestCase(AbstractTestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: str,
-        arglist,
+        cli_args: str,
         config,
     ):
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], arglist, config)
+        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], cli_args, config)
         kwargs = {}
-        if "-O" in arglist:
+        if "-O" in cli_args:
             kwargs["optimize"] = 1
         executable_path = copied_submission.with_suffix(cls.executable_suffix)
         py_compile.compile(file=str(copied_submission), cfile=str(executable_path), doraise=True)
         copied_submission.unlink()
         return executable_path
 
-    def compile_testcase(self, precompiled_submission: Path):
+    def compile_testcase(self, precompiled_submission: Path, cLi_args: str):
         return lambda *args, **kwargs: self.interpreter(
             self.make_executable_path(precompiled_submission),
             *args,
@@ -47,9 +47,9 @@ class TestCase(AbstractTestCase):
             **kwargs,
         )
 
-    def precompile_testcase(self):
+    def precompile_testcase(self, cli_args: str):
         kwargs = {}
-        if "-O" in self.argument_lists[ArgList.TESTCASE_PRECOMPILATION]:
+        if "-O" in cli_args:
             kwargs["optimize"] = 1
         executable_path = self.path.with_suffix(self.executable_suffix)
         py_compile.compile(file=str(self.path), cfile=str(executable_path), doraise=True, **kwargs)

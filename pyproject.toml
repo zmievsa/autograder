@@ -1,28 +1,25 @@
 [tool.poetry]
 name = "assignment-autograder"
-version = "2.19.0"
+version = "3.0.0a"
 description = "Automatic assignment grading for instructor use in programming courses"
 authors = ["Ovsyanka <szmiev2000@gmail.com>"]
 license = "GPL-3.0"
-readme  = "README.md"
+readme = "README.md"
 repository = "https://github.com/Ovsyanka83/autograder"
-include = [
-    "autograder/**/*"
-]
-packages = [
-    {include = "autograder"}
-]
+include = ["autograder/**/*"]
+packages = [{ include = "autograder" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Education",
-    "Topic :: Education :: Testing"
+    "Topic :: Education :: Testing",
 ]
 
 
 [tool.poetry.dependencies]
 python = "^3.7"
 antlr4-python3-runtime = "4.9.2"
+tomlkit = "^0.7.2"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"

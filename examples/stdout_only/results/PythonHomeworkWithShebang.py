@@ -2,7 +2,8 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test output                             100/100
+wrong_output_with_zero_weight.txt       0/0 (Wrong output)
+test_output.txt                         100/100
 ================================================================
 Result: 100/100
 
