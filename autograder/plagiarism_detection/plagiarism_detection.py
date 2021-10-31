@@ -57,8 +57,7 @@ def parseFiles(files, lexerClass, ignoreList, numTokens):
     freq = [0 for x in range(numTokens + 1)]
     totalTokens = 0
     for i in range(len(files)):
-        stream = InputStream(files[i].read())
-        files[i].close()
+        stream = InputStream(files[i].read_text())
         lexer = lexerClass(stream)
         tokens = CommonTokenStream(lexer)
         tokens.fetch(500)
