@@ -229,7 +229,7 @@ static void configure_memleak(int file_descriptor) {
  * writes all info of the unallocated memory into a file
  */
 static void report_mem_leak(void) {
-    FILE * test = fopen("test4.txt", "w+");
+    FILE * test = fopen("leak_info.txt", "w+");
     
     int fd = fileno(test);
     
