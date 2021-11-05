@@ -2,11 +2,11 @@
 from antlr4 import *
 from io import StringIO
 import sys
+
 if sys.version_info[1] > 5:
     from typing import TextIO
 else:
     from typing.io import TextIO
-
 
 
 def serializedATN():
@@ -17,8 +17,8 @@ def serializedATN():
         buf.write("\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23")
         buf.write("\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30")
         buf.write("\4\31\t\31\4\32\t\32\4\33\t\33\4\34\t\34\4\35\t\35\4\36")
-        buf.write("\t\36\4\37\t\37\4 \t \4!\t!\4\"\t\"\4#\t#\4$\t$\4%\t%")
-        buf.write("\4&\t&\4\'\t\'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
+        buf.write('\t\36\4\37\t\37\4 \t \4!\t!\4"\t"\4#\t#\4$\t$\4%\t%')
+        buf.write("\4&\t&\4'\t'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
         buf.write("\t.\4/\t/\4\60\t\60\4\61\t\61\4\62\t\62\4\63\t\63\4\64")
         buf.write("\t\64\4\65\t\65\4\66\t\66\4\67\t\67\48\t8\49\t9\4:\t:")
         buf.write("\4;\t;\4<\t<\4=\t=\4>\t>\4?\t?\4@\t@\4A\tA\4B\tB\4C\t")
@@ -53,10 +53,10 @@ def serializedATN():
         buf.write("\3\33\3\33\3\33\3\33\3\33\3\33\3\33\3\33\3\34\3\34\3\34")
         buf.write("\3\34\3\35\3\35\3\35\3\35\3\35\3\35\3\35\3\35\3\35\3\35")
         buf.write("\3\36\3\36\3\36\3\36\3\36\3\37\3\37\3\37\3\37\3\37\3\37")
-        buf.write("\3\37\3 \3 \3 \3 \3!\3!\3!\3!\3!\3!\3!\3!\3\"\3\"\3\"")
-        buf.write("\3\"\3\"\3\"\3\"\3\"\3#\3#\3#\3#\3#\3#\3#\3#\3#\3#\3$")
+        buf.write('\3\37\3 \3 \3 \3 \3!\3!\3!\3!\3!\3!\3!\3!\3"\3"\3"')
+        buf.write('\3"\3"\3"\3"\3"\3#\3#\3#\3#\3#\3#\3#\3#\3#\3#\3$')
         buf.write("\3$\3$\3$\3$\3$\3$\3%\3%\3%\3%\3%\3%\3%\3&\3&\3&\3&\3")
-        buf.write("&\3&\3\'\3\'\3\'\3\'\3\'\3\'\3\'\3(\3(\3(\3(\3(\3(\3(")
+        buf.write("&\3&\3'\3'\3'\3'\3'\3'\3'\3(\3(\3(\3(\3(\3(\3(")
         buf.write("\3(\3(\3)\3)\3)\3)\3)\3)\3*\3*\3*\3*\3*\3*\3*\3+\3+\3")
         buf.write("+\3+\3+\3+\3+\3+\3+\3+\3+\3+\3+\3,\3,\3,\3,\3,\3-\3-\3")
         buf.write("-\3-\3-\3-\3.\3.\3.\3.\3.\3.\3.\3/\3/\3/\3/\3/\3/\3/\3")
@@ -107,8 +107,8 @@ def serializedATN():
         buf.write("\7\u009a\u043e\n\u009a\f\u009a\16\u009a\u0441\13\u009a")
         buf.write("\3\u009a\3\u009a\3\u0431\2\u009b\3\3\5\4\7\5\t\6\13\7")
         buf.write("\r\b\17\t\21\n\23\13\25\f\27\r\31\16\33\17\35\20\37\21")
-        buf.write("!\22#\23%\24\'\25)\26+\27-\30/\31\61\32\63\33\65\34\67")
-        buf.write("\359\36;\37= ?!A\"C#E$G%I&K\'M(O)Q*S+U,W-Y.[/]\60_\61")
+        buf.write("!\22#\23%\24'\25)\26+\27-\30/\31\61\32\63\33\65\34\67")
+        buf.write("\359\36;\37= ?!A\"C#E$G%I&K'M(O)Q*S+U,W-Y.[/]\60_\61")
         buf.write("a\62c\63e\64g\65i\2k\2m\2o\2q\2s\2u\2w\2y\2{\2}\2\177")
         buf.write("\2\u0081\2\u0083\2\u0085\2\u0087\2\u0089\2\u008b\2\u008d")
         buf.write("\2\u008f\2\u0091\2\u0093\2\u0095\2\u0097\2\u0099\2\u009b")
@@ -127,11 +127,11 @@ def serializedATN():
         buf.write("\f\f\17\17))^^\6\2\f\f\17\17$$^^\n\2$$))^^ddhhppttvv\3")
         buf.write("\2\62\65\6\2&&C\\aac|\4\2\2\u0081\ud802\udc01\3\2\ud802")
         buf.write("\udc01\3\2\udc02\ue001\7\2&&\62;C\\aac|\5\2\13\f\16\17")
-        buf.write("\"\"\4\2\f\f\17\17\2\u0452\2\3\3\2\2\2\2\5\3\2\2\2\2\7")
+        buf.write('""\4\2\f\f\17\17\2\u0452\2\3\3\2\2\2\2\5\3\2\2\2\2\7')
         buf.write("\3\2\2\2\2\t\3\2\2\2\2\13\3\2\2\2\2\r\3\2\2\2\2\17\3\2")
         buf.write("\2\2\2\21\3\2\2\2\2\23\3\2\2\2\2\25\3\2\2\2\2\27\3\2\2")
         buf.write("\2\2\31\3\2\2\2\2\33\3\2\2\2\2\35\3\2\2\2\2\37\3\2\2\2")
-        buf.write("\2!\3\2\2\2\2#\3\2\2\2\2%\3\2\2\2\2\'\3\2\2\2\2)\3\2\2")
+        buf.write("\2!\3\2\2\2\2#\3\2\2\2\2%\3\2\2\2\2'\3\2\2\2\2)\3\2\2")
         buf.write("\2\2+\3\2\2\2\2-\3\2\2\2\2/\3\2\2\2\2\61\3\2\2\2\2\63")
         buf.write("\3\2\2\2\2\65\3\2\2\2\2\67\3\2\2\2\29\3\2\2\2\2;\3\2\2")
         buf.write("\2\2=\3\2\2\2\2?\3\2\2\2\2A\3\2\2\2\2C\3\2\2\2\2E\3\2")
@@ -160,7 +160,7 @@ def serializedATN():
         buf.write("\23\u0168\3\2\2\2\25\u016e\3\2\2\2\27\u0174\3\2\2\2\31")
         buf.write("\u017d\3\2\2\2\33\u0185\3\2\2\2\35\u0188\3\2\2\2\37\u018f")
         buf.write("\3\2\2\2!\u0194\3\2\2\2#\u0199\3\2\2\2%\u01a1\3\2\2\2")
-        buf.write("\'\u01a7\3\2\2\2)\u01af\3\2\2\2+\u01b5\3\2\2\2-\u01b9")
+        buf.write("'\u01a7\3\2\2\2)\u01af\3\2\2\2+\u01b5\3\2\2\2-\u01b9")
         buf.write("\3\2\2\2/\u01bc\3\2\2\2\61\u01c1\3\2\2\2\63\u01cc\3\2")
         buf.write("\2\2\65\u01d3\3\2\2\2\67\u01de\3\2\2\29\u01e2\3\2\2\2")
         buf.write(";\u01ec\3\2\2\2=\u01f1\3\2\2\2?\u01f8\3\2\2\2A\u01fc\3")
@@ -238,7 +238,7 @@ def serializedATN():
         buf.write("\7g\2\2\u018e\36\3\2\2\2\u018f\u0190\7g\2\2\u0190\u0191")
         buf.write("\7n\2\2\u0191\u0192\7u\2\2\u0192\u0193\7g\2\2\u0193 \3")
         buf.write("\2\2\2\u0194\u0195\7g\2\2\u0195\u0196\7p\2\2\u0196\u0197")
-        buf.write("\7w\2\2\u0197\u0198\7o\2\2\u0198\"\3\2\2\2\u0199\u019a")
+        buf.write('\7w\2\2\u0197\u0198\7o\2\2\u0198"\3\2\2\2\u0199\u019a')
         buf.write("\7g\2\2\u019a\u019b\7z\2\2\u019b\u019c\7v\2\2\u019c\u019d")
         buf.write("\7g\2\2\u019d\u019e\7p\2\2\u019e\u019f\7f\2\2\u019f\u01a0")
         buf.write("\7u\2\2\u01a0$\3\2\2\2\u01a1\u01a2\7h\2\2\u01a2\u01a3")
@@ -462,7 +462,7 @@ def serializedATN():
         buf.write(",\2\2\u03d5\u0100\3\2\2\2\u03d6\u03d7\7\61\2\2\u03d7\u0102")
         buf.write("\3\2\2\2\u03d8\u03d9\7(\2\2\u03d9\u0104\3\2\2\2\u03da")
         buf.write("\u03db\7~\2\2\u03db\u0106\3\2\2\2\u03dc\u03dd\7`\2\2\u03dd")
-        buf.write("\u0108\3\2\2\2\u03de\u03df\7\'\2\2\u03df\u010a\3\2\2\2")
+        buf.write("\u0108\3\2\2\2\u03de\u03df\7'\2\2\u03df\u010a\3\2\2\2")
         buf.write("\u03e0\u03e1\7/\2\2\u03e1\u03e2\7@\2\2\u03e2\u010c\3\2")
         buf.write("\2\2\u03e3\u03e4\7<\2\2\u03e4\u03e5\7<\2\2\u03e5\u010e")
         buf.write("\3\2\2\2\u03e6\u03e7\7-\2\2\u03e7\u03e8\7?\2\2\u03e8\u0110")
@@ -472,7 +472,7 @@ def serializedATN():
         buf.write("\u0116\3\2\2\2\u03f2\u03f3\7(\2\2\u03f3\u03f4\7?\2\2\u03f4")
         buf.write("\u0118\3\2\2\2\u03f5\u03f6\7~\2\2\u03f6\u03f7\7?\2\2\u03f7")
         buf.write("\u011a\3\2\2\2\u03f8\u03f9\7`\2\2\u03f9\u03fa\7?\2\2\u03fa")
-        buf.write("\u011c\3\2\2\2\u03fb\u03fc\7\'\2\2\u03fc\u03fd\7?\2\2")
+        buf.write("\u011c\3\2\2\2\u03fb\u03fc\7'\2\2\u03fc\u03fd\7?\2\2")
         buf.write("\u03fd\u011e\3\2\2\2\u03fe\u03ff\7>\2\2\u03ff\u0400\7")
         buf.write(">\2\2\u0400\u0401\7?\2\2\u0401\u0120\3\2\2\2\u0402\u0403")
         buf.write("\7@\2\2\u0403\u0404\7@\2\2\u0404\u0405\7?\2\2\u0405\u0122")
@@ -516,7 +516,7 @@ class JavaLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
-    decisionsToDFA = [ DFA(ds, i) for i, ds in enumerate(atn.decisionToState) ]
+    decisionsToDFA = [DFA(ds, i) for i, ds in enumerate(atn.decisionToState)]
 
     ABSTRACT = 1
     ASSERT = 2
@@ -625,87 +625,391 @@ class JavaLexer(Lexer):
     WS = 105
     COMMENT = 106
     LINE_COMMENT = 107
+    VAR = 108
 
-    channelNames = [ u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN" ]
+    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
 
-    modeNames = [ "DEFAULT_MODE" ]
+    modeNames = ["DEFAULT_MODE"]
 
-    literalNames = [ "<INVALID>",
-            "'abstract'", "'assert'", "'boolean'", "'break'", "'byte'",
-            "'case'", "'catch'", "'char'", "'class'", "'const'", "'continue'",
-            "'default'", "'do'", "'double'", "'else'", "'enum'", "'extends'",
-            "'final'", "'finally'", "'float'", "'for'", "'if'", "'goto'",
-            "'implements'", "'import'", "'instanceof'", "'int'", "'interface'",
-            "'long'", "'native'", "'new'", "'package'", "'private'", "'protected'",
-            "'public'", "'return'", "'short'", "'static'", "'strictfp'",
-            "'super'", "'switch'", "'synchronized'", "'this'", "'throw'",
-            "'throws'", "'transient'", "'try'", "'void'", "'volatile'",
-            "'while'", "'null'", "'('", "')'", "'{'", "'}'", "'['", "']'",
-            "';'", "','", "'.'", "'='", "'>'", "'<'", "'!'", "'~'", "'?'",
-            "':'", "'=='", "'<='", "'>='", "'!='", "'&&'", "'||'", "'++'",
-            "'--'", "'+'", "'-'", "'*'", "'/'", "'&'", "'|'", "'^'", "'%'",
-            "'->'", "'::'", "'+='", "'-='", "'*='", "'/='", "'&='", "'|='",
-            "'^='", "'%='", "'<<='", "'>>='", "'>>>='", "'@'", "'...'" ]
+    literalNames = [
+        "<INVALID>",
+        "'abstract'",
+        "'assert'",
+        "'boolean'",
+        "'break'",
+        "'byte'",
+        "'case'",
+        "'catch'",
+        "'char'",
+        "'class'",
+        "'const'",
+        "'continue'",
+        "'default'",
+        "'do'",
+        "'double'",
+        "'else'",
+        "'enum'",
+        "'extends'",
+        "'final'",
+        "'finally'",
+        "'float'",
+        "'for'",
+        "'if'",
+        "'goto'",
+        "'implements'",
+        "'import'",
+        "'instanceof'",
+        "'int'",
+        "'interface'",
+        "'long'",
+        "'native'",
+        "'new'",
+        "'package'",
+        "'private'",
+        "'protected'",
+        "'public'",
+        "'return'",
+        "'short'",
+        "'static'",
+        "'strictfp'",
+        "'super'",
+        "'switch'",
+        "'synchronized'",
+        "'this'",
+        "'throw'",
+        "'throws'",
+        "'transient'",
+        "'try'",
+        "'void'",
+        "'volatile'",
+        "'while'",
+        "'null'",
+        "'('",
+        "')'",
+        "'{'",
+        "'}'",
+        "'['",
+        "']'",
+        "';'",
+        "','",
+        "'.'",
+        "'='",
+        "'>'",
+        "'<'",
+        "'!'",
+        "'~'",
+        "'?'",
+        "':'",
+        "'=='",
+        "'<='",
+        "'>='",
+        "'!='",
+        "'&&'",
+        "'||'",
+        "'++'",
+        "'--'",
+        "'+'",
+        "'-'",
+        "'*'",
+        "'/'",
+        "'&'",
+        "'|'",
+        "'^'",
+        "'%'",
+        "'->'",
+        "'::'",
+        "'+='",
+        "'-='",
+        "'*='",
+        "'/='",
+        "'&='",
+        "'|='",
+        "'^='",
+        "'%='",
+        "'<<='",
+        "'>>='",
+        "'>>>='",
+        "'@'",
+        "'...'",
+        "'var'",
+    ]
 
-    symbolicNames = [ "<INVALID>",
-            "ABSTRACT", "ASSERT", "BOOLEAN", "BREAK", "BYTE", "CASE", "CATCH",
-            "CHAR", "CLASS", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE",
-            "ELSE", "ENUM", "EXTENDS", "FINAL", "FINALLY", "FLOAT", "FOR",
-            "IF", "GOTO", "IMPLEMENTS", "IMPORT", "INSTANCEOF", "INT", "INTERFACE",
-            "LONG", "NATIVE", "NEW", "PACKAGE", "PRIVATE", "PROTECTED",
-            "PUBLIC", "RETURN", "SHORT", "STATIC", "STRICTFP", "SUPER",
-            "SWITCH", "SYNCHRONIZED", "THIS", "THROW", "THROWS", "TRANSIENT",
-            "TRY", "VOID", "VOLATILE", "WHILE", "IntegerLiteral", "FloatingPointLiteral",
-            "BooleanLiteral", "CharacterLiteral", "StringLiteral", "NullLiteral",
-            "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", "RBRACK",
-            "SEMI", "COMMA", "DOT", "ASSIGN", "GT", "LT", "BANG", "TILDE",
-            "QUESTION", "COLON", "EQUAL", "LE", "GE", "NOTEQUAL", "AND",
-            "OR", "INC", "DEC", "ADD", "SUB", "MUL", "DIV", "BITAND", "BITOR",
-            "CARET", "MOD", "ARROW", "COLONCOLON", "ADD_ASSIGN", "SUB_ASSIGN",
-            "MUL_ASSIGN", "DIV_ASSIGN", "AND_ASSIGN", "OR_ASSIGN", "XOR_ASSIGN",
-            "MOD_ASSIGN", "LSHIFT_ASSIGN", "RSHIFT_ASSIGN", "URSHIFT_ASSIGN",
-            "Identifier", "AT", "ELLIPSIS", "WS", "COMMENT", "LINE_COMMENT" ]
+    symbolicNames = [
+        "<INVALID>",
+        "ABSTRACT",
+        "ASSERT",
+        "BOOLEAN",
+        "BREAK",
+        "BYTE",
+        "CASE",
+        "CATCH",
+        "CHAR",
+        "CLASS",
+        "CONST",
+        "CONTINUE",
+        "DEFAULT",
+        "DO",
+        "DOUBLE",
+        "ELSE",
+        "ENUM",
+        "EXTENDS",
+        "FINAL",
+        "FINALLY",
+        "FLOAT",
+        "FOR",
+        "IF",
+        "GOTO",
+        "IMPLEMENTS",
+        "IMPORT",
+        "INSTANCEOF",
+        "INT",
+        "INTERFACE",
+        "LONG",
+        "NATIVE",
+        "NEW",
+        "PACKAGE",
+        "PRIVATE",
+        "PROTECTED",
+        "PUBLIC",
+        "RETURN",
+        "SHORT",
+        "STATIC",
+        "STRICTFP",
+        "SUPER",
+        "SWITCH",
+        "SYNCHRONIZED",
+        "THIS",
+        "THROW",
+        "THROWS",
+        "TRANSIENT",
+        "TRY",
+        "VOID",
+        "VOLATILE",
+        "WHILE",
+        "IntegerLiteral",
+        "FloatingPointLiteral",
+        "BooleanLiteral",
+        "CharacterLiteral",
+        "StringLiteral",
+        "NullLiteral",
+        "LPAREN",
+        "RPAREN",
+        "LBRACE",
+        "RBRACE",
+        "LBRACK",
+        "RBRACK",
+        "SEMI",
+        "COMMA",
+        "DOT",
+        "ASSIGN",
+        "GT",
+        "LT",
+        "BANG",
+        "TILDE",
+        "QUESTION",
+        "COLON",
+        "EQUAL",
+        "LE",
+        "GE",
+        "NOTEQUAL",
+        "AND",
+        "OR",
+        "INC",
+        "DEC",
+        "ADD",
+        "SUB",
+        "MUL",
+        "DIV",
+        "BITAND",
+        "BITOR",
+        "CARET",
+        "MOD",
+        "ARROW",
+        "COLONCOLON",
+        "ADD_ASSIGN",
+        "SUB_ASSIGN",
+        "MUL_ASSIGN",
+        "DIV_ASSIGN",
+        "AND_ASSIGN",
+        "OR_ASSIGN",
+        "XOR_ASSIGN",
+        "MOD_ASSIGN",
+        "LSHIFT_ASSIGN",
+        "RSHIFT_ASSIGN",
+        "URSHIFT_ASSIGN",
+        "Identifier",
+        "AT",
+        "ELLIPSIS",
+        "WS",
+        "COMMENT",
+        "LINE_COMMENT",
+        "VAR",
+    ]
 
-    ruleNames = [ "ABSTRACT", "ASSERT", "BOOLEAN", "BREAK", "BYTE", "CASE",
-                  "CATCH", "CHAR", "CLASS", "CONST", "CONTINUE", "DEFAULT",
-                  "DO", "DOUBLE", "ELSE", "ENUM", "EXTENDS", "FINAL", "FINALLY",
-                  "FLOAT", "FOR", "IF", "GOTO", "IMPLEMENTS", "IMPORT",
-                  "INSTANCEOF", "INT", "INTERFACE", "LONG", "NATIVE", "NEW",
-                  "PACKAGE", "PRIVATE", "PROTECTED", "PUBLIC", "RETURN",
-                  "SHORT", "STATIC", "STRICTFP", "SUPER", "SWITCH", "SYNCHRONIZED",
-                  "THIS", "THROW", "THROWS", "TRANSIENT", "TRY", "VOID",
-                  "VOLATILE", "WHILE", "IntegerLiteral", "DecimalIntegerLiteral",
-                  "HexIntegerLiteral", "OctalIntegerLiteral", "BinaryIntegerLiteral",
-                  "IntegerTypeSuffix", "DecimalNumeral", "Digits", "Digit",
-                  "NonZeroDigit", "DigitsAndUnderscores", "DigitOrUnderscore",
-                  "Underscores", "HexNumeral", "HexDigits", "HexDigit",
-                  "HexDigitsAndUnderscores", "HexDigitOrUnderscore", "OctalNumeral",
-                  "OctalDigits", "OctalDigit", "OctalDigitsAndUnderscores",
-                  "OctalDigitOrUnderscore", "BinaryNumeral", "BinaryDigits",
-                  "BinaryDigit", "BinaryDigitsAndUnderscores", "BinaryDigitOrUnderscore",
-                  "FloatingPointLiteral", "DecimalFloatingPointLiteral",
-                  "ExponentPart", "ExponentIndicator", "SignedInteger",
-                  "Sign", "FloatTypeSuffix", "HexadecimalFloatingPointLiteral",
-                  "HexSignificand", "BinaryExponent", "BinaryExponentIndicator",
-                  "BooleanLiteral", "CharacterLiteral", "SingleCharacter",
-                  "StringLiteral", "StringCharacters", "StringCharacter",
-                  "EscapeSequence", "OctalEscape", "ZeroToThree", "UnicodeEscape",
-                  "NullLiteral", "LPAREN", "RPAREN", "LBRACE", "RBRACE",
-                  "LBRACK", "RBRACK", "SEMI", "COMMA", "DOT", "ASSIGN",
-                  "GT", "LT", "BANG", "TILDE", "QUESTION", "COLON", "EQUAL",
-                  "LE", "GE", "NOTEQUAL", "AND", "OR", "INC", "DEC", "ADD",
-                  "SUB", "MUL", "DIV", "BITAND", "BITOR", "CARET", "MOD",
-                  "ARROW", "COLONCOLON", "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN",
-                  "DIV_ASSIGN", "AND_ASSIGN", "OR_ASSIGN", "XOR_ASSIGN",
-                  "MOD_ASSIGN", "LSHIFT_ASSIGN", "RSHIFT_ASSIGN", "URSHIFT_ASSIGN",
-                  "Identifier", "JavaLetter", "JavaLetterOrDigit", "AT",
-                  "ELLIPSIS", "WS", "COMMENT", "LINE_COMMENT" ]
+    ruleNames = [
+        "ABSTRACT",
+        "ASSERT",
+        "BOOLEAN",
+        "BREAK",
+        "BYTE",
+        "CASE",
+        "CATCH",
+        "CHAR",
+        "CLASS",
+        "CONST",
+        "CONTINUE",
+        "DEFAULT",
+        "DO",
+        "DOUBLE",
+        "ELSE",
+        "ENUM",
+        "EXTENDS",
+        "FINAL",
+        "FINALLY",
+        "FLOAT",
+        "FOR",
+        "IF",
+        "GOTO",
+        "IMPLEMENTS",
+        "IMPORT",
+        "INSTANCEOF",
+        "INT",
+        "INTERFACE",
+        "LONG",
+        "NATIVE",
+        "NEW",
+        "PACKAGE",
+        "PRIVATE",
+        "PROTECTED",
+        "PUBLIC",
+        "RETURN",
+        "SHORT",
+        "STATIC",
+        "STRICTFP",
+        "SUPER",
+        "SWITCH",
+        "SYNCHRONIZED",
+        "THIS",
+        "THROW",
+        "THROWS",
+        "TRANSIENT",
+        "TRY",
+        "VOID",
+        "VOLATILE",
+        "WHILE",
+        "IntegerLiteral",
+        "DecimalIntegerLiteral",
+        "HexIntegerLiteral",
+        "OctalIntegerLiteral",
+        "BinaryIntegerLiteral",
+        "IntegerTypeSuffix",
+        "DecimalNumeral",
+        "Digits",
+        "Digit",
+        "NonZeroDigit",
+        "DigitsAndUnderscores",
+        "DigitOrUnderscore",
+        "Underscores",
+        "HexNumeral",
+        "HexDigits",
+        "HexDigit",
+        "HexDigitsAndUnderscores",
+        "HexDigitOrUnderscore",
+        "OctalNumeral",
+        "OctalDigits",
+        "OctalDigit",
+        "OctalDigitsAndUnderscores",
+        "OctalDigitOrUnderscore",
+        "BinaryNumeral",
+        "BinaryDigits",
+        "BinaryDigit",
+        "BinaryDigitsAndUnderscores",
+        "BinaryDigitOrUnderscore",
+        "FloatingPointLiteral",
+        "DecimalFloatingPointLiteral",
+        "ExponentPart",
+        "ExponentIndicator",
+        "SignedInteger",
+        "Sign",
+        "FloatTypeSuffix",
+        "HexadecimalFloatingPointLiteral",
+        "HexSignificand",
+        "BinaryExponent",
+        "BinaryExponentIndicator",
+        "BooleanLiteral",
+        "CharacterLiteral",
+        "SingleCharacter",
+        "StringLiteral",
+        "StringCharacters",
+        "StringCharacter",
+        "EscapeSequence",
+        "OctalEscape",
+        "ZeroToThree",
+        "UnicodeEscape",
+        "NullLiteral",
+        "LPAREN",
+        "RPAREN",
+        "LBRACE",
+        "RBRACE",
+        "LBRACK",
+        "RBRACK",
+        "SEMI",
+        "COMMA",
+        "DOT",
+        "ASSIGN",
+        "GT",
+        "LT",
+        "BANG",
+        "TILDE",
+        "QUESTION",
+        "COLON",
+        "EQUAL",
+        "LE",
+        "GE",
+        "NOTEQUAL",
+        "AND",
+        "OR",
+        "INC",
+        "DEC",
+        "ADD",
+        "SUB",
+        "MUL",
+        "DIV",
+        "BITAND",
+        "BITOR",
+        "CARET",
+        "MOD",
+        "ARROW",
+        "COLONCOLON",
+        "ADD_ASSIGN",
+        "SUB_ASSIGN",
+        "MUL_ASSIGN",
+        "DIV_ASSIGN",
+        "AND_ASSIGN",
+        "OR_ASSIGN",
+        "XOR_ASSIGN",
+        "MOD_ASSIGN",
+        "LSHIFT_ASSIGN",
+        "RSHIFT_ASSIGN",
+        "URSHIFT_ASSIGN",
+        "Identifier",
+        "JavaLetter",
+        "JavaLetterOrDigit",
+        "AT",
+        "ELLIPSIS",
+        "WS",
+        "COMMENT",
+        "LINE_COMMENT",
+        "VAR",
+    ]
 
     grammarFileName = "Java.g4"
 
-    def __init__(self, input=None, output:TextIO = sys.stdout):
+    def __init__(self, input=None, output: TextIO = sys.stdout):
         super().__init__(input, output)
         self.checkVersion("4.9.2")
-        self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
+        self._interp = LexerATNSimulator(
+            self, self.atn, self.decisionsToDFA, PredictionContextCache()
+        )
         self._actions = None
         self._predicates = None
