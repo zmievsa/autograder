@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Generic, List, Mapping, TypeVar
 from tomlkit.api import parse
 from tomlkit.container import Container
+import sys
 
 
 DEFAULT_FILE_STEM = "Homework"
@@ -58,6 +59,8 @@ class GradingConfig:
         self.timeouts = ArgList(cfg["TIMEOUT"], 1)
         self.generate_results = cfg["GENERATE_RESULTS"]
         self.parallel_grading_enabled = cfg["PARALLEL_GRADING_ENABLED"]
+        if self.parallel_grading_enabled and sys.platform.startswith("win32"):
+            self.parallel_grading_enabled = False
         self.stdout_only_grading_enabled = cfg["STDOUT_ONLY_GRADING_ENABLED"]
 
         self.total_points_possible = cfg["TOTAL_POINTS_POSSIBLE"]
@@ -72,7 +75,7 @@ class GradingConfig:
         else:
             self.any_submission_file_name_is_allowed = False
 
-        self.testcase_weights = ArgList(cfg["TESTCASE_WEIGHTS"], 1)
+        self.testcase_weights = ArgList(cfg["TESTCASE_WEIGHT"], 1)
 
         self.submission_precompilation_args = ArgList(cfg["SUBMISSION_PRECOMPILATION_ARGS"], "")
         self.testcase_precompilation_args = ArgList(cfg["TESTCASE_PRECOMPILATION_ARGS"], "")
