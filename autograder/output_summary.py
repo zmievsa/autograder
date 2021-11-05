@@ -103,13 +103,14 @@ class JsonGradingOutputLogger(GradingOutputLogger):
 
         submission_results = [
             {
-                "submission": str(s.old_path),
+                "submission": s.old_path.name,
                 "final_grade": s.final_grade,
                 "testcase_scores": [{"name": n, "message": msg} for n, (_, _, msg) in s.grades.items()],
                 "precompilation_error": s.precompilation_error,
             }
             for s in submissions
         ]
+        submission_results.sort(key=lambda v: v["final_grade"], reverse=True)
         output = {
             "average_score": score,
             "total_points_possible": self.total_points_possible,

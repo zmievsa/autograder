@@ -25,8 +25,8 @@ def import_from_path(module_name: str, path: Path) -> ModuleType:
     return module
 
 
-def get_file_stems(dir_: Path) -> Iterable[str]:
-    return (p.stem for p in dir_.iterdir()) if dir_.exists() else []
+def get_file_names(dir_: Path) -> Iterable[str]:
+    return (p.name for p in dir_.iterdir()) if dir_.exists() else []
 
 
 def hide_path_to_directory(string_to_hide_path_from: str, path_to_hide: Path, replacement: str = "...") -> str:

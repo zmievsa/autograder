@@ -2,8 +2,8 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Testoutput                              50/50
-Testresult                              100.0/100
+TestOutput.java                         50/50
+TestResult.java                         100.0/100
 ================================================================
 Result: 100/100
 

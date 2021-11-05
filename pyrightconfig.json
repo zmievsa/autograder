@@ -3,8 +3,10 @@
         "autograder/"
     ],
     "exclude": [
-        "autograder/testcases/test_helpers/*",
-        "examples/**"
+        "autograder/plagiarism_detection/lexers",
+        "autograder/testcase_types/**/templates",
+        "autograder/testcase_types/**/helpers",
+        "examples/**",
     ],
     "strict": [
         "autograder/testcases/abstract_base_class.py"

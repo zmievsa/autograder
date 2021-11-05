@@ -2,9 +2,9 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test output                             50/50
-Test result                             100.0/100
-Test time                               50.0/50
+test_output.c                           50/50
+test_result.c                           100.0/100
+test_time.c                             50.0/50
 ================================================================
 Result: 100/100
 

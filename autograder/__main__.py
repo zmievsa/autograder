@@ -107,7 +107,7 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         from . import plagiarism_detection
         import json
 
-        files = [f for f in current_dir.iterdir() if f.is_file()]
+        files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
         result: Dict[FrozenSet[Path], float] = plagiarism_detection.compare(files)
         print(json.dumps([(*k, v) for k, v in result.items()]))
     else:

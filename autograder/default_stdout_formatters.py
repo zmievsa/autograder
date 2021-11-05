@@ -8,9 +8,9 @@
 # (function argument name can be anything and is unimportant).
 
 
-# def ALL(s: str) -> str:
-#     """This is a default formatter that will be used on all testcase
-#     outputs by default if no other formatters are specified for them
+# def DEFAULT(s: str) -> str:
+#     """This formatter will be used on all testcase outputs
+#     by default if no other formatters are specified for them
 
 #     This formatter will only leave digits in the output because the author
 #     of it decided that any other text is unimportant for the purposes of his testing.

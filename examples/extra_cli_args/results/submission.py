@@ -2,8 +2,8 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Check result with assert                100.0/100
-Check result with runtime args          100.0/100
+check_result_with_assert.py             100.0/100
+check_result_with_runtime_args.py       100.0/100
 ================================================================
 Result: 100/100
 

@@ -1,0 +1,3 @@
+[CONFIG]
+TESTCASE_PRECOMPILATION_ARGS = {"check_result_with_assert.py" = "-O"}
+TESTCASE_RUNTIME_ARGS = {"check_result_with_runtime_args.py" = "10 4"}

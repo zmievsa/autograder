@@ -44,7 +44,7 @@ def contains_shebang(path: Path) -> bool:
 
 class StdoutOnlyTestCase(TestCase):
 
-    helper_module = ""
+    helper_module = ""  # type: ignore
     compiler = get_shell_command("make")
 
     @classmethod
@@ -62,7 +62,7 @@ class StdoutOnlyTestCase(TestCase):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        arglist,
+        cli_args: str,
         config,
     ):
         """pwd is temp/student_dir"""
@@ -77,13 +77,13 @@ class StdoutOnlyTestCase(TestCase):
         else:
             _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
             try:
-                cls.compiler(*arglist)
+                cls.compiler(*cli_args.split())
             except ShellError as e:
                 if "no makefile found" not in str(e):
                     raise e
             return _find_submission_executable(student_dir, possible_source_file_stems)
 
-    def compile_testcase(self, precompiled_submission: Path):
+    def compile_testcase(self, precompiled_submission: Path, cli_args: str):
         return lambda *a, **kw: self._run_stdout_only_testcase(precompiled_submission, *a, **kw)
 
     def prepend_test_helper(self):
@@ -104,7 +104,6 @@ class StdoutOnlyTestCase(TestCase):
         # We fake the validation string because there is no way we can truly validate such testcases
         result.stdout += f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}"
         result.returncode = ExitCodeEventType.CHECK_STDOUT
-        print("STDOUTTEST:", result.returncode)
         return result
 
 
