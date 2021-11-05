@@ -3,7 +3,7 @@ public class Test2 {
 		// comment 1
 		System.out.println("Hello, World!");
 		String z = "test";
-		for(int i = 0; i <= 30; i++) {
+		for(var i = 0; i <= 30; i++) {
 			System.out.println(z);
 		}
 		// comment 2

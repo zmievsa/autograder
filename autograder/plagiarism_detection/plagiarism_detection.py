@@ -1,8 +1,7 @@
 import math
-from numba import jit
 import numpy as np
-from multiprocessing import Pool
 from antlr4 import *
+from numpy.core.defchararray import array
 from lexers.Java8Lexer import JavaLexer
 from lexers.Python3Lexer import Python3Lexer
 from lexers.CLexer import CLexer
@@ -11,13 +10,12 @@ from lexers.CppLexer import CppLexer
 from comparison import get_similarity
 
 # entry point function that is called to compare a set of files with each other
-def compare(paths):
+def compare(paths: array) -> dict:
     numFiles = len(paths)
     if numFiles == 0:
         raise ValueError("No files found")
     language_map = initialize_language(paths)
     results = {}
-    similarity_scores = {}
     for language in language_map:
         files = language_map[language]["files"]
         if len(files) == 0:
@@ -43,7 +41,7 @@ def compare(paths):
 
 
 # determine language of files and initialize language-specific variables
-def initialize_language(paths):
+def initialize_language(paths: array) -> dict:
     language_partition = {"java": [], "py": [], "c": [], "cpp": []}
 
     for path in paths:
@@ -55,12 +53,12 @@ def initialize_language(paths):
         "java": {
             "lexer": JavaLexer,
             "ignore_list": np.array([-1, 106, 107]),
-            "num_tokens": 105,
+            "num_tokens": 108,
         },
         "py": {
             "lexer": Python3Lexer,
             "ignore_list": np.array([-1, 39]),
-            "num_tokens": 97,
+            "num_tokens": 99,
         },
         "c": {
             "lexer": CLexer,
@@ -79,12 +77,13 @@ def initialize_language(paths):
     return language_mapper
 
 
-def parse_files(language):
+def parse_files(language: dict) -> dict:
     files = language["files"]
     lexer_class = language["lexer"]
     ignore_list = language["ignore_list"]
+    num_tokens = language["num_tokens"]
     tokenStreams = []
-    freq = [0 for x in range(language["num_tokens"] + 1)]
+    freq = [0 for x in range(num_tokens + 1)]
     total_tokens = 0
     for file in files:
         with file.open() as f:
@@ -96,7 +95,9 @@ def parse_files(language):
             array = []
             for token in tokens.tokens:
                 # remove comments, blank lines, etc
-                if token.type not in ignore_list:
+                if token.type > num_tokens:
+                    print("hello")
+                if token.type not in ignore_list and token.type <= num_tokens:
                     array += [token.type]
                     freq[token.type] += 1
                     total_tokens += 1
@@ -118,13 +119,13 @@ def parse_files(language):
     }
 
 
-def build_similarity_matrix(freq):
+def build_similarity_matrix(freq: np.array) -> np.array:
     # alpha is how heavily matching tokens should be penalized, beta is how heavily
     # mismatching tokens should be rewarded. alpha + beta = 1
     alpha = 0.65
     beta = 0.35
     matrixLen = len(freq) + 1
-    matrix = [[0 for i in range(matrixLen)] for i in range(matrixLen)]
+    matrix = np.zeros((matrixLen, matrixLen))
     for i in range(matrixLen):
         for j in range(i, matrixLen):
             # matching a gap with a gap is impossible
@@ -140,12 +141,14 @@ def build_similarity_matrix(freq):
             else:
                 value = beta * math.log2(freq[i] * freq[j])
             # value of matching i and j is same as matching j and i
-            matrix[i][j] = int(1000 * value)
-            matrix[j][i] = int(1000 * value)
+            matrix[i, j] = int(1000 * value)
+            matrix[j, i] = int(1000 * value)
     return np.array(matrix)
 
 
-def build_self_similarities(token_streams, matrix, lengths):
+def build_self_similarities(
+    token_streams: np.array, matrix: np.array, lengths: np.array
+) -> np.array:
     self_similarities = []
     for i in range(len(token_streams)):
         score = 0
@@ -156,7 +159,12 @@ def build_self_similarities(token_streams, matrix, lengths):
     return np.array(self_similarities, dtype=np.int32)
 
 
-def run_comparisons(token_streams, similarity_matrix, self_similarities, lengths):
+def run_comparisons(
+    token_streams: np.array,
+    similarity_matrix: np.array,
+    self_similarities: np.array,
+    lengths: np.array,
+) -> np.array:
     similarity_scores = np.zeros((len(token_streams), len(token_streams)))
     for i in range(len(token_streams)):
         for j in range(i + 1, len(token_streams)):
@@ -170,7 +178,7 @@ def run_comparisons(token_streams, similarity_matrix, self_similarities, lengths
     return similarity_scores
 
 
-def convert_results(results, files):
+def convert_results(results: np.array, files: array) -> dict:
     converted_results = {}
     for i in range(len(results)):
         for j in range(i + 1, len(results)):
