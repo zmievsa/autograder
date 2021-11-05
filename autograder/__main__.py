@@ -17,12 +17,18 @@ def main(argv=None):
 
         print(__version__)
         exit(0)
+    # the interface architecture needs to be refactored a bit. For now, this hack with getattr
+    # will prevent errors if autograder has been called on its own.
+    elif getattr(args, "submission_path", None) is None:
+        parser.print_help()
+        exit()
+
     current_dir = (Path.cwd() / args.submission_path).resolve()
     return _evaluate_args(args, current_dir)
 
 
 def _create_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="autograder")
     parser.add_argument("-v", "--version", action="store_true", help="print the autograder version number and exit")
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     _create_run_parser(subparsers)
@@ -85,21 +91,13 @@ def _add_submission_path_argument(parser: argparse.ArgumentParser):
 
 
 def _evaluate_args(args: argparse.Namespace, current_dir: Path):
-    from autograder.util import AutograderError, print_results
+    from autograder.util import AutograderError
 
-    if sys.platform.startswith("win32"):
-        raise AutograderError(
-            "Windows is not supported by autograder. If you do not have Linux,"
-            "try using it through utilities like Windows Subsystem For Linux."
-        )
-    elif sys.platform.startswith("darwin") and not args.json_output:
+    if sys.platform.startswith("darwin") and not args.json_output:
         print("OSX is not officially supported. Proceed with caution.")
-    from autograder.autograder import Grader, AutograderPaths  # That's some awful naming
+    from autograder.autograder import Grader, AutograderPaths
 
-    if args.command == "stats":
-        if args.print:
-            print_results(AutograderPaths(current_dir), args.print)
-    elif args.command == "guide":
+    if args.command == "guide":
         from autograder import guide
 
         guide.main(AutograderPaths(current_dir))
@@ -109,11 +107,13 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         from . import plagiarism_detection
         import json
 
-        files = [f for f in current_dir.iterdir() if f.is_file()]
+        files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
         result: Dict[FrozenSet[Path], float] = plagiarism_detection.compare(files)
         print(json.dumps([(*k, v) for k, v in result.items()]))
     else:
-        raise NotImplementedError(f"Unknown command '{args.command}' supplied.")
+        raise NotImplementedError(
+            f"Unknown command '{args.command}' supplied.\nTry 'autograder --help for more information'"
+        )
     return -1
 
 

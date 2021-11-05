@@ -2,13 +2,13 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test env                                Crashed due to signal 103:
+test_env.py                             Crashed due to signal 103:
 
 
-Test exit                               Crashed due to signal 103:
+test_exit.py                            Crashed due to signal 103:
 
 
-Test import                             None of the helper functions have been called.
+test_import.py                          None of the helper functions have been called.
 Instead, exit() has been called with exit_code 5.
 It could indicate student cheating or testcase_utils being written incorrectly.
 ================================================================

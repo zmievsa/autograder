@@ -136,12 +136,12 @@ def safe_copytree(
                             symlinks,
                             ignore,
                             copy_function,
-                            dirs_exist_ok=dirs_exist_ok,
+                            dirs_exist_ok=dirs_exist_ok,  # type: ignore
                         )
                     else:
                         copy_function(src_obj, dst_name)
             elif srcentry.is_dir():
-                shutil.copytree(src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)
+                shutil.copytree(src_obj, dst_name, symlinks, ignore, copy_function, dirs_exist_ok=dirs_exist_ok)  # type: ignore
             else:
                 # Will raise a SpecialFileError for unsupported file types
                 copy_function(src_obj, dst_name)

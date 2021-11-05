@@ -22,8 +22,10 @@ class DummyFile(object):
 def nostdout():
     save_stdout = sys.stdout
     sys.stdout = DummyFile()
-    yield
-    sys.stdout = save_stdout
+    try:
+        yield
+    finally:
+        sys.stdout = save_stdout
 
 
 class NonDaemonPool(Pool):
@@ -54,6 +56,7 @@ TEST_DIRS = {
     "multiple_languages": 100,
     "stdout_only": 100,
     "extra_files": 100,
+    "extra_cli_args": 100,
     "fibonacci_c": 58,
     "cheating_attempts": 0,  # All cheaters shall fail
 }
@@ -95,8 +98,6 @@ def run_silenced_grader(*args):
 
 def test_example(args):
     test_dir, expected_result = args
-    if expected_result == "EXTRA_CLI_ARGS":
-        return test_extra_cli_args()
     with ErrorHandler(test_dir):
         real_result = int(run_silenced_grader(f"examples/{test_dir}"))
         msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
@@ -108,19 +109,7 @@ def test_example(args):
 
 def main():
     with NonDaemonPool() as pool:
-        pool.map(test_example, [(d, r) for d, r in TEST_DIRS.items()] + [tuple(["", "EXTRA_CLI_ARGS"])])
-
-
-def test_extra_cli_args():
-    testing_dir = Path("examples/extra_cli_args/")
-
-    with ErrorHandler(testing_dir.name):
-        result = run_silenced_grader(str(testing_dir))
-        s = f"CHECKING TEST {testing_dir.name} with args to equal 100. Real result: {int(result)}"
-        if result == 100:
-            PASS(s)
-        else:
-            FAIL(s)
+        pool.map(test_example, [(d, r) for d, r in TEST_DIRS.items()])
 
 
 if __name__ == "__main__":

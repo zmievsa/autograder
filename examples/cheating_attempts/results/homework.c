@@ -2,10 +2,10 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-Test env                                Crashed due to signal 103:
+test_env.c                              Crashed due to signal 103:
 
 
-Test exit                               Crashed due to signal 103:
+test_exit.c                             Crashed due to signal 103:
 
 
 ================================================================

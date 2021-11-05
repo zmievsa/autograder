@@ -7,7 +7,7 @@ from .abstract_testcase import TestCase
 
 def find_appropriate_source_file_stem(file: Path, possible_source_file_stems: List[str]) -> Optional[str]:
     for s in possible_source_file_stems:
-        if s in file.stem:
+        if s.lower() in file.stem.lower():
             return s
 
 
@@ -21,22 +21,24 @@ def get_submission_name(submission: Path):
 
 class Submission:
     # Sowwy, dataclasses do not support slots until 3.10
-    __slots__ = "path", "name", "type", "dir", "grades", "precompilation_error", "final_grade"
+    __slots__ = "old_path", "temp_path", "temp_dir", "name", "type", "grades", "precompilation_error", "final_grade"
 
-    path: Path
+    old_path: Path
+    temp_path: Path
+    temp_dir: Path  # Personal temporary dir, not the root one
     name: str
     type: Type[TestCase]
-    dir: Path
     grades: Dict[str, Tuple[float, float, str]]
     precompilation_error: str
     final_grade: int
 
     def __init__(self, file: Path, testcase_type: Type[TestCase], temp_dir: Path):
-        self.path = file
+        self.old_path = file
+        self.temp_dir = temp_dir / file.name
+        self.temp_dir.mkdir()
+        self.temp_path = self.temp_dir / file.name
         self.name = get_submission_name(file)
         self.type = testcase_type
-        self.dir = temp_dir / file.name
-        self.dir.mkdir()
         self.grades = {}
         self.precompilation_error = ""
         self.final_grade = -1

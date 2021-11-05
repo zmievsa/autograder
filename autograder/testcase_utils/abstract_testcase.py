@@ -2,25 +2,16 @@ import enum
 import shutil
 from abc import ABC, abstractmethod, ABCMeta
 from inspect import getsourcefile
-from io import StringIO
 from pathlib import Path
-from typing import Dict
+import subprocess
 from typing import List, Tuple
 
-import sh
-
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
-from .shell import get_stderr, ShCommand
+from .shell import ShellCommand, ShellError
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-
-
-# TODO: Why is this not in config?
-class ArgList(enum.Enum):
-    SUBMISSION_PRECOMPILATION = "SUBMISSION_PRECOMPILATION_ARGS"
-    TESTCASE_PRECOMPILATION = "TESTCASE_PRECOMPILATION_ARGS"
-    TESTCASE_COMPILATION = "TESTCASE_COMPILATION_ARGS"
+from ..config_manager import GradingConfig
 
 
 class SourceDirSaver(ABCMeta, type):
@@ -50,9 +41,15 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     io: TestCaseIO
     validating_string: str
 
+    config: GradingConfig
+
+    # Note that this structure will not work for any children of this class until 3.9
+    # because classmethod does not wrap property correctly until then.
+    # See https://bugs.python.org/issue19072
+    @classmethod
     @property
     @abstractmethod
-    def helper_module(self) -> str:
+    def helper_module(cls) -> str:
         pass
 
     @classmethod
@@ -60,41 +57,42 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     def is_installed(cls) -> bool:
         """Returns True if software necessary to run the testcase is installed on the system"""
 
+    @classmethod
+    def get_template_dir(cls):
+        return cls.type_source_file.parent / "templates"
+
     @abstractmethod
-    def compile_testcase(self, precompiled_submission: Path) -> ShCommand:
+    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         """Compiles student submission and testcase into a single executable
         (or simply returns the command to run the testcase if no further compilation is necessary)
 
         pwd = temp/student_dir
         """
 
-    @classmethod
-    def get_template_dir(cls):
-        return cls.type_source_file.parent / "templates"
-
     def __init__(
         self,
         path: Path,
         timeout: float,
-        argument_lists: Dict[ArgList, List[str]],
         weight: float,
+        testcase_precompilation_args: str,
         io: TestCaseIO,
+        config: GradingConfig,
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
         self.timeout = timeout
-        self.argument_lists = argument_lists
         self.weight = weight
         self.max_score = int(weight * 100)
 
-        # Only really works if test name is in snake_case
-        self.name = path.stem.replace("_", " ").capitalize()
+        self.name = path.name
 
         self.io = io
         self.validating_string = generate_validating_string()
 
+        self.config = config
+
         self.prepend_test_helper()
-        self.precompile_testcase()
+        self.precompile_testcase(testcase_precompilation_args)
 
     @classmethod
     def precompile_submission(
@@ -102,7 +100,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
-        arglist: List[str],
+        cli_args: str,
+        config: GradingConfig,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -114,7 +113,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         shutil.copy(str(submission), str(destination))
         return destination
 
-    def precompile_testcase(self):
+    def precompile_testcase(self, cli_args: str):
         """Replaces the original testcase file with its compiled version,
         thus making reading its contents as plaintext harder.
         Useful in preventing cheating.
@@ -134,9 +133,11 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     def get_path_to_helper_module(self) -> Path:
         return self.test_helpers_dir / self.helper_module
 
-    def run(self, precompiled_submission: Path) -> Tuple[float, str]:
+    def run(
+        self, precompiled_submission: Path, testcase_compilation_args: str, testcase_runtime_args: str
+    ) -> Tuple[float, str]:
         """Returns student score and message to be displayed"""
-        result, message = self._weightless_run(precompiled_submission)
+        result, message = self._weightless_run(precompiled_submission, testcase_compilation_args, testcase_runtime_args)
 
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
@@ -156,8 +157,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         with self.path.open("w") as f:
             f.write(final_content)
 
-    def get_formatted_test_helper(self) -> str:
-        return get_formatted_test_helper(self.get_path_to_helper_module())
+    def get_formatted_test_helper(self, **exta_format_kwargs) -> str:
+        return get_formatted_test_helper(self.get_path_to_helper_module(), **exta_format_kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
@@ -168,60 +169,58 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         if source_path.exists():
             source_path.unlink()
 
-    def _weightless_run(self, precompiled_submission: Path) -> Tuple[float, str]:
+    def _weightless_run(
+        self,
+        precompiled_submission: Path,
+        testcase_compilation_args: str,
+        testcase_runtime_args: str,
+    ) -> Tuple[float, str]:
         """Returns student score (without applying testcase weight) and message to be displayed"""
         testcase_copy_in_student_dir = precompiled_submission.with_name(self.path.name)
         shutil.copy(str(self.path), str(testcase_copy_in_student_dir))
 
         try:
-            test_executable = self.compile_testcase(precompiled_submission)
-        except sh.ErrorReturnCode as e:
-            return 0, get_stderr(e, "Failed to compile")
+            test_executable = self.compile_testcase(precompiled_submission, testcase_compilation_args)
+        except ShellError as e:
+            return 0, e.format("Failed to compile")
         self.delete_source_file(testcase_copy_in_student_dir)
-
-        with StringIO() as runtime_output, self.io.input() as runtime_input:
-            try:
-                result = test_executable(
-                    _in=runtime_input,
-                    _out=runtime_output,
-                    _timeout=self.timeout,
-                    _ok_code=USED_EXIT_CODES,
-                    _env={"VALIDATING_STRING": self.validating_string},
-                )
-                if result is None:
-                    raise NotImplementedError()
-                exit_code = result.exit_code
-            except sh.TimeoutException:
-                return 0, "Exceeded Time Limit"
-            except sh.ErrorReturnCode as e:
-                return (
-                    0,
-                    f"Crashed due to signal {e.exit_code}:\n{e.stderr.decode('UTF-8', 'replace')}\n",
-                )
-            raw_output = runtime_output.getvalue()
-            output, score, output_is_valid = validate_output(raw_output, self.validating_string)
-            if not output_is_valid:
-                # This  means that either the student used built-in exit function himself
-                # or some testcase helper is broken, or a testcase exits itself without
-                # the use of helper functions.
-                return (
-                    0,
-                    "None of the helper functions have been called.\n"
-                    f"Instead, exit() has been called with exit_code {exit_code}.\n"
-                    "It could indicate student cheating or testcase_utils being written incorrectly.",
-                )
-            elif exit_code == ExitCodeEventType.CHECK_STDOUT:
-                if self.io.expected_output_equals(output):
-                    return 100, f"{int(100 * self.weight)}/{self.max_score}"
-                else:
-                    return 0, f"0/{self.max_score} (Wrong output)"
-            elif exit_code == ExitCodeEventType.RESULT:
-                message = f"{round(score * self.weight, 2)}/{self.max_score}"
-                if score == 0:
-                    message += " (Wrong answer)"
-                return score, message
-            elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
-                # We should already handle this case in try, except block. Maybe we need more info in the error?
-                raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
+        try:
+            result = test_executable(
+                *testcase_runtime_args.split(),
+                input=self.io.input,
+                timeout=self.timeout,
+                env={"VALIDATING_STRING": self.validating_string},
+                allowed_exit_codes=USED_EXIT_CODES,
+            )
+            exit_code = result.returncode
+        except subprocess.TimeoutExpired:
+            return 0, "Exceeded Time Limit"
+        except ShellError as e:
+            return 0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"
+        raw_output = result.stdout
+        output, score, output_is_valid = validate_output(raw_output, self.validating_string)
+        if not output_is_valid:
+            # This  means that either the student used built-in exit function himself
+            # or some testcase helper is broken, or a testcase exits itself without
+            # the use of helper functions.
+            return (
+                0,
+                "None of the helper functions have been called.\n"
+                f"Instead, exit() has been called with exit_code {exit_code}.\n"
+                "It could indicate student cheating or testcase_utils being written incorrectly.",
+            )
+        elif exit_code == ExitCodeEventType.CHECK_STDOUT:
+            if self.io.expected_output_equals(output):
+                return 100, f"{int(100 * self.weight)}/{self.max_score}"
             else:
-                raise ValueError(f"Unknown system code {exit_code} has not been handled.")
+                return 0, f"0/{self.max_score} (Wrong output)"
+        elif exit_code == ExitCodeEventType.RESULT:
+            message = f"{round(score * self.weight, 2)}/{self.max_score}"
+            if score == 0:
+                message += " (Wrong answer)"
+            return score, message
+        elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
+            # We should already handle this case in try, except block. Maybe we need more info in the error?
+            raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
+        else:
+            raise ValueError(f"Unknown system code {exit_code} has not been handled.")

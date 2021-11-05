@@ -2,7 +2,8 @@ This utility aims to provide a simple, yet secure and highly configurable way to
 
 I consider it to be finished. Autograder has been tested on a real university class with hundreds of students and has shown to be error-less (in terms of grades), fast, and protected from cheating.
 #### Table of Contents  
-[Features](#Features)   
+[Features](#Features) 
+[Installation](#Platform-Support)  
 [Installation](#Installation)   
 [Supported Programming Languages](#Supported-Programming-Languages)   
 [Quickstart](#Quickstart)   
@@ -25,8 +26,16 @@ I consider it to be finished. Autograder has been tested on a real university cl
 * Most of these features are described in detail in [default_config.ini](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.ini) and demonstrated in examples/ directory.
 * Stdout-only (language-agnostic) grading supported
 * JSON result output supported if autograder needs to be integrated as a part of a larger utility
+# Platform Support
+* Linux is fully supported
+* OS X has not been tested
+* Windows is partially supported:
+  * C/C++ have only been tested with `mingw` installed with `chocolatey`
+  * Java is only supported if autograder is run with Administrative privileges
+  * Stdout-testcases that require compilation are only supported if `make` is installed
+  * Stdout-testcases that require shebang lines are not supported
 # Installation
-* Currently, Linux-only and Python >= 3.6. OS X has not been tested. Windows, Python < 3.6 are not supported at all.
+* Currently Python >= 3.7 is necessary.
 * Run `pip3 install assignment-autograder`
 * If you want to update to a newer version, run `pip3 install --upgrade --no-cache-dir assignment-autograder`
 # Supported Programming Languages
