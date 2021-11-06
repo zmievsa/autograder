@@ -1,11 +1,9 @@
-from numba import jit
+from numba import njit
 import numpy as np
 
 
-@jit(nopython=True)
-def get_similarity(
-    a: np.array, b: np.array, matrix: np.ndarray, self_similarity_sum: int
-) -> float:
+@njit
+def get_similarity(a: np.ndarray, b: np.ndarray, matrix: np.ndarray, self_similarity_sum: int) -> float:
     dp = np.zeros((len(a), len(b)), dtype=np.int32)
     # initialize dp with score of matching first token of each token stream
     dp[0, 0] = max(0, matrix[a[0], b[0]])
