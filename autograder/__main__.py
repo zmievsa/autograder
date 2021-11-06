@@ -41,16 +41,8 @@ def _create_parser():
 def _create_run_parser(subparsers):
     parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
     parser.add_argument("-j", "--json_output", action="store_true", help="Output grades in json format")
-    parser.add_argument(
-        "-s",
-        "--submissions",
-        action="store",
-        nargs="*",
-        metavar="<name>",
-        default=[],
-        help="Only grade submissions with specified file names (without full path)",
-    )
     _add_submission_path_argument(parser)
+    _add_submission_list_argument(parser)
 
 
 def _create_stats_parser(subparsers):
@@ -78,6 +70,7 @@ def _create_guide_parser(subparsers):
 def _create_plagiarism_parser(subparsers):
     parser = subparsers.add_parser("plagiarism", help="Checks how similar the submissions are to each other")
     _add_submission_path_argument(parser)
+    _add_submission_list_argument(parser)
 
 
 def _add_submission_path_argument(parser: argparse.ArgumentParser):
@@ -87,6 +80,18 @@ def _add_submission_path_argument(parser: argparse.ArgumentParser):
         nargs="?",
         default=Path.cwd(),
         help="Path to directory that contains student submissions",
+    )
+
+
+def _add_submission_list_argument(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "-s",
+        "--submissions",
+        action="store",
+        nargs="*",
+        metavar="<name>",
+        default=[],
+        help="Only consider submissions with specified file names (without full path)",
     )
 
 
@@ -108,8 +113,15 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         import json
 
         files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
-        result: Dict[FrozenSet[Path], float] = plagiarism_detection.compare(files)
-        print(json.dumps([(*k, v) for k, v in result.items()]))
+        if args.submissions:
+            submissions = [Path(s).name for s in args.submissions]
+            files = [f for f in files if f.name in submissions]
+        result = plagiarism_detection.compare(files)
+        result = {tuple(k): v for k, v in result[list(result.keys())[0]].items()}
+        # print(result)
+        output = [{"student1": k[0].name, "student2": k[1].name, "similarity_score": v} for k, v in result.items()]
+        output.sort(key=lambda v: v["similarity_score"], reverse=True)
+        print(json.dumps({"results": output}, indent=4))
     else:
         raise NotImplementedError(
             f"Unknown command '{args.command}' supplied.\nTry 'autograder --help for more information'"
