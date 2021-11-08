@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod, ABCMeta
 from inspect import getsourcefile
 from pathlib import Path
 import subprocess
+import time
+import sys
 from typing import List, Tuple
 
 from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
@@ -14,6 +16,7 @@ from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
 from ..config_manager import GradingConfig
 
+from concurrent.futures import TimeoutError
 import asyncio
 
 
@@ -167,7 +170,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
-        if path.exists():
+        # Windows sucks at deleting such files
+        if path.exists() and sys.platform != "win32":
             path.unlink()
 
     def delete_source_file(self, source_path: Path):
@@ -199,7 +203,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
                 allowed_exit_codes=USED_EXIT_CODES,
             )
             exit_code = result.returncode
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return 0, "Exceeded Time Limit"
         except ShellError as e:
             return 0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"

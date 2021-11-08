@@ -10,6 +10,8 @@ from locale import getpreferredencoding
 # import subprocess
 
 from asyncio import subprocess
+import subprocess as synchronous_subprocess
+from concurrent.futures import TimeoutError
 
 
 @dataclass
@@ -47,9 +49,16 @@ class ShellCommand:
         )
         # That's the same way subprocess.Popen(text=True) gets the encoding
         encoding = getpreferredencoding(False)
-        result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout)
+        try:
+            result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout=timeout)
+        except TimeoutError as e:
+            # Windows doesn't know how to clean up its processes
+            if sys.platform == "win32" and process.returncode is None:
+                synchronous_subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)])
+            raise e
         stdout, stderr = (s.decode(encoding) for s in result)
         returncode = process.returncode if process.returncode is not None else -1
+
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
         return ShellCommandResult(returncode, stdout, stderr)

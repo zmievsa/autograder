@@ -1,8 +1,6 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, FrozenSet
-
 
 def main(argv=None):
     """Returns the average score of the students"""

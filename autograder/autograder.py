@@ -16,6 +16,7 @@ from .testcase_utils.testcase_picker import TestCasePicker
 from .testcase_utils.testcase_io import TestCaseIO
 from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_names, temporarily_change_dir
 import asyncio
+from tempfile import TemporaryDirectory
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -27,6 +28,8 @@ class Grader:
     tests: Dict[Type[TestCase], List[TestCase]]
     raw_submissions: List[Path]
     paths: "AutograderPaths"
+    temp_dir: Path
+    _temp_dir: TemporaryDirectory
 
     logger: GradingOutputLogger
     config: GradingConfig
@@ -74,6 +77,9 @@ class Grader:
                 for t_lst in self.tests.values()
             )
             tasks = map(Runner(self, asyncio.Lock()), self.submissions)
+
+            loop = asyncio.ProactorEventLoop()
+            asyncio.set_event_loop(loop)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
             total_class_points = sum(s.final_grade for s in modified_submissions)
@@ -87,13 +93,15 @@ class Grader:
         return class_average
 
     def cleanup(self):
-        if self.paths.temp_dir.exists():
-            shutil.rmtree(self.paths.temp_dir)
+        if self.temp_dir.exists():
+            # Windows doesn't know how to clean processes in time...
+            if sys.platform == "win32":
+                time.sleep(1)
+            self._temp_dir.cleanup()
 
     def _prepare_directory_structure(self):
-        # Cleanup in case any error
-        self.cleanup()
-        self.paths.temp_dir.mkdir()
+        self._temp_dir = TemporaryDirectory()
+        self.temp_dir = Path(self._temp_dir.name)
         self._check_required_directories_exist()
         if self.config.generate_results:
             self.paths.results_dir.mkdir(exist_ok=True)
@@ -121,7 +129,7 @@ class Grader:
                     or find_appropriate_source_file_stem(submission_path, self.config.possible_source_file_stems)
                     is not None
                 ):
-                    submissions.append(Submission(submission_path, testcase_type, self.paths.temp_dir))
+                    submissions.append(Submission(submission_path, testcase_type, self.temp_dir))
                 else:
                     pass
                     # TODO: Figure out what to do with this
@@ -178,10 +186,10 @@ class Grader:
             testcase_type = self.testcase_picker.pick(test)
             if testcase_type is None:
                 continue
-            shutil.copy(str(test), str(self.paths.temp_dir))
+            shutil.copy(str(test), str(self.temp_dir))
             tests[testcase_type].append(
                 testcase_type(
-                    self.paths.temp_dir / test.name,
+                    self.temp_dir / test.name,
                     self.config.timeouts[test.name],
                     self.config.testcase_weights[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
@@ -202,7 +210,6 @@ class Grader:
 class AutograderPaths:
     __slots__ = (
         "current_dir",
-        "temp_dir",
         "results_dir",
         "output_summary",
         "tests_dir",
@@ -218,7 +225,6 @@ class AutograderPaths:
         "required_dirs",
     )
     current_dir: Path
-    temp_dir: Path
     results_dir: Path
     output_summary: Path
     tests_dir: Path
@@ -237,7 +243,6 @@ class AutograderPaths:
 
     def __init__(self, current_dir):
         self.current_dir = current_dir
-        self.temp_dir = current_dir / "temp"
         self.results_dir = current_dir / "results"
         self.output_summary = current_dir / "grader_output.txt"
         self.tests_dir = current_dir / "tests"
