@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Mapping, Optional
+from typing import Callable, Dict, Mapping, Optional
 from ..config_manager import DEFAULT_ARGLIST_VALUE_KEY
 
 import inspect
@@ -16,14 +16,14 @@ class TestCaseIO:
     def __init__(
         self,
         testcase_path: Path,  # A path of either input or output
-        formatters: Mapping[str, Optional[FORMATTER_TYPE]],
+        formatters: Dict[str, FORMATTER_TYPE],
         input_dir: Path,
         output_dir: Path,
     ):
         self.name = testcase_path.name
         self.stem = testcase_path.stem
         f = formatters  # to make next line shorter
-        self.formatter = f.get(self.stem, None) or f.get(DEFAULT_ARGLIST_VALUE_KEY, None) or default_formatter
+        self.formatter = f.get(self.stem) or f.get(DEFAULT_ARGLIST_VALUE_KEY) or default_formatter
         self.output_file: Path = output_dir / f"{self.stem}.txt"
 
         if self.output_file.exists() and self.output_file.is_file():
@@ -41,7 +41,8 @@ class TestCaseIO:
             self.input = ""
 
     def format_output(self, output: str) -> str:
-        return self.formatter(output)
+        # Replacement of \r\n accounts for inconsistent line endings between systems
+        return self.formatter(output).replace("\r\n", "\n")
 
     def expected_output_equals(self, output: str) -> bool:
         return self.format_output(output) == self.expected_output

@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 import time
 from typing import Callable, Dict, List, Set, Type, Tuple
+import itertools
 import sys
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
@@ -14,6 +15,7 @@ from .testcase_utils.submission import Submission, find_appropriate_source_file_
 from .testcase_utils.testcase_picker import TestCasePicker
 from .testcase_utils.testcase_io import TestCaseIO
 from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_names, temporarily_change_dir
+import asyncio
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -62,11 +64,19 @@ class Grader:
             self.tests, unused_io_choices = self._gather_testcases(io_choices.copy())
             if self.config.stdout_only_grading_enabled:
                 self.tests[StdoutOnlyTestCase] = self._generate_stdout_only_testcases(unused_io_choices)
-            with multiprocessing.Pool() as pool:
-                map_func = pool.map if self.config.parallel_grading_enabled else map
-                manager = multiprocessing.Manager()
-                modified_submissions = list(map_func(Runner(self, manager.Lock()), self.submissions))
-                total_class_points = sum(s.final_grade for s in modified_submissions)
+
+            # Allows for consistent output
+            for test_list in self.tests.values():
+                test_list.sort(key=lambda t: t.path.name)
+
+            precompilation_tasks = itertools.chain.from_iterable(
+                (t.precompile_testcase(self.config.testcase_precompilation_args[t.name]) for t in t_lst)
+                for t_lst in self.tests.values()
+            )
+            tasks = map(Runner(self, asyncio.Lock()), self.submissions)
+            asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
+            modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
+            total_class_points = sum(s.final_grade for s in modified_submissions)
             class_average = round(total_class_points / len(self.submissions))
             self.logger.print_final_score(modified_submissions, class_average)
             self.logger.print_key()
@@ -146,7 +156,6 @@ class Grader:
                 io.output_file,
                 self.config.timeouts[io.name],
                 self.config.testcase_weights[io.name],
-                self.config.testcase_precompilation_args[io.name],
                 io,
                 self.config,
             )
@@ -161,6 +170,7 @@ class Grader:
         """Returns sorted list of testcase_types from tests/testcases"""
         if not self.paths.testcases_dir.exists():
             return {}, io
+        tests: Dict[Type[TestCase], List[TestCase]]
         tests = {t: [] for t in self.testcase_picker.testcase_types}
         for test in self.paths.testcases_dir.iterdir():
             if not test.is_file():
@@ -174,14 +184,10 @@ class Grader:
                     self.paths.temp_dir / test.name,
                     self.config.timeouts[test.name],
                     self.config.testcase_weights[test.name],
-                    self.config.testcase_precompilation_args[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
                     self.config,
                 )
             )
-        # Allows consistent output
-        for test_list in tests.values():
-            test_list.sort(key=lambda t: t.path.name)
         return tests, io
 
     @staticmethod
@@ -263,22 +269,21 @@ class Runner:
     """Grades single submissions"""
 
     grader: Grader
-    lock: Lock
+    lock: asyncio.Lock
 
-    def __init__(self, grader, lock: Lock):
+    def __init__(self, grader, lock: asyncio.Lock):
         self.grader = grader
         self.lock = lock
 
-    def __call__(self, submission: Submission) -> Submission:
-        self.run_on_single_submission(submission, self.lock)
+    async def __call__(self, submission: Submission) -> Submission:
+        await self.run_on_single_submission(submission, self.lock)
         return submission
 
-    def run_on_single_submission(self, submission: Submission, lock):
-        with temporarily_change_dir(submission.temp_dir):
-            self._copy_extra_files(submission.temp_dir)
-            self._get_testcase_output(submission)
-            with lock:
-                self.grader.logger.print_single_student_grading_results(submission)
+    async def run_on_single_submission(self, submission: Submission, lock):
+        self._copy_extra_files(submission.temp_dir)
+        await self._get_testcase_output(submission)
+        async with lock:
+            self.grader.logger.print_single_student_grading_results(submission)
         # Windows sucks at cleaning up processes early
         if not sys.platform.startswith("win32"):
             # Cleanup after running tests on student submission
@@ -291,13 +296,19 @@ class Runner:
                 shutil.copy(str(path), str(new_path))
 
     # TODO: rename to "_run_testcases_on_submission" or something
-    def _get_testcase_output(self, submission: Submission):
+    async def _get_testcase_output(self, submission: Submission):
         """Grades single submission and returns its normalized score
 
         Note: Has side effects in submission instance
         """
         try:
-            precompiled_submission = self._precompile_submission(submission)
+            precompiled_submission = await submission.type.precompile_submission(
+                submission.old_path,
+                submission.temp_dir,
+                self.grader.config.possible_source_file_stems,
+                self.grader.config.submission_precompilation_args[submission.old_path.name],
+                self.grader.config,
+            )
         except ShellError as e:
             error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
             submission.register_precompilation_error(error)
@@ -308,7 +319,7 @@ class Runner:
             return 0
         submission.type.run_additional_testcase_operations_in_student_dir(submission.temp_dir)
         for test in allowed_tests:
-            testcase_score, message = test.run(
+            testcase_score, message = await test.run(
                 precompiled_submission,
                 self.grader.config.testcase_compilation_args[test.name],
                 self.grader.config.testcase_runtime_args[test.name],
@@ -316,12 +327,3 @@ class Runner:
             message = hide_path_to_directory(message, submission.temp_dir)
             submission.add_grade(test.name, testcase_score, test.weight, message)
         submission.register_final_grade(self.grader.config.total_score_to_100_ratio)
-
-    def _precompile_submission(self, submission: Submission) -> Path:
-        return submission.type.precompile_submission(
-            submission.old_path,
-            submission.temp_dir,
-            self.grader.config.possible_source_file_stems,
-            self.grader.config.submission_precompilation_args[submission.old_path.name],
-            self.grader.config,
-        )

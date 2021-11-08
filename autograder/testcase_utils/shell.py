@@ -1,33 +1,58 @@
+import asyncio
 import os
 from pathlib import Path
 import shutil
 import sys
-from typing import Any, Union
+from typing import Any, Optional, Sequence, Union
 from dataclasses import dataclass
-import subprocess
+from locale import getpreferredencoding
+
+# import subprocess
+
+from asyncio import subprocess
+
+
+@dataclass
+class ShellCommandResult:
+    returncode: int
+    stdout: str
+    stderr: str
 
 
 @dataclass(frozen=True)
 class ShellCommand:
-    """We use this to imitate sh.Command by duck-typing it"""
+    """We use this class to abstract away from systemcall libraries"""
 
     command_name: Union[str, Path]
 
-    def __call__(self, *args, allowed_exit_codes=(0,), **kwargs: Any) -> subprocess.CompletedProcess:
+    async def __call__(
+        self,
+        *args,
+        allowed_exit_codes: Sequence[int] = (0,),
+        timeout=None,
+        stdin: str = "",
+        **kwargs: Any,
+    ) -> ShellCommandResult:
         if "env" in kwargs and sys.platform.startswith("win32"):
             kwargs["env"].update({"SYSTEMROOT": os.environ["SYSTEMROOT"]})
 
-        result = subprocess.run(
+        process = await subprocess.create_subprocess_exec(
             # Linux handles non-string args well yet Windows doesn't
-            [str(self.command_name)] + [str(a) for a in args],
+            str(self.command_name),
+            *[str(a) for a in args],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            stdin=subprocess.PIPE,
             **kwargs,
         )
-        if result.returncode not in allowed_exit_codes:
-            raise ShellError(result.returncode, result.stderr)
-        return result
+        # That's the same way subprocess.Popen(text=True) gets the encoding
+        encoding = getpreferredencoding(False)
+        result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout)
+        stdout, stderr = (s.decode(encoding) for s in result)
+        returncode = process.returncode if process.returncode is not None else -1
+        if process.returncode not in allowed_exit_codes:
+            raise ShellError(returncode, stderr)
+        return ShellCommandResult(returncode, stdout, stderr)
 
 
 EMPTY_COMMAND = ShellCommand("false")
@@ -37,7 +62,7 @@ class ShellError(Exception):
     def __init__(self, returncode: int, stderr: str):
         super().__init__(stderr)
         self.returncode = returncode
-        self.stderr = stderr.strip()
+        self.stderr = stderr
 
     def format(self, title: str) -> str:
         return f"{title}\n{self.stderr}"

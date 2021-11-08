@@ -4,7 +4,7 @@
 from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+from typing import List, Sequence
 import json
 
 
@@ -48,7 +48,7 @@ class GradingOutputLogger:
         self._print_single_student_grading_results_to_stdout(submission, student_final_result)
         self._print_single_student_grading_results_to_file(submission, student_final_result)
 
-    def print_final_score(self, submissions, score: int):
+    def print_final_score(self, submissions: Sequence, score: int):
         print(f"\nAverage score: {score}/{self.total_points_possible}")
 
     def print_key(self):
@@ -99,7 +99,7 @@ class JsonGradingOutputLogger(GradingOutputLogger):
     def print_key(self):
         pass
 
-    def print_final_score(self, submissions: List[Submission], score: int):
+    def print_final_score(self, submissions: Sequence[Submission], score: int):
 
         submission_results = [
             {

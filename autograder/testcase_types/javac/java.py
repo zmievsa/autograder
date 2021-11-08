@@ -59,7 +59,7 @@ class TestCase(AbstractTestCase):
         return cls.compiler is not None and cls.virtual_machine is not None
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
@@ -72,10 +72,10 @@ class TestCase(AbstractTestCase):
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = super().precompile_submission(submission, student_dir, [stem], cli_args, config)
+        copied_submission = await super().precompile_submission(submission, student_dir, [stem], cli_args, config)
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):
-                cls.compiler(copied_submission, *cli_args.split())
+                await cls.compiler(copied_submission, *cli_args.split())
             else:
                 raise ShellError(1, "The use of reflection is forbidden in student submissions.")
         finally:
@@ -83,13 +83,14 @@ class TestCase(AbstractTestCase):
 
         return copied_submission.with_suffix(".class")
 
-    def compile_testcase(self, precompiled_submission: Path, cli_args: str):
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
         new_self_path = precompiled_submission.with_name(self.path.name)
-        self.compiler(
+        await self.compiler(
             new_self_path,
             "-cp",
             CLASSPATH,
             *cli_args.split(),
+            cwd=precompiled_submission.parent,
         )
         return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
 

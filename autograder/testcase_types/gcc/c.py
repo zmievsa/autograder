@@ -32,7 +32,7 @@ class TestCase(AbstractTestCase):
         return cls.type_source_file.parent / "c_templates"
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
@@ -43,13 +43,19 @@ class TestCase(AbstractTestCase):
         """Compiles student submission without linking it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], cli_args, config)
+        copied_submission = await super().precompile_submission(
+            submission,
+            student_dir,
+            [submission.stem],
+            cli_args,
+            config,
+        )
         precompiled_submission = copied_submission.with_suffix(".o")
 
         # TODO: Append INCLUDE_MEMLEAK to submission here
         # copied_submission.write_text(copied_submission.read_text())
         try:
-            cls.compiler(
+            await cls.compiler(
                 "-c",
                 f"{copied_submission}",
                 "-o",
@@ -61,8 +67,8 @@ class TestCase(AbstractTestCase):
             copied_submission.unlink()
         return precompiled_submission
 
-    def precompile_testcase(self, cli_args: str):
-        self.compiler(
+    async def precompile_testcase(self, cli_args: str):
+        await self.compiler(
             "-c",
             self.path,
             "-o",
@@ -72,7 +78,7 @@ class TestCase(AbstractTestCase):
         self.path.unlink()
         self.path = self.path.with_suffix(".o")
 
-    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         executable_path = self.make_executable_path(precompiled_submission)
         files_to_compile = [
             precompiled_submission.with_name(self.path.name),
@@ -80,7 +86,7 @@ class TestCase(AbstractTestCase):
         ]
         # if self.config.file["GCC"].getboolean("MEMORY_LEAK_DETECTION"):
         #     files_to_compile.append(precompiled_submission.with_name("memleak_detector.c"))
-        self.compiler(
+        await self.compiler(
             "-o",
             executable_path,
             *files_to_compile,
