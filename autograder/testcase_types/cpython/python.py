@@ -1,10 +1,11 @@
 import py_compile
-import shutil
 import sys
 from pathlib import Path
+from typing import List
+from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
+from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command
 
 
 class TestCase(AbstractTestCase):
@@ -22,15 +23,17 @@ class TestCase(AbstractTestCase):
         return cls.interpreter is not EMPTY_COMMAND
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
-        possible_source_file_stems: str,
+        possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ):
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], cli_args, config)
+        copied_submission = await super().precompile_submission(
+            submission, student_dir, [submission.stem], cli_args, config
+        )
         kwargs = {}
         if "-O" in cli_args:
             kwargs["optimize"] = 1
@@ -39,7 +42,7 @@ class TestCase(AbstractTestCase):
         copied_submission.unlink()
         return executable_path
 
-    def compile_testcase(self, precompiled_submission: Path, cLi_args: str):
+    async def compile_testcase(self, precompiled_submission: Path, cLi_args: str):
         return lambda *args, **kwargs: self.interpreter(
             self.make_executable_path(precompiled_submission),
             *args,
@@ -47,7 +50,7 @@ class TestCase(AbstractTestCase):
             **kwargs,
         )
 
-    def precompile_testcase(self, cli_args: str):
+    async def precompile_testcase(self, cli_args: str):
         kwargs = {}
         if "-O" in cli_args:
             kwargs["optimize"] = 1

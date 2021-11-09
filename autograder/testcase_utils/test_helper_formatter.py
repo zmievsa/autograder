@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from .exit_codes import ExitCodeEventType
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
@@ -15,7 +15,7 @@ FORMAT_KWARGS = {
 }
 
 
-def format_template(template: str, safe=True, **kwargs: Dict[str, Any]):
+def format_template(template: str, safe: bool = True, **kwargs: Dict[str, Any]):
     # We use dict here to filter repeated matches
     matches = {m.group(1): m.group(0) for m in template_matcher.finditer(template)}
     for attr, matched_string in matches.items():
@@ -28,6 +28,6 @@ def format_template(template: str, safe=True, **kwargs: Dict[str, Any]):
     return template
 
 
-def get_formatted_test_helper(path_to_test_helper: Path, **exta_format_kwargs) -> str:
+def get_formatted_test_helper(path_to_test_helper: Path, **exta_format_kwargs: str) -> str:
     with path_to_test_helper.open() as helper_file:
         return format_template(helper_file.read(), safe=False, **FORMAT_KWARGS, **exta_format_kwargs)

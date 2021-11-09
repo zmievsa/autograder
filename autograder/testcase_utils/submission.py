@@ -1,6 +1,6 @@
-from pathlib import Path
-from typing import List, Optional, Type, Dict, Tuple
 import re
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Type
 
 from .abstract_testcase import TestCase
 
@@ -28,6 +28,7 @@ class Submission:
     temp_dir: Path  # Personal temporary dir, not the root one
     name: str
     type: Type[TestCase]
+    #            t_name,    grade  weight msg
     grades: Dict[str, Tuple[float, float, str]]
     precompilation_error: str
     final_grade: int
@@ -57,7 +58,7 @@ class Submission:
         total_score = 0
         grades = self.grades.items()
         total_testcase_weight = 0
-        for test_name, (test_grade, test_weight, test_message) in grades:
+        for _, (test_grade, test_weight, _) in grades:
             total_score += test_grade
             total_testcase_weight += test_weight
         normalized_score = total_score / total_testcase_weight * total_score_to_100_ratio

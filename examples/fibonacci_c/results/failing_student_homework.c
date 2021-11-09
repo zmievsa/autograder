@@ -16,6 +16,7 @@ Failed to precompile:
 .../failing_student_homework.c:4:11: warning: implicit declaration of function ‘fib’ [-Wimplicit-function-declaration]
     4 |    return fib(n-1) + fib(n-2);
       |           ^~~
+
 ================================================================
 Result: 0/100
 

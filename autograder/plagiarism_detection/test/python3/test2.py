@@ -1,5 +1,6 @@
 # comment 1
 import exceptions
+
 print ("hello, world")
 response = raw_input()
 try:

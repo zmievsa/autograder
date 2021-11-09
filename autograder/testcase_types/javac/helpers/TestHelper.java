@@ -2,14 +2,19 @@
 // the student from accessing helper array and helper methods
 // https://blog.quirk.es/2009/11/setting-environment-variables-in-java.html
     private interface LibC extends Library {
-        public int setenv(String name, String value, int overwrite);
         public int {% SETENV %}(String name);
     }
-    private static LibC libc = (LibC) Native.loadLibrary("{% C_LIBRARY %}", LibC.class);
 
     private static int setenv(String name) {
         getenv().remove(name);
-        return libc.{% SETENV %}(name + "=NULL");
+        try {
+            LibC libc = (LibC) Native.loadLibrary("{% C_LIBRARY %}", LibC.class);
+            return libc.{% SETENV %}(name + "=NULL");
+        } catch (Throwable e) {
+            // Java.io.Exception that happens if mscvrt is unavailable in Windows
+            // Usually it is the case when you run autograder without admin rights
+            return 0;
+        }
     }
 
     @SuppressWarnings("unchecked")

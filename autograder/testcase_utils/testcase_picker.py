@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import List, Type, Optional
+from typing import List, Optional, Type
 
 from autograder.util import AutograderError, import_from_path
+
 from .abstract_testcase import TestCase
 from .stdout_testcase import StdoutOnlyTestCase
 
@@ -24,12 +25,12 @@ class TestCasePicker:
 
     @classmethod
     def discover_testcase_types(cls, testcase_types_dir: Path) -> List[Type[TestCase]]:
-        testcase_types = []
+        testcase_types: List[Type[TestCase]] = []
         for testcase_type_dir in testcase_types_dir.iterdir():
             for path in testcase_type_dir.iterdir():
                 if path.is_file() and path.suffix == ".py":
                     module = import_from_path(f"testcase:{path.stem}{testcase_type_dir.name}", path)
-                    testcase_type = getattr(module, "TestCase", None)
+                    testcase_type: Optional[Type[TestCase]] = getattr(module, "TestCase", None)
                     if testcase_type is None:
                         # All prints are disabled for json output
                         # print(f"Testcase type '{path}' does not define a 'TestCase' class, skipping.")

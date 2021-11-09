@@ -1,13 +1,13 @@
 import re
 import shutil
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import List
+from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem
-from autograder.testcase_utils.test_helper_formatter import get_formatted_test_helper
 from autograder.util import AutograderError
 
 PUBLIC_CLASS_MATCHER = re.compile(r"public(?:\w|\s)+class(?:\w|\s)+({)")
@@ -59,23 +59,23 @@ class TestCase(AbstractTestCase):
         return cls.compiler is not None and cls.virtual_machine is not None
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ):
         stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
         if stem is None:
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = super().precompile_submission(submission, student_dir, [stem], cli_args, config)
+        copied_submission = await super().precompile_submission(submission, student_dir, [stem], cli_args, config)
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):
-                cls.compiler(copied_submission, *cli_args.split())
+                await cls.compiler(copied_submission, *cli_args.split())
             else:
                 raise ShellError(1, "The use of reflection is forbidden in student submissions.")
         finally:
@@ -83,13 +83,14 @@ class TestCase(AbstractTestCase):
 
         return copied_submission.with_suffix(".class")
 
-    def compile_testcase(self, precompiled_submission: Path, cli_args: str):
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
         new_self_path = precompiled_submission.with_name(self.path.name)
-        self.compiler(
+        await self.compiler(
             new_self_path,
             "-cp",
             CLASSPATH,
             *cli_args.split(),
+            cwd=precompiled_submission.parent,
         )
         return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
 
@@ -107,12 +108,10 @@ class TestCase(AbstractTestCase):
         This is quite a crude way to do it but it is the easiest
         I found so far.
         """
-        with open(self.path) as f:
-            content = f.read()
+        content = self.path.read_text()
         formatted_test_helper = self.get_formatted_test_helper(**ADDITIONAL_TEST_HELPER_KWARGS)
         final_content = self._add_at_the_beginning_of_public_class(formatted_test_helper, content)
-        with open(self.path, "w") as f:
-            f.write(LIBRARIES_REQUIRED_FOR_UNSETENV + final_content)
+        self.path.write_text(LIBRARIES_REQUIRED_FOR_UNSETENV + final_content)
 
     def _add_at_the_beginning_of_public_class(self, helper_class: str, java_file: str):
         """Looks for the first bracket of the first public class and inserts test helper next to it"""

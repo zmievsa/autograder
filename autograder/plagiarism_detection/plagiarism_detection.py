@@ -1,16 +1,19 @@
 import math
+from pathlib import Path
+from typing import List
+
 import numpy as np
 from antlr4 import *
-from numpy.core.defchararray import array
-from lexers.Java8Lexer import JavaLexer
-from lexers.Python3Lexer import Python3Lexer
-from lexers.CLexer import CLexer
-from lexers.CppLexer import CppLexer
 
-from comparison import get_similarity
+from .comparison import get_similarity
+from .lexers.CLexer import CLexer
+from .lexers.CppLexer import CppLexer
+from .lexers.Java8Lexer import JavaLexer
+from .lexers.Python3Lexer import Python3Lexer
+
 
 # entry point function that is called to compare a set of files with each other
-def compare(paths: array) -> dict:
+def compare(paths: List[Path]) -> dict:
     numFiles = len(paths)
     if numFiles == 0:
         raise ValueError("No files found")
@@ -29,19 +32,15 @@ def compare(paths: array) -> dict:
         similarityMatrix = build_similarity_matrix(parsed_file_map["freq"])
         # find the similarity score of comparing a file to itself. This is used to normalize the similarity score
         # calculated when comparing unique files
-        self_similarities = build_self_similarities(
-            token_streams, similarityMatrix, lengths
-        )
-        result = run_comparisons(
-            token_streams, similarityMatrix, self_similarities, lengths
-        )
+        self_similarities = build_self_similarities(token_streams, similarityMatrix, lengths)
+        result = run_comparisons(token_streams, similarityMatrix, self_similarities, lengths)
         results[language] = convert_results(result, files)
 
     return results
 
 
 # determine language of files and initialize language-specific variables
-def initialize_language(paths: array) -> dict:
+def initialize_language(paths: List[Path]) -> dict:
     language_partition = {"java": [], "py": [], "c": [], "cpp": []}
 
     for path in paths:
@@ -119,7 +118,7 @@ def parse_files(language: dict) -> dict:
     }
 
 
-def build_similarity_matrix(freq: np.array) -> np.array:
+def build_similarity_matrix(freq: np.ndarray) -> np.ndarray:
     # alpha is how heavily matching tokens should be penalized, beta is how heavily
     # mismatching tokens should be rewarded. alpha + beta = 1
     alpha = 0.65
@@ -146,9 +145,7 @@ def build_similarity_matrix(freq: np.array) -> np.array:
     return np.array(matrix)
 
 
-def build_self_similarities(
-    token_streams: np.array, matrix: np.array, lengths: np.array
-) -> np.array:
+def build_self_similarities(token_streams: np.ndarray, matrix: np.ndarray, lengths: np.ndarray) -> np.ndarray:
     self_similarities = []
     for i in range(len(token_streams)):
         score = 0
@@ -160,11 +157,11 @@ def build_self_similarities(
 
 
 def run_comparisons(
-    token_streams: np.array,
-    similarity_matrix: np.array,
-    self_similarities: np.array,
-    lengths: np.array,
-) -> np.array:
+    token_streams: np.ndarray,
+    similarity_matrix: np.ndarray,
+    self_similarities: np.ndarray,
+    lengths: np.ndarray,
+) -> np.ndarray:
     similarity_scores = np.zeros((len(token_streams), len(token_streams)))
     for i in range(len(token_streams)):
         for j in range(i + 1, len(token_streams)):
@@ -178,7 +175,7 @@ def run_comparisons(
     return similarity_scores
 
 
-def convert_results(results: np.array, files: array) -> dict:
+def convert_results(results: np.ndarray, files: List[Path]) -> dict:
     converted_results = {}
     for i in range(len(results)):
         for j in range(i + 1, len(results)):

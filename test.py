@@ -2,12 +2,11 @@
 
 # TODO: Refactor this mess
 
-from contextlib import contextmanager
-from multiprocessing.pool import Pool
-from pathlib import Path
-from typing import Callable
 import contextlib
 import sys
+from contextlib import contextmanager
+from multiprocessing.pool import Pool
+from typing import Callable
 
 from autograder.__main__ import main as autograder
 

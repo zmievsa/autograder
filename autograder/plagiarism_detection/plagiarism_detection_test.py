@@ -1,6 +1,7 @@
-from plagiarism_detection import compare
-from pathlib import Path
 import time
+from pathlib import Path
+
+from plagiarism_detection import compare
 
 
 def main():

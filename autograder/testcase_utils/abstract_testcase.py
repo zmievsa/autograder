@@ -1,17 +1,17 @@
-import enum
 import shutil
-from abc import ABC, abstractmethod, ABCMeta
+import sys
+from abc import ABC, ABCMeta, abstractmethod
+from concurrent.futures import TimeoutError
 from inspect import getsourcefile
 from pathlib import Path
-import subprocess
 from typing import List, Tuple
 
-from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from ..config_manager import GradingConfig
+from .exit_codes import SYSTEM_RESERVED_EXIT_CODES, USED_EXIT_CODES, ExitCodeEventType
 from .shell import ShellCommand, ShellError
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-from ..config_manager import GradingConfig
 
 
 class SourceDirSaver(ABCMeta, type):
@@ -19,7 +19,7 @@ class SourceDirSaver(ABCMeta, type):
 
     type_source_file: Path
 
-    def __new__(mcs, name, bases, dct):
+    def __new__(mcs, name, bases, dct):  # type: ignore
         cls = super().__new__(mcs, name, bases, dct)
         # We needed a way to get a source file based solely on __class__ to access its sibling directories
         source_file = getsourcefile(cls)
@@ -62,7 +62,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         return cls.type_source_file.parent / "templates"
 
     @abstractmethod
-    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         """Compiles student submission and testcase into a single executable
         (or simply returns the command to run the testcase if no further compilation is necessary)
 
@@ -74,7 +74,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         path: Path,
         timeout: float,
         weight: float,
-        testcase_precompilation_args: str,
         io: TestCaseIO,
         config: GradingConfig,
     ):
@@ -92,10 +91,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         self.config = config
 
         self.prepend_test_helper()
-        self.precompile_testcase(testcase_precompilation_args)
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
@@ -113,7 +111,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         shutil.copy(str(submission), str(destination))
         return destination
 
-    def precompile_testcase(self, cli_args: str):
+    async def precompile_testcase(self, cli_args: str):
         """Replaces the original testcase file with its compiled version,
         thus making reading its contents as plaintext harder.
         Useful in preventing cheating.
@@ -133,11 +131,15 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     def get_path_to_helper_module(self) -> Path:
         return self.test_helpers_dir / self.helper_module
 
-    def run(
+    async def run(
         self, precompiled_submission: Path, testcase_compilation_args: str, testcase_runtime_args: str
     ) -> Tuple[float, str]:
         """Returns student score and message to be displayed"""
-        result, message = self._weightless_run(precompiled_submission, testcase_compilation_args, testcase_runtime_args)
+        result, message = await self._weightless_run(
+            precompiled_submission,
+            testcase_compilation_args,
+            testcase_runtime_args,
+        )
 
         self.delete_executable_files(precompiled_submission)
         return result * self.weight, message
@@ -157,19 +159,20 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         with self.path.open("w") as f:
             f.write(final_content)
 
-    def get_formatted_test_helper(self, **exta_format_kwargs) -> str:
+    def get_formatted_test_helper(self, **exta_format_kwargs: str) -> str:
         return get_formatted_test_helper(self.get_path_to_helper_module(), **exta_format_kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
-        if path.exists():
+        # Windows sucks at deleting such files
+        if path.exists() and sys.platform != "win32":
             path.unlink()
 
     def delete_source_file(self, source_path: Path):
         if source_path.exists():
             source_path.unlink()
 
-    def _weightless_run(
+    async def _weightless_run(
         self,
         precompiled_submission: Path,
         testcase_compilation_args: str,
@@ -180,20 +183,21 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         shutil.copy(str(self.path), str(testcase_copy_in_student_dir))
 
         try:
-            test_executable = self.compile_testcase(precompiled_submission, testcase_compilation_args)
+            test_executable = await self.compile_testcase(precompiled_submission, testcase_compilation_args)
         except ShellError as e:
             return 0, e.format("Failed to compile")
         self.delete_source_file(testcase_copy_in_student_dir)
         try:
-            result = test_executable(
+            result = await test_executable(
                 *testcase_runtime_args.split(),
-                input=self.io.input,
+                stdin=self.io.input,
                 timeout=self.timeout,
+                cwd=precompiled_submission.parent,
                 env={"VALIDATING_STRING": self.validating_string},
                 allowed_exit_codes=USED_EXIT_CODES,
             )
             exit_code = result.returncode
-        except subprocess.TimeoutExpired:
+        except TimeoutError:
             return 0, "Exceeded Time Limit"
         except ShellError as e:
             return 0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"

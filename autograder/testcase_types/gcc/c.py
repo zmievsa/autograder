@@ -1,10 +1,11 @@
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import List
+from autograder.config_manager import GradingConfig
 
-
-from autograder.testcase_utils.abstract_testcase import ShellCommand, TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
-
+from autograder.testcase_utils.abstract_testcase import ShellCommand
+from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
+from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command
 
 INCLUDE_MEMLEAK: str = '\n#include "leak_detector_c.h"\n'
 
@@ -14,8 +15,8 @@ class TestCase(AbstractTestCase):
     executable_suffix = ".out"
     helper_module = "test_helper.c"  # type: ignore
     compiler = get_shell_command("gcc")
-    SUBMISSION_COMPILATION_ARGS = ["-Dmain=__student_main__"]
-    TESTCASE_COMPILATION_ARGS = []
+    SUBMISSION_COMPILATION_ARGS: List[str] = ["-Dmain=__student_main__"]
+    TESTCASE_COMPILATION_ARGS: List[str] = []
     if sys.platform.startswith("win32"):
         # Windows cannot load its libraries if linking is dynamic
         TESTCASE_COMPILATION_ARGS += ["-static"]
@@ -32,24 +33,30 @@ class TestCase(AbstractTestCase):
         return cls.type_source_file.parent / "c_templates"
 
     @classmethod
-    def precompile_submission(
+    async def precompile_submission(
         cls,
         submission: Path,
         student_dir: Path,
-        possible_source_file_stems: str,
+        possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ) -> Path:
         """Compiles student submission without linking it.
         It is done to speed up total compilation time
         """
-        copied_submission = super().precompile_submission(submission, student_dir, [submission.stem], cli_args, config)
+        copied_submission = await super().precompile_submission(
+            submission,
+            student_dir,
+            [submission.stem],
+            cli_args,
+            config,
+        )
         precompiled_submission = copied_submission.with_suffix(".o")
 
         # TODO: Append INCLUDE_MEMLEAK to submission here
         # copied_submission.write_text(copied_submission.read_text())
         try:
-            cls.compiler(
+            await cls.compiler(
                 "-c",
                 f"{copied_submission}",
                 "-o",
@@ -61,8 +68,8 @@ class TestCase(AbstractTestCase):
             copied_submission.unlink()
         return precompiled_submission
 
-    def precompile_testcase(self, cli_args: str):
-        self.compiler(
+    async def precompile_testcase(self, cli_args: str):
+        await self.compiler(
             "-c",
             self.path,
             "-o",
@@ -72,7 +79,7 @@ class TestCase(AbstractTestCase):
         self.path.unlink()
         self.path = self.path.with_suffix(".o")
 
-    def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         executable_path = self.make_executable_path(precompiled_submission)
         files_to_compile = [
             precompiled_submission.with_name(self.path.name),
@@ -80,7 +87,7 @@ class TestCase(AbstractTestCase):
         ]
         # if self.config.file["GCC"].getboolean("MEMORY_LEAK_DETECTION"):
         #     files_to_compile.append(precompiled_submission.with_name("memleak_detector.c"))
-        self.compiler(
+        await self.compiler(
             "-o",
             executable_path,
             *files_to_compile,
