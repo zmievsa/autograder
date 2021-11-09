@@ -1,10 +1,11 @@
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import List
+from autograder.config_manager import GradingConfig
 
-
-from autograder.testcase_utils.abstract_testcase import ShellCommand, TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
-
+from autograder.testcase_utils.abstract_testcase import ShellCommand
+from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
+from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command
 
 INCLUDE_MEMLEAK: str = '\n#include "leak_detector_c.h"\n'
 
@@ -14,8 +15,8 @@ class TestCase(AbstractTestCase):
     executable_suffix = ".out"
     helper_module = "test_helper.c"  # type: ignore
     compiler = get_shell_command("gcc")
-    SUBMISSION_COMPILATION_ARGS = ["-Dmain=__student_main__"]
-    TESTCASE_COMPILATION_ARGS = []
+    SUBMISSION_COMPILATION_ARGS: List[str] = ["-Dmain=__student_main__"]
+    TESTCASE_COMPILATION_ARGS: List[str] = []
     if sys.platform.startswith("win32"):
         # Windows cannot load its libraries if linking is dynamic
         TESTCASE_COMPILATION_ARGS += ["-static"]
@@ -36,9 +37,9 @@ class TestCase(AbstractTestCase):
         cls,
         submission: Path,
         student_dir: Path,
-        possible_source_file_stems: str,
+        possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ) -> Path:
         """Compiles student submission without linking it.
         It is done to speed up total compilation time

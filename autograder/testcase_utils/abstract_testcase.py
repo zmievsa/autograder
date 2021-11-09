@@ -1,23 +1,17 @@
-import enum
-import io
 import shutil
-from abc import ABC, abstractmethod, ABCMeta
+import sys
+from abc import ABC, ABCMeta, abstractmethod
+from concurrent.futures import TimeoutError
 from inspect import getsourcefile
 from pathlib import Path
-import subprocess
-import time
-import sys
 from typing import List, Tuple
 
-from .exit_codes import ExitCodeEventType, USED_EXIT_CODES, SYSTEM_RESERVED_EXIT_CODES
+from ..config_manager import GradingConfig
+from .exit_codes import SYSTEM_RESERVED_EXIT_CODES, USED_EXIT_CODES, ExitCodeEventType
 from .shell import ShellCommand, ShellError
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
-from ..config_manager import GradingConfig
-
-from concurrent.futures import TimeoutError
-import asyncio
 
 
 class SourceDirSaver(ABCMeta, type):
@@ -25,7 +19,7 @@ class SourceDirSaver(ABCMeta, type):
 
     type_source_file: Path
 
-    def __new__(mcs, name, bases, dct):
+    def __new__(mcs, name, bases, dct):  # type: ignore
         cls = super().__new__(mcs, name, bases, dct)
         # We needed a way to get a source file based solely on __class__ to access its sibling directories
         source_file = getsourcefile(cls)
@@ -165,7 +159,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         with self.path.open("w") as f:
             f.write(final_content)
 
-    def get_formatted_test_helper(self, **exta_format_kwargs) -> str:
+    def get_formatted_test_helper(self, **exta_format_kwargs: str) -> str:
         return get_formatted_test_helper(self.get_path_to_helper_module(), **exta_format_kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):

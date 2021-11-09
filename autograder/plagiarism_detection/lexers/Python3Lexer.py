@@ -1,17 +1,18 @@
 # Generated from Python3.g4 by ANTLR 4.9.2
-from antlr4 import *
-from io import StringIO
 import sys
+from io import StringIO
+
+from antlr4 import *
 
 if sys.version_info[1] > 5:
     from typing import TextIO
 else:
     from typing.io import TextIO
 
+import importlib
+import re
 
 from antlr4.Token import CommonToken
-import re
-import importlib
 
 # Allow languages to extend the lexer and parser, by loading the parser dynamically
 module_path = __name__[:-5]

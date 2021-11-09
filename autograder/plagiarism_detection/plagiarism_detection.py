@@ -1,14 +1,16 @@
 import math
 from pathlib import Path
 from typing import List
+
 import numpy as np
 from antlr4 import *
-from .lexers.Java8Lexer import JavaLexer
-from .lexers.Python3Lexer import Python3Lexer
-from .lexers.CLexer import CLexer
-from .lexers.CppLexer import CppLexer
 
 from .comparison import get_similarity
+from .lexers.CLexer import CLexer
+from .lexers.CppLexer import CppLexer
+from .lexers.Java8Lexer import JavaLexer
+from .lexers.Python3Lexer import Python3Lexer
+
 
 # entry point function that is called to compare a set of files with each other
 def compare(paths: List[Path]) -> dict:

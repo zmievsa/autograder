@@ -1,22 +1,21 @@
-import multiprocessing
-from threading import Lock
-import shutil
-from pathlib import Path
-import time
-from typing import Callable, Dict, List, Set, Type, Tuple
+import asyncio
 import itertools
+import shutil
 import sys
+import time
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
+
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
-from .testcase_utils.shell import ShellError
 from .testcase_utils.abstract_testcase import TestCase
+from .testcase_utils.shell import ShellError
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
-from .testcase_utils.testcase_picker import TestCasePicker
 from .testcase_utils.testcase_io import TestCaseIO
-from .util import AutograderError, hide_path_to_directory, import_from_path, get_file_names, temporarily_change_dir
-import asyncio
-from tempfile import TemporaryDirectory
+from .testcase_utils.testcase_picker import TestCasePicker
+from .util import AutograderError, get_file_names, hide_path_to_directory, import_from_path
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
@@ -26,7 +25,7 @@ class Grader:
     json_output: bool
     submissions: List[Submission]
     tests: Dict[Type[TestCase], List[TestCase]]
-    raw_submissions: List[Path]
+    raw_submissions: List[str]
     paths: "AutograderPaths"
     temp_dir: Path
     _temp_dir: TemporaryDirectory
@@ -35,7 +34,7 @@ class Grader:
     config: GradingConfig
     testcase_picker: TestCasePicker
 
-    def __init__(self, current_dir: Path, json_output: bool = False, submissions=None):
+    def __init__(self, current_dir: Path, json_output: bool = False, submissions: Optional[List[str]] = None):
         if submissions is None:
             submissions = []
         self.json_output = json_output
@@ -78,8 +77,9 @@ class Grader:
             )
             tasks = map(Runner(self, asyncio.Lock()), self.submissions)
 
-            loop = asyncio.ProactorEventLoop()
-            asyncio.set_event_loop(loop)
+            if sys.platform == "win32":
+                loop = asyncio.ProactorEventLoop()
+                asyncio.set_event_loop(loop)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
             total_class_points = sum(s.final_grade for s in modified_submissions)
@@ -132,8 +132,6 @@ class Grader:
                     submissions.append(Submission(submission_path, testcase_type, self.temp_dir))
                 else:
                     pass
-                    # TODO: Figure out what to do with this
-                    # self.logger(f"{submission_path} does not contain the required file name. Skipping it.")
 
         if not len(submissions):
             raise AutograderError(f"No student submissions found in '{self.paths.current_dir}'.")
@@ -145,8 +143,8 @@ class Grader:
     def _gather_io(self) -> Dict[str, TestCaseIO]:
         outputs = get_file_names(self.paths.output_dir)
         inputs = get_file_names(self.paths.input_dir)
-        io = set().union(outputs, inputs)
-        io = {Path(i) for i in io}
+        io: Set[str] = set().union(outputs, inputs)
+        io_set = {Path(i) for i in io}
         dict_io = {
             p.stem: TestCaseIO(
                 p,
@@ -154,7 +152,7 @@ class Grader:
                 self.paths.input_dir,
                 self.paths.output_dir,
             )
-            for p in io
+            for p in io_set
         }
         return dict_io
 
@@ -235,13 +233,14 @@ class AutograderPaths:
     output_dir: Path
     stdout_formatters: Path
     config: Path
-    required_dirs: tuple
+    required_dirs: Tuple[Path, ...]
 
     testcase_types_dir: Path
     default_stdout_formatters: Path
     default_config: Path
 
-    def __init__(self, current_dir):
+    def __init__(self, current_dir: Union[Path, str]):
+        current_dir = Path(current_dir)
         self.current_dir = current_dir
         self.results_dir = current_dir / "results"
         self.output_summary = current_dir / "grader_output.txt"
@@ -276,7 +275,7 @@ class Runner:
     grader: Grader
     lock: asyncio.Lock
 
-    def __init__(self, grader, lock: asyncio.Lock):
+    def __init__(self, grader: Grader, lock: asyncio.Lock):
         self.grader = grader
         self.lock = lock
 
@@ -284,7 +283,7 @@ class Runner:
         await self.run_on_single_submission(submission, self.lock)
         return submission
 
-    async def run_on_single_submission(self, submission: Submission, lock):
+    async def run_on_single_submission(self, submission: Submission, lock: asyncio.Lock) -> None:
         self._copy_extra_files(submission.temp_dir)
         await self._get_testcase_output(submission)
         async with lock:
@@ -294,7 +293,7 @@ class Runner:
             # Cleanup after running tests on student submission
             shutil.rmtree(submission.temp_dir)
 
-    def _copy_extra_files(self, to_dir: Path):
+    def _copy_extra_files(self, to_dir: Path) -> None:
         if self.grader.paths.extra_dir.exists():
             for path in self.grader.paths.extra_dir.iterdir():
                 new_path = to_dir / path.name

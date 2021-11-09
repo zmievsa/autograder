@@ -1,8 +1,5 @@
 import importlib.util
-import os
-import string
 import sys
-from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 from typing import Iterable
@@ -26,7 +23,7 @@ def import_from_path(module_name: str, path: Path) -> ModuleType:
 
 
 def get_file_names(dir_: Path) -> Iterable[str]:
-    return (p.name for p in dir_.iterdir()) if dir_.exists() else []
+    return (p.name for p in dir_.iterdir()) if dir_.exists() else ()
 
 
 def hide_path_to_directory(string_to_hide_path_from: str, path_to_hide: Path, replacement: str = "...") -> str:
@@ -47,13 +44,3 @@ def hide_path_to_directory(string_to_hide_path_from: str, path_to_hide: Path, re
         shorter_path_to_hide = Path("/".join(path_to_hide.parts[2:]))
         formatted_string = formatted_string.replace(str(shorter_path_to_hide), replacement)
     return formatted_string
-
-
-@contextmanager
-def temporarily_change_dir(new_dir: Path):
-    old_dir = Path.cwd()
-    os.chdir(new_dir)
-    try:
-        yield
-    finally:
-        os.chdir(old_dir)

@@ -1,8 +1,10 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import List, Optional
 
-def main(argv=None):
+
+def main(argv: Optional[List[str]] = None):
     """Returns the average score of the students"""
     if argv is None:
         argv = sys.argv[1:]
@@ -88,31 +90,32 @@ def _add_submission_list_argument(parser: argparse.ArgumentParser):
         action="store",
         nargs="*",
         metavar="<name>",
+        type=Path,
         default=[],
         help="Only consider submissions with specified file names (without full path)",
     )
 
 
 def _evaluate_args(args: argparse.Namespace, current_dir: Path):
-    from autograder.util import AutograderError
-
     if sys.platform.startswith("darwin") and not args.json_output:
         print("OSX is not officially supported. Proceed with caution.")
-    from autograder.autograder import Grader, AutograderPaths
+    from autograder.autograder import AutograderPaths, Grader
 
     if args.command == "guide":
         from autograder import guide
 
         guide.main(AutograderPaths(current_dir))
     elif args.command == "run":
-        return Grader(current_dir, json_output=args.json_output, submissions=args.submissions).run()
+        submissions = [s.name for s in args.submissions]
+        return Grader(current_dir, args.json_output, submissions).run()
     elif args.command == "plagiarism":
-        from . import plagiarism_detection
         import json
+
+        from . import plagiarism_detection
 
         files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
         if args.submissions:
-            submissions = [Path(s).name for s in args.submissions]
+            submissions = [s.name for s in args.submissions]
             files = [f for f in files if f.name in submissions]
         result = plagiarism_detection.compare(files)
         result = {tuple(k): v for k, v in result[list(result.keys())[0]].items()}

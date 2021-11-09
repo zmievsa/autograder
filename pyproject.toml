@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "assignment-autograder"
-version = "3.1.0"
+version = "3.2.1"
 description = "Automatic assignment grading for instructor use in programming courses"
 authors = ["Ovsyanka <szmiev2000@gmail.com>"]
 license = "GPL-3.0"
@@ -24,6 +24,7 @@ numba = "^0.54.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
+isort = "^5.10.1"
 
 [tool.poetry.scripts]
 autograder = 'autograder.__main__:main'

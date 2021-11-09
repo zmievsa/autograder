@@ -1,10 +1,10 @@
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, List, Mapping, TypeVar
+from typing import Any, Generic, List, Mapping, Optional, TypeVar
+
 from tomlkit.api import parse
 from tomlkit.container import Container
-import sys
-
 
 DEFAULT_FILE_STEM = "Homework"
 MAIN_CONFIG_SECTION = "CONFIG"
@@ -31,7 +31,7 @@ class ArgList(Generic[TESTNAME, VT]):
 
 
 class GradingConfig:
-    file: Mapping
+    file: Mapping[str, Any]
 
     timeouts: ArgList[str, float]
     generate_results: bool
@@ -83,7 +83,7 @@ class GradingConfig:
         self.testcase_runtime_args = ArgList(cfg["TESTCASE_RUNTIME_ARGS"], "")
 
 
-def _read_config(config: Path, fallback_config: Path = None) -> Mapping:
+def _read_config(config: Path, fallback_config: Optional[Path] = None) -> Mapping[str, Any]:
     if fallback_config is None:
         fallback_doc = None
     else:

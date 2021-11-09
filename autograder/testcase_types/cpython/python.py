@@ -1,10 +1,11 @@
 import py_compile
-import shutil
 import sys
 from pathlib import Path
+from typing import List
+from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import get_shell_command, EMPTY_COMMAND
+from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command
 
 
 class TestCase(AbstractTestCase):
@@ -26,9 +27,9 @@ class TestCase(AbstractTestCase):
         cls,
         submission: Path,
         student_dir: Path,
-        possible_source_file_stems: str,
+        possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ):
         copied_submission = await super().precompile_submission(
             submission, student_dir, [submission.stem], cli_args, config

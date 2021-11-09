@@ -1,17 +1,16 @@
 import asyncio
 import os
-from pathlib import Path
 import shutil
+import subprocess as synchronous_subprocess
 import sys
-from typing import Any, Optional, Sequence, Union
+from asyncio import subprocess
+from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
+from pathlib import Path
+from typing import Any, Optional, Sequence, Union
 
 # import subprocess
-
-from asyncio import subprocess
-import subprocess as synchronous_subprocess
-from concurrent.futures import TimeoutError
 
 
 @dataclass
@@ -29,9 +28,9 @@ class ShellCommand:
 
     async def __call__(
         self,
-        *args,
+        *args: object,
         allowed_exit_codes: Sequence[int] = (0,),
-        timeout=None,
+        timeout: Optional[float] = None,
         stdin: str = "",
         **kwargs: Any,
     ) -> ShellCommandResult:

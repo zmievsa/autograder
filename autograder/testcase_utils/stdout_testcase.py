@@ -1,13 +1,14 @@
 import shutil
 import stat
-from pathlib import Path
 import sys
-from typing import Any, Callable, List, TypeVar
-from typing_extensions import ParamSpec
+from pathlib import Path
+from typing import Any, Callable, List
 
-from autograder.testcase_utils.exit_codes import ExitCodeEventType
+
+from ..config_manager import GradingConfig
 from .abstract_testcase import TestCase
-from .shell import ShellCommand, get_shell_command, ShellError
+from .exit_codes import ExitCodeEventType
+from .shell import ShellCommand, ShellError, get_shell_command
 from .submission import find_appropriate_source_file_stem
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
@@ -64,7 +65,7 @@ class StdoutOnlyTestCase(TestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config,
+        config: GradingConfig,
     ):
         """pwd is temp/student_dir"""
 
@@ -82,7 +83,13 @@ class StdoutOnlyTestCase(TestCase):
             except ShellError as e:
                 if "no makefile found" not in str(e):
                     raise e
-            return _find_submission_executable(student_dir, possible_source_file_stems)
+            executable = _find_submission_executable(student_dir, possible_source_file_stems)
+            if executable is None:
+                raise ShellError(
+                    -1,
+                    "Submission was successfully precompiled but the executable could not be found. Most likely it was not in POSSIBLE_SOURCE_FILE_STEMS.",
+                )
+            return executable
 
     async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
         return _add_args(self._run_stdout_only_testcase, precompiled_submission)
@@ -96,7 +103,7 @@ class StdoutOnlyTestCase(TestCase):
     def delete_source_file(self, source_path: Path):
         """There is no testcase file"""
 
-    async def _run_stdout_only_testcase(self, precompiled_submission: Path, *args, **kwargs):
+    async def _run_stdout_only_testcase(self, precompiled_submission: Path, *args: Any, **kwargs: Any):
         # Because student submissions do not play by our ExitCodeEventType rules,
         # we allow them to return 0 at the end.
         kwargs["allowed_exit_codes"] = (0,)
@@ -133,7 +140,7 @@ def _make_executable(f: Path) -> None:
 
 
 def _add_args(function: Callable[..., Any], *initial_args: Any) -> Callable[..., Any]:
-    async def inner(*args, **kwargs):
+    async def inner(*args: Any, **kwargs: Any):
         return await function(*initial_args, *args, **kwargs)
 
     return inner
