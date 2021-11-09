@@ -35,7 +35,6 @@ class GradingConfig:
 
     timeouts: ArgList[str, float]
     generate_results: bool
-    parallel_grading_enabled: bool
     stdout_only_grading_enabled: bool
     total_points_possible: int
     total_score_to_100_ratio: float
@@ -58,9 +57,6 @@ class GradingConfig:
         cfg = global_config[MAIN_CONFIG_SECTION]
         self.timeouts = ArgList(cfg["TIMEOUT"], 1)
         self.generate_results = cfg["GENERATE_RESULTS"]
-        self.parallel_grading_enabled = cfg["PARALLEL_GRADING_ENABLED"]
-        if self.parallel_grading_enabled and sys.platform.startswith("win32"):
-            self.parallel_grading_enabled = False
         self.stdout_only_grading_enabled = cfg["STDOUT_ONLY_GRADING_ENABLED"]
 
         self.total_points_possible = cfg["TOTAL_POINTS_POSSIBLE"]
