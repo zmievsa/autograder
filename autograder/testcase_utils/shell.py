@@ -52,7 +52,7 @@ class ShellCommand:
             result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout=timeout)
         except TimeoutError as e:
             # Windows doesn't know how to clean up its processes
-            if sys.platform == "win32" and process.returncode is None:
+            if process.returncode is None and sys.platform == "win32":
                 synchronous_subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)])
             raise e
         stdout, stderr = (s.decode(encoding) for s in result)

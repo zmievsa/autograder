@@ -41,24 +41,20 @@ class Grader:
         self.raw_submissions = submissions
         self.stdout_formatters = {}
         self.paths = AutograderPaths(current_dir)
+        self.config = GradingConfig(self.paths.config, self.paths.default_config)
+        self.testcase_picker = TestCasePicker(self.paths.testcase_types_dir, self.config.stdout_only_grading_enabled)
+        self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
+        logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
+        self.logger = logger_type(
+            self.paths.results_dir,
+            self.config.assignment_name,
+            self.config.total_points_possible,
+            self.config.generate_results,
+        )
 
     def run(self):
         io_choices = {}
         try:
-            self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
-            self.config = GradingConfig(self.paths.config, self.paths.default_config)
-            self.testcase_picker = TestCasePicker(
-                self.paths.testcase_types_dir,
-                self.config.possible_source_file_stems,
-                self.config.stdout_only_grading_enabled,
-            )
-            logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
-            self.logger = logger_type(
-                self.paths.results_dir,
-                self.config.assignment_name,
-                self.config.total_points_possible,
-                self.config.generate_results,
-            )
             self._prepare_directory_structure()
             self.submissions = self._gather_submissions()
             io_choices = self._gather_io()
@@ -122,7 +118,7 @@ class Grader:
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
 
-            testcase_type = self.testcase_picker.pick(submission_path)
+            testcase_type = self.testcase_picker.pick(submission_path, self.config.possible_source_file_stems)
             if testcase_type is not None:
                 if (
                     self.config.any_submission_file_name_is_allowed
@@ -181,7 +177,7 @@ class Grader:
         for test in self.paths.testcases_dir.iterdir():
             if not test.is_file():
                 continue
-            testcase_type = self.testcase_picker.pick(test)
+            testcase_type = self.testcase_picker.pick(test, self.config.possible_source_file_stems)
             if testcase_type is None:
                 continue
             shutil.copy(str(test), str(self.temp_dir))
