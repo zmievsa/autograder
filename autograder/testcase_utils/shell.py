@@ -21,8 +21,6 @@ class ShellCommandResult:
     returncode: int
     stdout: str
     stderr: str
-    # This is a small hack to
-    # extra_streams: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclass

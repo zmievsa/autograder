@@ -3,7 +3,7 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 test_output.txt                         100/100
-wrong_output_with_zero_weight.txt       Exceeded Time Limit
+wrong_output_with_zero_weight.txt       Exceeded time limit of 1 seconds
 ================================================================
 Result: 100/100
 

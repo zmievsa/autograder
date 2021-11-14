@@ -3,7 +3,7 @@ import dataclasses
 import shutil
 import sys
 from abc import ABC, ABCMeta, abstractmethod
-from concurrent.futures import TimeoutError
+from asyncio import TimeoutError
 from inspect import getsourcefile
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Tuple

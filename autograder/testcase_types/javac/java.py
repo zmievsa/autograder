@@ -7,7 +7,7 @@ from typing import Any, List, Mapping
 from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import ShellError, get_shell_command
+from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem
 from autograder.util import AutograderError
 
@@ -57,7 +57,7 @@ class TestCase(AbstractTestCase):
 
     @classmethod
     def is_installed(cls) -> bool:
-        return cls.compiler is not None and cls.virtual_machine is not None
+        return cls.compiler is not EMPTY_COMMAND and cls.virtual_machine is not EMPTY_COMMAND
 
     @classmethod
     async def precompile_submission(
@@ -77,7 +77,7 @@ class TestCase(AbstractTestCase):
         copied_submission = await super().precompile_submission(submission, student_dir, [stem], cli_args, config, lock)
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):
-                await cls.compiler(copied_submission, *cli_args.split())
+                await cls.compiler(copied_submission, *cli_args.split(), cwd=student_dir)
             else:
                 raise ShellError(1, "The use of reflection is forbidden in student submissions.")
         finally:

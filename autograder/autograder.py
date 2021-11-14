@@ -285,9 +285,8 @@ class Runner:
 
     async def run_on_single_submission(self, submission: Submission, lock: asyncio.Lock) -> None:
         self._copy_extra_files(submission.temp_dir)
-        await self._get_testcase_output(submission)
-        async with lock:
-            self.grader.logger.print_single_student_grading_results(submission)
+        await self._get_testcase_output(submission, lock)
+        self.grader.logger.print_single_student_grading_results(submission)
         # Windows sucks at cleaning up processes early
         if not sys.platform.startswith("win32"):
             # Cleanup after running tests on student submission
@@ -300,12 +299,11 @@ class Runner:
                 shutil.copy(str(path), str(new_path))
 
     # TODO: rename to "_run_testcases_on_submission" or something
-    async def _get_testcase_output(self, submission: Submission):
+    async def _get_testcase_output(self, submission: Submission, lock: asyncio.Lock):
         """Grades single submission and returns its normalized score
 
         Note: Has side effects in submission instance
         """
-        precompilation_lock = asyncio.Lock()
         try:
             precompiled_submission = await submission.type.precompile_submission(
                 submission.old_path,
@@ -313,7 +311,7 @@ class Runner:
                 self.grader.config.possible_source_file_stems,
                 self.grader.config.submission_precompilation_args[submission.old_path.name],
                 self.grader.config.file,
-                precompilation_lock,
+                lock,
             )
         except ShellError as e:
             error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)

@@ -3,7 +3,7 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 test_output.cpp                         50/50
-test_result.cpp                         100.0/100
+test_result.cpp                         100/100
 ================================================================
 Result: 100/100
 

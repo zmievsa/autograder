@@ -66,6 +66,7 @@ class StdoutOnlyTestCase(TestCase):
         possible_source_file_stems: List[str],
         cli_args: str,
         config: GradingConfig,
+        lock
     ):
         """pwd is temp/student_dir"""
 

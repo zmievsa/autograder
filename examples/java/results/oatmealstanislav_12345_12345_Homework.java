@@ -3,7 +3,7 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 TestOutput.java                         50/50
-TestResult.java                         100.0/100
+TestResult.java                         100/100
 ================================================================
 Result: 100/100
 

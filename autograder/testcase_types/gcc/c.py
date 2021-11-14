@@ -63,9 +63,6 @@ class TestCase(AbstractTestCase):
             async with lock:
                 if not cls.MEMLEAK_TEMP_DIR:
                     await cls.precompile_memleak_detector(cls.TESTCASE_COMPILATION_ARGS)
-                # Yeah, windows can't do anything in time
-            if sys.platform == "win32":
-                await asyncio.sleep(0.5)
             shutil.copy(Path(cls.MEMLEAK_TEMP_DIR.name) / PRECOMPILED_MEMLEAK_FNAME, student_dir)
             cli_args_lst.extend(["-include", str(MEMLEAK_HEADER)])
 
