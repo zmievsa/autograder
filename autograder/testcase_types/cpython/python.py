@@ -1,7 +1,8 @@
+import asyncio
 import py_compile
 import sys
 from pathlib import Path
-from typing import List
+from typing import Any, List, Mapping
 from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
@@ -29,10 +30,16 @@ class TestCase(AbstractTestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: GradingConfig,
+        config: Mapping[str, Any],
+        lock: asyncio.Lock,
     ):
         copied_submission = await super().precompile_submission(
-            submission, student_dir, [submission.stem], cli_args, config
+            submission,
+            student_dir,
+            [submission.stem],
+            cli_args,
+            config,
+            lock,
         )
         kwargs = {}
         if "-O" in cli_args:

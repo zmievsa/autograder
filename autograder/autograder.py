@@ -5,6 +5,7 @@ import sys
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import logging
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 from .config_manager import GradingConfig
@@ -18,6 +19,9 @@ from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, get_file_names, hide_path_to_directory, import_from_path
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
+
+
+L = logging.getLogger("AUTOGRADER.grader")
 
 
 # TODO: What if grader built a less complex object whose only purpose is actually grading? Should improve complexity.
@@ -159,7 +163,7 @@ class Grader:
                 self.config.timeouts[io.name],
                 self.config.testcase_weights[io.name],
                 io,
-                self.config,
+                self.config.file,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -187,7 +191,7 @@ class Grader:
                     self.config.timeouts[test.name],
                     self.config.testcase_weights[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
-                    self.config,
+                    self.config.file,
                 )
             )
         return tests, io
@@ -301,13 +305,15 @@ class Runner:
 
         Note: Has side effects in submission instance
         """
+        precompilation_lock = asyncio.Lock()
         try:
             precompiled_submission = await submission.type.precompile_submission(
                 submission.old_path,
                 submission.temp_dir,
                 self.grader.config.possible_source_file_stems,
                 self.grader.config.submission_precompilation_args[submission.old_path.name],
-                self.grader.config,
+                self.grader.config.file,
+                precompilation_lock,
             )
         except ShellError as e:
             error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
@@ -319,11 +325,11 @@ class Runner:
             return 0
         submission.type.run_additional_testcase_operations_in_student_dir(submission.temp_dir)
         for test in allowed_tests:
-            testcase_score, message = await test.run(
+            result = await test.run(
                 precompiled_submission,
                 self.grader.config.testcase_compilation_args[test.name],
                 self.grader.config.testcase_runtime_args[test.name],
             )
-            message = hide_path_to_directory(message, submission.temp_dir)
-            submission.add_grade(test.name, testcase_score, test.weight, message)
+            message = hide_path_to_directory(result.message, submission.temp_dir)
+            submission.add_grade(test.name, result.grade, test.weight, message, result.extra_output_fields)
         submission.register_final_grade(self.grader.config.total_score_to_100_ratio)

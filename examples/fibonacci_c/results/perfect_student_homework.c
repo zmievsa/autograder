@@ -3,8 +3,8 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 test_output.c                           50/50
-test_result.c                           100.0/100
-test_time.c                             50.0/50
+test_result.c                           100/100
+test_time.c                             50/50
 ================================================================
 Result: 100/100
 

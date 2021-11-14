@@ -59,8 +59,11 @@ class GradingOutputLogger:
         if submission.precompilation_error:
             print(f"{submission.precompilation_error}")
         else:
-            for test_name, (_, _, test_message) in submission.grades.items():
-                print(f"{test_name}: {test_message}")
+            for test_name, grade in submission.grades.items():
+                additional_output = "\n".join(grade.extra_output_fields.values())
+                if additional_output:
+                    additional_output = "\n" + additional_output
+                print(f"{test_name}: {grade.message}{additional_output}")
         print(f"\nResult: {formatted_student_score}\n\n")
 
     def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
@@ -83,8 +86,11 @@ class GradingOutputLogger:
             b("\n")
             b(submission.precompilation_error)
         else:
-            for test_name, (_, _, test_message) in submission.grades.items():
-                b("\n%-40s%s" % (test_name, test_message))
+            for test_name, grade in submission.grades.items():
+                additional_output = "\n".join(grade.extra_output_fields.values())
+                b("\n%-40s%s" % (test_name, grade.message))
+                if additional_output:
+                    b("\n" + additional_output)
         b("\n================================================================\n")
         b("Result: " + formatted_student_score)
         b(KEY)
@@ -112,7 +118,14 @@ class JsonGradingOutputLogger(GradingOutputLogger):
             {
                 "submission": s.old_path.name,
                 "final_grade": s.final_grade,
-                "testcase_scores": [{"name": n, "message": msg} for n, (_, _, msg) in s.grades.items()],
+                "testcase_scores": [
+                    {
+                        "name": test_name,
+                        "message": grade.message,
+                        **grade.extra_output_fields,
+                    }
+                    for test_name, grade in s.grades.items()
+                ],
                 "precompilation_error": s.precompilation_error,
             }
             for s in submissions

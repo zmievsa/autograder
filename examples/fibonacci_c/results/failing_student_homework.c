@@ -2,18 +2,18 @@ Homework Test Results
 
 ================================================================
 Failed to precompile:
-.../failing_student_homework.c: In function ‘fibonacci’:
-.../failing_student_homework.c:2:15: error: ‘P’ undeclared (first use in this function)
+...\failing_student_homework.c: In function 'fibonacci':
+...\failing_student_homework.c:2:15: error: 'P' undeclared (first use in this function)
     2 |    if (n <= 1)P
       |               ^
-.../failing_student_homework.c:2:15: note: each undeclared identifier is reported only once for each function it appears in
-.../failing_student_homework.c:2:16: error: expected ‘;’ before ‘return’
+...\failing_student_homework.c:2:15: note: each undeclared identifier is reported only once for each function it appears in
+...\failing_student_homework.c:2:16: error: expected ';' before 'return'
     2 |    if (n <= 1)P
       |                ^
       |                ;
     3 |       return n;
       |       ~~~~~~    
-.../failing_student_homework.c:4:11: warning: implicit declaration of function ‘fib’ [-Wimplicit-function-declaration]
+...\failing_student_homework.c:4:11: warning: implicit declaration of function 'fib' [-Wimplicit-function-declaration]
     4 |    return fib(n-1) + fib(n-2);
       |           ^~~
 

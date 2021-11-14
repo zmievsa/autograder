@@ -1,10 +1,12 @@
+import asyncio
+import dataclasses
 import shutil
 import sys
 from abc import ABC, ABCMeta, abstractmethod
 from concurrent.futures import TimeoutError
 from inspect import getsourcefile
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, List, Mapping, Tuple
 
 from ..config_manager import GradingConfig
 from .exit_codes import SYSTEM_RESERVED_EXIT_CODES, USED_EXIT_CODES, ExitCodeEventType
@@ -12,6 +14,13 @@ from .shell import ShellCommand, ShellError
 from .test_helper_formatter import get_formatted_test_helper
 from .testcase_io import TestCaseIO
 from .testcase_result_validator import generate_validating_string, validate_output
+
+
+@dataclasses.dataclass
+class TestCaseResult:
+    grade: float
+    message: str
+    extra_output_fields: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 class SourceDirSaver(ABCMeta, type):
@@ -41,7 +50,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     io: TestCaseIO
     validating_string: str
 
-    config: GradingConfig
+    config: Mapping[str, Any]
 
     # Note that this structure will not work for any children of this class until 3.9
     # because classmethod does not wrap property correctly until then.
@@ -75,7 +84,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         timeout: float,
         weight: float,
         io: TestCaseIO,
-        config: GradingConfig,
+        config: Mapping[str, Any],
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
@@ -99,7 +108,11 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: GradingConfig,
+        config: Mapping[str, Any],
+        # Lock is used to allow for optimizations during precompilation.
+        # For example, when all submissions share a single library that
+        # needs to be precompiled only once.
+        lock: asyncio.Lock,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -132,17 +145,23 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         return self.test_helpers_dir / self.helper_module
 
     async def run(
-        self, precompiled_submission: Path, testcase_compilation_args: str, testcase_runtime_args: str
-    ) -> Tuple[float, str]:
+        self,
+        precompiled_submission: Path,
+        testcase_compilation_args: str,
+        testcase_runtime_args: str,
+    ) -> TestCaseResult:
         """Returns student score and message to be displayed"""
-        result, message = await self._weightless_run(
-            precompiled_submission,
-            testcase_compilation_args,
-            testcase_runtime_args,
-        )
+        shutil.copy(self.path, precompiled_submission.with_name(self.path.name))
+        try:
+            test_executable = await self.compile_testcase(precompiled_submission, testcase_compilation_args)
+        except ShellError as e:
+            return TestCaseResult(0, e.format("Failed to compile"))
+
+        result = await self._weightless_run(precompiled_submission, test_executable, testcase_runtime_args)
+        result.grade *= self.weight
 
         self.delete_executable_files(precompiled_submission)
-        return result * self.weight, message
+        return result
 
     def make_executable_path(self, submission: Path) -> Path:
         """By combining test name and student name, it makes a unique path"""
@@ -168,27 +187,15 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         if path.exists() and sys.platform != "win32":
             path.unlink()
 
-    def delete_source_file(self, source_path: Path):
-        if source_path.exists():
-            source_path.unlink()
-
     async def _weightless_run(
         self,
         precompiled_submission: Path,
-        testcase_compilation_args: str,
+        compiled_testcase: ShellCommand,
         testcase_runtime_args: str,
-    ) -> Tuple[float, str]:
+    ) -> TestCaseResult:
         """Returns student score (without applying testcase weight) and message to be displayed"""
-        testcase_copy_in_student_dir = precompiled_submission.with_name(self.path.name)
-        shutil.copy(str(self.path), str(testcase_copy_in_student_dir))
-
         try:
-            test_executable = await self.compile_testcase(precompiled_submission, testcase_compilation_args)
-        except ShellError as e:
-            return 0, e.format("Failed to compile")
-        self.delete_source_file(testcase_copy_in_student_dir)
-        try:
-            result = await test_executable(
+            result = await compiled_testcase(
                 *testcase_runtime_args.split(),
                 stdin=self.io.input,
                 timeout=self.timeout,
@@ -198,16 +205,16 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             )
             exit_code = result.returncode
         except TimeoutError:
-            return 0, "Exceeded Time Limit"
+            return TestCaseResult(0, f"Exceeded time limit of {self.timeout} seconds")
         except ShellError as e:
-            return 0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"
+            return TestCaseResult(0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n")
         raw_output = result.stdout
         output, score, output_is_valid = validate_output(raw_output, self.validating_string)
         if not output_is_valid:
             # This  means that either the student used built-in exit function himself
             # or some testcase helper is broken, or a testcase exits itself without
             # the use of helper functions.
-            return (
+            return TestCaseResult(
                 0,
                 "None of the helper functions have been called.\n"
                 f"Instead, exit() has been called with exit_code {exit_code}.\n"
@@ -215,14 +222,18 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             )
         elif exit_code == ExitCodeEventType.CHECK_STDOUT:
             if self.io.expected_output_equals(output):
-                return 100, f"{int(100 * self.weight)}/{self.max_score}"
+                return TestCaseResult(100, f"{int(100 * self.weight)}/{self.max_score}")
             else:
-                return 0, f"0/{self.max_score} (Wrong output)"
+                return TestCaseResult(0, f"0/{self.max_score} (Wrong output)")
         elif exit_code == ExitCodeEventType.RESULT:
-            message = f"{round(score * self.weight, 2)}/{self.max_score}"
+            weighted_score = round(score * self.weight, 2)
+            # We do this to make output prettier in case the student gets full points
+            if weighted_score == self.max_score:
+                weighted_score = round(weighted_score)
+            message = f"{weighted_score}/{self.max_score}"
             if score == 0:
                 message += " (Wrong answer)"
-            return score, message
+            return TestCaseResult(score, message)
         elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
             # We should already handle this case in try, except block. Maybe we need more info in the error?
             raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")

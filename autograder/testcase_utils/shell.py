@@ -1,16 +1,19 @@
 import asyncio
+import dataclasses
 import os
 import shutil
 import subprocess as synchronous_subprocess
 import sys
+import logging
 from asyncio import subprocess
 from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
 from pathlib import Path
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
-# import subprocess
+
+L = logging.getLogger("AUTOGRADER.testcase_utils.shell")
 
 
 @dataclass
@@ -18,9 +21,11 @@ class ShellCommandResult:
     returncode: int
     stdout: str
     stderr: str
+    # This is a small hack to
+    # extra_streams: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
-@dataclass(frozen=True)
+@dataclass
 class ShellCommand:
     """We use this class to abstract away from systemcall libraries"""
 
@@ -34,9 +39,14 @@ class ShellCommand:
         stdin: str = "",
         **kwargs: Any,
     ) -> ShellCommandResult:
-        if "env" in kwargs and sys.platform.startswith("win32"):
-            kwargs["env"].update({"SYSTEMROOT": os.environ["SYSTEMROOT"]})
-
+        os_specific_kwargs = {}
+        if sys.platform == "win32":
+            os_specific_kwargs["startupinfo"] = synchronous_subprocess.STARTUPINFO(
+                dwFlags=synchronous_subprocess.STARTF_USESHOWWINDOW,
+                wShowWindow=synchronous_subprocess.SW_HIDE,
+            )
+            if "env" in kwargs:
+                kwargs["env"].update({"SYSTEMROOT": os.environ["SYSTEMROOT"]})
         process = await subprocess.create_subprocess_exec(
             # Linux handles non-string args well yet Windows doesn't
             str(self.command_name),
@@ -45,6 +55,7 @@ class ShellCommand:
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
             **kwargs,
+            **os_specific_kwargs,
         )
         # That's the same way subprocess.Popen(text=True) gets the encoding
         encoding = getpreferredencoding(False)
@@ -53,9 +64,21 @@ class ShellCommand:
         except TimeoutError as e:
             # Windows doesn't know how to clean up its processes
             if process.returncode is None and sys.platform == "win32":
-                synchronous_subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)])
+                # We could probably do this asynchronously but I am too lazy to test it
+                synchronous_subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                    **os_specific_kwargs,
+                    stdout=synchronous_subprocess.DEVNULL,
+                    stderr=synchronous_subprocess.DEVNULL,
+                )
             raise e
         stdout, stderr = (s.decode(encoding) for s in result)
+        L.debug(
+            f"""({process.returncode}) EXECUTED CMD: {self.command_name} {' '.join([str(a) for a in args])}
+                STDOUT: {stdout}
+                STDERR: {stderr}
+            """
+        )
         returncode = process.returncode if process.returncode is not None else -1
 
         if process.returncode not in allowed_exit_codes:

@@ -95,7 +95,7 @@ def parse_files(language: dict) -> dict:
             for token in tokens.tokens:
                 # remove comments, blank lines, etc
                 if token.type > num_tokens:
-                    print("hello")
+                    pass
                 if token.type not in ignore_list and token.type <= num_tokens:
                     array += [token.type]
                     freq[token.type] += 1

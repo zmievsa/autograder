@@ -1,7 +1,12 @@
 import argparse
+import logging
 import sys
 from pathlib import Path
 from typing import List, Optional
+
+
+L = logging.getLogger("AUTOGRADER")
+logging.basicConfig(level=logging.CRITICAL, handlers=[logging.StreamHandler()])
 
 
 def main(argv: Optional[List[str]] = None):
@@ -29,7 +34,7 @@ def main(argv: Optional[List[str]] = None):
 
 def _create_parser():
     parser = argparse.ArgumentParser(prog="autograder")
-    parser.add_argument("-v", "--version", action="store_true", help="print the autograder version number and exit")
+    parser.add_argument("-V", "--version", action="store_true", help="print the autograder version number and exit")
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     _create_run_parser(subparsers)
     _create_stats_parser(subparsers)
@@ -40,7 +45,8 @@ def _create_parser():
 
 def _create_run_parser(subparsers):
     parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
-    parser.add_argument("-j", "--json_output", action="store_true", help="Output grades in json format")
+    parser.add_argument("-j", "--json", action="store_true", help="Output grades in json format")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show all debugging output")
     _add_submission_path_argument(parser)
     _add_submission_list_argument(parser)
 
@@ -97,7 +103,7 @@ def _add_submission_list_argument(parser: argparse.ArgumentParser):
 
 
 def _evaluate_args(args: argparse.Namespace, current_dir: Path):
-    if sys.platform.startswith("darwin") and not args.json_output:
+    if sys.platform.startswith("darwin") and not args.json:
         print("OSX is not officially supported. Proceed with caution.")
     from autograder.autograder import AutograderPaths, Grader
 
@@ -106,8 +112,10 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
 
         guide.main(AutograderPaths(current_dir))
     elif args.command == "run":
+        if args.verbose:
+            L.setLevel(logging.DEBUG)
         submissions = [s.name for s in args.submissions]
-        return Grader(current_dir, args.json_output, submissions).run()
+        return Grader(current_dir, args.json, submissions).run()
     elif args.command == "plagiarism":
         import json
 

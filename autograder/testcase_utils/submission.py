@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type
@@ -19,6 +20,14 @@ def get_submission_name(submission: Path):
     return submission.name if match is None else match["student_name"]
 
 
+@dataclass
+class TestCaseGrade:
+    testcase_score: float
+    testcase_weight: float
+    message: str
+    extra_output_fields: Dict[str, str]
+
+
 class Submission:
     # Sowwy, dataclasses do not support slots until 3.10
     __slots__ = "old_path", "temp_path", "temp_dir", "name", "type", "grades", "precompilation_error", "final_grade"
@@ -28,8 +37,7 @@ class Submission:
     temp_dir: Path  # Personal temporary dir, not the root one
     name: str
     type: Type[TestCase]
-    #            t_name,    grade  weight msg
-    grades: Dict[str, Tuple[float, float, str]]
+    grades: Dict[str, TestCaseGrade]
     precompilation_error: str
     final_grade: int
 
@@ -44,8 +52,15 @@ class Submission:
         self.precompilation_error = ""
         self.final_grade = -1
 
-    def add_grade(self, test_name: str, testcase_score: float, testcase_weight: float, message: str):
-        self.grades[test_name] = (testcase_score, testcase_weight, message)
+    def add_grade(
+        self,
+        test_name: str,
+        testcase_score: float,
+        testcase_weight: float,
+        message: str,
+        extra_output_fields: Dict[str, str],
+    ):
+        self.grades[test_name] = TestCaseGrade(testcase_score, testcase_weight, message, extra_output_fields)
 
     def register_precompilation_error(self, error: str) -> None:
         self.precompilation_error = error
@@ -56,10 +71,9 @@ class Submission:
 
     def _calculate_final_grade(self, total_score_to_100_ratio: float) -> int:
         total_score = 0
-        grades = self.grades.items()
         total_testcase_weight = 0
-        for _, (test_grade, test_weight, _) in grades:
-            total_score += test_grade
-            total_testcase_weight += test_weight
+        for grade in self.grades.values():
+            total_score += grade.testcase_score
+            total_testcase_weight += grade.testcase_weight
         normalized_score = total_score / total_testcase_weight * total_score_to_100_ratio
         return round(normalized_score)
