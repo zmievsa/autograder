@@ -10,13 +10,7 @@ from .stdout_testcase import StdoutOnlyTestCase
 class TestCasePicker:
     testcase_types: List[Type[TestCase]]
 
-    def __init__(
-        self,
-        testcase_types_dir: Path,
-        possible_source_file_stems: List[str],
-        stdout_only_grading_enabled: bool = False,
-    ):
-        self.possible_source_file_stems = possible_source_file_stems
+    def __init__(self, testcase_types_dir: Path, stdout_only_grading_enabled: bool = False):
         self.testcase_types = self.discover_testcase_types(testcase_types_dir)
         if stdout_only_grading_enabled:
             self.testcase_types.insert(0, StdoutOnlyTestCase)
@@ -32,25 +26,13 @@ class TestCasePicker:
                     module = import_from_path(f"testcase:{path.stem}{testcase_type_dir.name}", path)
                     testcase_type: Optional[Type[TestCase]] = getattr(module, "TestCase", None)
                     if testcase_type is None:
-                        # All prints are disabled for json output
-                        # print(f"Testcase type '{path}' does not define a 'TestCase' class, skipping.")
                         continue
 
-                    if cls._is_installed(testcase_type_dir.name, testcase_type):
+                    if testcase_type.is_installed():
                         testcase_types.append(testcase_type)
         return testcase_types
 
-    @staticmethod
-    def _is_installed(language_name: str, testcase: Type[TestCase]) -> bool:
-        """Useful for logging"""
-        if testcase.is_installed():
-            return True
-        else:
-            # All prints are disabled for json output
-            # print(f"Utilities for running {language_name} are not installed. Disabling it.")
-            return False
-
-    def pick(self, file: Path) -> Optional[Type[TestCase]]:
+    def pick(self, file: Path, possible_source_file_stems: List[str]) -> Optional[Type[TestCase]]:
         for testcase_type in self.testcase_types:
-            if testcase_type.is_a_type_of(file, self.possible_source_file_stems):
+            if testcase_type.is_a_type_of(file, possible_source_file_stems):
                 return testcase_type

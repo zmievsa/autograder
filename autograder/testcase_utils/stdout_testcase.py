@@ -66,6 +66,7 @@ class StdoutOnlyTestCase(TestCase):
         possible_source_file_stems: List[str],
         cli_args: str,
         config: GradingConfig,
+        lock
     ):
         """pwd is temp/student_dir"""
 
@@ -129,7 +130,6 @@ def _copy_multifile_submission_contents_into_student_dir(submission: Path, stude
 
 
 def _find_submission_executable(student_dir: Path, possible_source_file_stems: List[str]):
-    print(list(student_dir.iterdir()), "\n", possible_source_file_stems)
     for f in student_dir.iterdir():
         if find_appropriate_source_file_stem(f, possible_source_file_stems):
             return f

@@ -5,6 +5,7 @@ import sys
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import logging
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 from .config_manager import GradingConfig
@@ -18,6 +19,9 @@ from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, get_file_names, hide_path_to_directory, import_from_path
 
 EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
+
+
+L = logging.getLogger("AUTOGRADER.grader")
 
 
 # TODO: What if grader built a less complex object whose only purpose is actually grading? Should improve complexity.
@@ -41,24 +45,20 @@ class Grader:
         self.raw_submissions = submissions
         self.stdout_formatters = {}
         self.paths = AutograderPaths(current_dir)
+        self.config = GradingConfig(self.paths.config, self.paths.default_config)
+        self.testcase_picker = TestCasePicker(self.paths.testcase_types_dir, self.config.stdout_only_grading_enabled)
+        self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
+        logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
+        self.logger = logger_type(
+            self.paths.results_dir,
+            self.config.assignment_name,
+            self.config.total_points_possible,
+            self.config.generate_results,
+        )
 
     def run(self):
         io_choices = {}
         try:
-            self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
-            self.config = GradingConfig(self.paths.config, self.paths.default_config)
-            self.testcase_picker = TestCasePicker(
-                self.paths.testcase_types_dir,
-                self.config.possible_source_file_stems,
-                self.config.stdout_only_grading_enabled,
-            )
-            logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
-            self.logger = logger_type(
-                self.paths.results_dir,
-                self.config.assignment_name,
-                self.config.total_points_possible,
-                self.config.generate_results,
-            )
             self._prepare_directory_structure()
             self.submissions = self._gather_submissions()
             io_choices = self._gather_io()
@@ -122,7 +122,7 @@ class Grader:
             if submissions_to_grade and submission_path.name not in submissions_to_grade:
                 continue
 
-            testcase_type = self.testcase_picker.pick(submission_path)
+            testcase_type = self.testcase_picker.pick(submission_path, self.config.possible_source_file_stems)
             if testcase_type is not None:
                 if (
                     self.config.any_submission_file_name_is_allowed
@@ -163,7 +163,7 @@ class Grader:
                 self.config.timeouts[io.name],
                 self.config.testcase_weights[io.name],
                 io,
-                self.config,
+                self.config.file,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -181,7 +181,7 @@ class Grader:
         for test in self.paths.testcases_dir.iterdir():
             if not test.is_file():
                 continue
-            testcase_type = self.testcase_picker.pick(test)
+            testcase_type = self.testcase_picker.pick(test, self.config.possible_source_file_stems)
             if testcase_type is None:
                 continue
             shutil.copy(str(test), str(self.temp_dir))
@@ -191,7 +191,7 @@ class Grader:
                     self.config.timeouts[test.name],
                     self.config.testcase_weights[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
-                    self.config,
+                    self.config.file,
                 )
             )
         return tests, io
@@ -285,9 +285,8 @@ class Runner:
 
     async def run_on_single_submission(self, submission: Submission, lock: asyncio.Lock) -> None:
         self._copy_extra_files(submission.temp_dir)
-        await self._get_testcase_output(submission)
-        async with lock:
-            self.grader.logger.print_single_student_grading_results(submission)
+        await self._get_testcase_output(submission, lock)
+        self.grader.logger.print_single_student_grading_results(submission)
         # Windows sucks at cleaning up processes early
         if not sys.platform.startswith("win32"):
             # Cleanup after running tests on student submission
@@ -300,7 +299,7 @@ class Runner:
                 shutil.copy(str(path), str(new_path))
 
     # TODO: rename to "_run_testcases_on_submission" or something
-    async def _get_testcase_output(self, submission: Submission):
+    async def _get_testcase_output(self, submission: Submission, lock: asyncio.Lock):
         """Grades single submission and returns its normalized score
 
         Note: Has side effects in submission instance
@@ -311,7 +310,8 @@ class Runner:
                 submission.temp_dir,
                 self.grader.config.possible_source_file_stems,
                 self.grader.config.submission_precompilation_args[submission.old_path.name],
-                self.grader.config,
+                self.grader.config.file,
+                lock,
             )
         except ShellError as e:
             error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
@@ -323,11 +323,11 @@ class Runner:
             return 0
         submission.type.run_additional_testcase_operations_in_student_dir(submission.temp_dir)
         for test in allowed_tests:
-            testcase_score, message = await test.run(
+            result = await test.run(
                 precompiled_submission,
                 self.grader.config.testcase_compilation_args[test.name],
                 self.grader.config.testcase_runtime_args[test.name],
             )
-            message = hide_path_to_directory(message, submission.temp_dir)
-            submission.add_grade(test.name, testcase_score, test.weight, message)
+            message = hide_path_to_directory(result.message, submission.temp_dir)
+            submission.add_grade(test.name, result.grade, test.weight, message, result.extra_output_fields)
         submission.register_final_grade(self.grader.config.total_score_to_100_ratio)
