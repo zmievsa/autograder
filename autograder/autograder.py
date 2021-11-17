@@ -75,11 +75,12 @@ class Grader:
                 (t.precompile_testcase(self.config.testcase_precompilation_args[t.name]) for t in t_lst)
                 for t_lst in self.tests.values()
             )
-            tasks = map(Runner(self, asyncio.Lock()), self.submissions)
 
             if sys.platform == "win32":
                 loop = asyncio.ProactorEventLoop()
                 asyncio.set_event_loop(loop)
+
+            tasks = map(Runner(self, asyncio.Lock()), self.submissions)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
             total_class_points = sum(s.final_grade for s in modified_submissions)

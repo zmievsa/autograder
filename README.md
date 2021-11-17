@@ -8,8 +8,8 @@ If you wish to use autograder as a professor/student, configuring and running it
 The command line utility is intended for advanced use cases (extending autograder, grading on a server, or integrating it as a part of a larger utility/app)
 
 #### Table of Contents  
-[Features](#Features) 
-[Installation](#Platform-Support)  
+[Features](#Features)  
+[Platform Support](#Platform-Support)  
 [Installation](#Installation)   
 [Supported Programming Languages](#Supported-Programming-Languages)   
 [Quickstart](#Quickstart)   
