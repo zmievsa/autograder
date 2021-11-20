@@ -24,6 +24,7 @@ TEST_DIRS = {
     "cheating_attempts": 0,  # All cheaters shall fail
 }
 
+
 @contextmanager
 def silence_output():
     with StringIO() as buf, redirect_stdout(buf), redirect_stderr(buf):
@@ -59,7 +60,7 @@ def test_example(args):
     test_dir, expected_result = args
     with ErrorHandler(test_dir):
         with silence_output():
-            real_result = int(autograder(["run", f"examples/{test_dir}"]))
+            real_result = int(autograder(["run", f"examples/{test_dir}"])[1])
         msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
         if int(expected_result) == real_result:
             print(msg)
