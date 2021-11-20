@@ -103,8 +103,6 @@ def _add_submission_list_argument(parser: argparse.ArgumentParser):
 
 
 def _evaluate_args(args: argparse.Namespace, current_dir: Path):
-    if sys.platform.startswith("darwin") and not args.json:
-        print("OSX is not officially supported. Proceed with caution.")
     from autograder.autograder import AutograderPaths, Grader
 
     if args.command == "guide":

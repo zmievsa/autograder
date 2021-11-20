@@ -35,13 +35,13 @@ The command line utility is intended for advanced use cases (extending autograde
 * Can detect and report memory leaks in C/C++ code
 # Platform Support
 * Linux is fully supported
-* OS X has not been tested
 * Windows is partially supported:
-  * Python fully supported
-  * Java supported if javac and java alias are available
   * C/C++ have only been tested with `mingw` installed with `chocolatey`
   * Stdout-testcases that require compilation are only supported if `make` is installed
   * Stdout-testcases that require shebang lines are not and cannot be supported
+* OS X is partially supported:
+  * Stdout-only python testcases do not work yet
+  * Java RESULT, PASS, and FAIL helper methods are not supported
 # Installation
 * Currently Python >= 3.7 is necessary.
 * Run `pip install assignment-autograder`
