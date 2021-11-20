@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import os
 import shutil
 import subprocess as synchronous_subprocess
@@ -10,7 +9,7 @@ from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 
 L = logging.getLogger("AUTOGRADER.testcase_utils.shell")
@@ -73,12 +72,18 @@ class ShellCommand:
         stdout, stderr = (s.decode(encoding) for s in result)
         L.debug(
             f"""({process.returncode}) EXECUTED CMD: {self.command_name} {' '.join([str(a) for a in args])}
-                STDOUT: {stdout}
-                STDERR: {stderr}
+                STDOUT: {stdout.strip()}
+                STDERR: {stderr.strip()}
             """
         )
         returncode = process.returncode if process.returncode is not None else -1
-
+        # Possible fix for OSX sometimes not recognizing correct returncodes
+        # Delete after testing if unnecessary
+        if not isinstance(returncode, int):
+            try:
+                returncode = int(returncode)
+            except:
+                pass
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
         return ShellCommandResult(returncode, stdout, stderr)

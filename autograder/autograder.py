@@ -29,7 +29,7 @@ class Grader:
     json_output: bool
     submissions: List[Submission]
     tests: Dict[Type[TestCase], List[TestCase]]
-    raw_submissions: List[str]
+    raw_submissions: Optional[List[str]]
     paths: "AutograderPaths"
     temp_dir: Path
     _temp_dir: TemporaryDirectory
@@ -39,8 +39,6 @@ class Grader:
     testcase_picker: TestCasePicker
 
     def __init__(self, current_dir: Path, json_output: bool = False, submissions: Optional[List[str]] = None):
-        if submissions is None:
-            submissions = []
         self.json_output = json_output
         self.raw_submissions = submissions
         self.stdout_formatters = {}
@@ -117,10 +115,10 @@ class Grader:
 
     def _gather_submissions(self) -> List[Submission]:
         """Returns sorted list of paths to submissions"""
-        submissions_to_grade = set(self.raw_submissions)
+        submissions_to_grade = None if self.raw_submissions is None else set(self.raw_submissions)
         submissions: List[Submission] = []
         for submission_path in self.paths.current_dir.iterdir():
-            if submissions_to_grade and submission_path.name not in submissions_to_grade:
+            if submissions_to_grade is not None and submission_path.name not in submissions_to_grade:
                 continue
 
             testcase_type = self.testcase_picker.pick(submission_path, self.config.possible_source_file_stems)
@@ -130,7 +128,7 @@ class Grader:
                     or find_appropriate_source_file_stem(submission_path, self.config.possible_source_file_stems)
                     is not None
                 ):
-                    submissions.append(Submission(submission_path, testcase_type, self.temp_dir))
+                    submissions.append(Submission(submission_path, testcase_type))
                 else:
                     pass
 

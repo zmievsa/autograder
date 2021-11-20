@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Type
+from tempfile import TemporaryDirectory
+from typing import Dict, List, Optional, Type
 
 from .abstract_testcase import TestCase
 
@@ -30,10 +31,21 @@ class TestCaseGrade:
 
 class Submission:
     # Sowwy, dataclasses do not support slots until 3.10
-    __slots__ = "old_path", "temp_path", "temp_dir", "name", "type", "grades", "precompilation_error", "final_grade"
+    __slots__ = (
+        "old_path",
+        "temp_path",
+        "_temp_dir",
+        "temp_dir",
+        "name",
+        "type",
+        "grades",
+        "precompilation_error",
+        "final_grade",
+    )
 
     old_path: Path
     temp_path: Path
+    _temp_dir: TemporaryDirectory
     temp_dir: Path  # Personal temporary dir, not the root one
     name: str
     type: Type[TestCase]
@@ -41,10 +53,10 @@ class Submission:
     precompilation_error: str
     final_grade: int
 
-    def __init__(self, file: Path, testcase_type: Type[TestCase], temp_dir: Path):
+    def __init__(self, file: Path, testcase_type: Type[TestCase]):
         self.old_path = file
-        self.temp_dir = temp_dir / file.name
-        self.temp_dir.mkdir()
+        self._temp_dir = TemporaryDirectory(prefix="ag_hw_")
+        self.temp_dir = Path(self._temp_dir.name)
         self.temp_path = self.temp_dir / file.name
         self.name = get_submission_name(file)
         self.type = testcase_type
