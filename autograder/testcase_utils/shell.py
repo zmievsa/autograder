@@ -79,11 +79,6 @@ class ShellCommand:
         returncode = process.returncode if process.returncode is not None else -1
         # Possible fix for OSX sometimes not recognizing correct returncodes
         # Delete after testing if unnecessary
-        if not isinstance(returncode, int):
-            try:
-                returncode = int(returncode)
-            except:
-                pass
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
         return ShellCommandResult(returncode, stdout, stderr)
