@@ -97,7 +97,7 @@ def _add_submission_list_argument(parser: argparse.ArgumentParser):
         nargs="*",
         metavar="<name>",
         type=Path,
-        default=[],
+        default=None,
         help="Only consider submissions with specified file names (without full path)",
     )
 
@@ -114,7 +114,7 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
     elif args.command == "run":
         if args.verbose:
             L.setLevel(logging.DEBUG)
-        submissions = [s.name for s in args.submissions]
+        submissions = [s.name for s in args.submissions] if args.submissions else args.submissions
         return Grader(current_dir, args.json, submissions).run()
     elif args.command == "plagiarism":
         import json
@@ -122,12 +122,11 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
         from . import plagiarism_detection
 
         files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
-        if args.submissions:
-            submissions = [s.name for s in args.submissions]
+        if args.submissions is not None:
+            submissions = [submission.name for submission in args.submissions]
             files = [f for f in files if f.name in submissions]
         result = plagiarism_detection.compare(files)
         result = {tuple(k): v for k, v in result[list(result.keys())[0]].items()}
-        # print(result)
         output = [{"student1": k[0].name, "student2": k[1].name, "similarity_score": v} for k, v in result.items()]
         output.sort(key=lambda v: v["similarity_score"], reverse=True)
         print(json.dumps({"results": output}, indent=4))
