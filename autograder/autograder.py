@@ -54,7 +54,7 @@ class Grader:
             self.config.generate_results,
         )
 
-    def run(self):
+    def run(self) -> Tuple[Tuple[Submission], int]:
         io_choices = {}
         try:
             self._prepare_directory_structure()
@@ -89,7 +89,7 @@ class Grader:
             for io in io_choices.values():
                 io.cleanup()
             self.cleanup()
-        return class_average
+        return modified_submissions, class_average
 
     def cleanup(self):
         if self.temp_dir.exists():
