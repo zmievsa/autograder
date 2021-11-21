@@ -35,22 +35,23 @@ The command line utility is intended for advanced use cases (extending autograde
 * Can detect and report memory leaks in C/C++ code
 # Platform Support
 * Linux is fully supported
+* OS X is fully supported
 * Windows is partially supported:
-  * C/C++ have only been tested with `mingw` installed with `chocolatey`
-  * Stdout-testcases that require compilation are only supported if `make` is installed
   * Stdout-testcases that require shebang lines are not and cannot be supported
-* OS X is partially supported:
-  * Stdout-only python testcases do not work yet
-  * Java RESULT, PASS, and FAIL helper methods are not supported
 # Installation
 * Currently Python >= 3.7 is necessary.
 * Run `pip install assignment-autograder`
 * If you want to update to a newer version, run `pip install -U --no-cache-dir assignment-autograder`
+* To grade various programming languages, you'd need to install:
+  * `gcc`/`clang` for C/C++ support
+  * `Java JDK` for java support
+  * `make` for compiled stdout-only testcase support
+  * Any interpreter/compiler necessary to run stdout-only testcases. For example, testcases with ruby in their shebang lines will require the ruby interpreter
 # Supported Programming Languages
-* Java (only through javac and java alias)
-* C (only through gcc)
-* C++ (only through g++)
-* CPython (3.6-3.10)
+* Java
+* C
+* C++
+* CPython (3.6-3.9)
 * Any programming language if stdout-only grading is used
 # Quickstart
 * Run `autograder guide path/to/directory/you'd/like/to/grade`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
