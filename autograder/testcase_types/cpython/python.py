@@ -6,7 +6,7 @@ from typing import Any, List, Mapping
 from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command
+from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command, ShellError
 
 
 class TestCase(AbstractTestCase):
@@ -45,7 +45,10 @@ class TestCase(AbstractTestCase):
         if "-O" in cli_args:
             kwargs["optimize"] = 1
         executable_path = copied_submission.with_suffix(cls.executable_suffix)
-        py_compile.compile(file=str(copied_submission), cfile=str(executable_path), doraise=True)
+        try:
+            py_compile.compile(file=str(copied_submission), cfile=str(executable_path), doraise=True)
+        except Exception as e:
+            raise ShellError(1, str(e)) from e
         copied_submission.unlink()
         return executable_path
 
