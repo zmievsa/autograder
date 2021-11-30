@@ -15,7 +15,7 @@ TEST_DIRS = {
     "c": 100,
     "c++": 100,
     "java": 100,
-    "python": 100,
+    "python": 50,
     "multiple_languages": 100,
     "stdout_only": 100 if sys.platform != "win32" else 33,
     "extra_files": 100,
