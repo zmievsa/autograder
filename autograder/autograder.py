@@ -296,7 +296,7 @@ class Runner:
         # Windows sucks at cleaning up processes early
         if not sys.platform.startswith("win32"):
             # Cleanup after running tests on student submission
-            shutil.rmtree(submission.temp_dir)
+            submission._temp_dir.cleanup()
 
     def _copy_extra_files(self, to_dir: Path) -> None:
         if self.grader.paths.extra_dir.exists():
