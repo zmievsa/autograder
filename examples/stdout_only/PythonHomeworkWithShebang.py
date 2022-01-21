@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def numberSaver():
     arr = [0] * 9
     sum = 0
@@ -17,5 +18,6 @@ def numberSaver():
         sum += arr[i - 1] * i
 
     return sum
+
 
 numberSaver()

@@ -3,7 +3,9 @@
 
 
 def main():
-    res = student_submission.numberSaver()  # You can call any function from student's file like this
+    res = (
+        student_submission.numberSaver()
+    )  # You can call any function from student's file like this
     if res == 54:
         PASS()
     else:

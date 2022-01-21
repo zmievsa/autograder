@@ -4,8 +4,8 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Any, List, Mapping
-from autograder.config_manager import GradingConfig
 
+from autograder.config_manager import GradingConfig
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem
@@ -57,7 +57,10 @@ class TestCase(AbstractTestCase):
 
     @classmethod
     def is_installed(cls) -> bool:
-        return cls.compiler is not EMPTY_COMMAND and cls.virtual_machine is not EMPTY_COMMAND
+        return (
+            cls.compiler is not EMPTY_COMMAND
+            and cls.virtual_machine is not EMPTY_COMMAND
+        )
 
     @classmethod
     async def precompile_submission(
@@ -74,12 +77,18 @@ class TestCase(AbstractTestCase):
             raise AutograderError(
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
-        copied_submission = await super().precompile_submission(submission, student_dir, [stem], cli_args, config, lock)
+        copied_submission = await super().precompile_submission(
+            submission, student_dir, [stem], cli_args, config, lock
+        )
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):
-                await cls.compiler(copied_submission, *cli_args.split(), cwd=student_dir)
+                await cls.compiler(
+                    copied_submission, *cli_args.split(), cwd=student_dir
+                )
             else:
-                raise ShellError(1, "The use of reflection is forbidden in student submissions.")
+                raise ShellError(
+                    1, "The use of reflection is forbidden in student submissions."
+                )
         finally:
             copied_submission.unlink()
 
@@ -94,7 +103,9 @@ class TestCase(AbstractTestCase):
             *cli_args.split(),
             cwd=precompiled_submission.parent,
         )
-        return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
+        return lambda *args, **kwargs: self.virtual_machine(
+            "-cp", CLASSPATH, self.path.stem, *args, **kwargs
+        )
 
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
@@ -111,8 +122,12 @@ class TestCase(AbstractTestCase):
         I found so far.
         """
         content = self.path.read_text()
-        formatted_test_helper = self.get_formatted_test_helper(**ADDITIONAL_TEST_HELPER_KWARGS)
-        final_content = self._add_at_the_beginning_of_public_class(formatted_test_helper, content)
+        formatted_test_helper = self.get_formatted_test_helper(
+            **ADDITIONAL_TEST_HELPER_KWARGS
+        )
+        final_content = self._add_at_the_beginning_of_public_class(
+            formatted_test_helper, content
+        )
         self.path.write_text(LIBRARIES_REQUIRED_FOR_UNSETENV + final_content)
 
     def _add_at_the_beginning_of_public_class(self, helper_class: str, java_file: str):

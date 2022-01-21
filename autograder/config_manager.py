@@ -73,13 +73,19 @@ class GradingConfig:
 
         self.testcase_weights = ArgList(cfg["TESTCASE_WEIGHT"], 1)
 
-        self.submission_precompilation_args = ArgList(cfg["SUBMISSION_PRECOMPILATION_ARGS"], "")
-        self.testcase_precompilation_args = ArgList(cfg["TESTCASE_PRECOMPILATION_ARGS"], "")
+        self.submission_precompilation_args = ArgList(
+            cfg["SUBMISSION_PRECOMPILATION_ARGS"], ""
+        )
+        self.testcase_precompilation_args = ArgList(
+            cfg["TESTCASE_PRECOMPILATION_ARGS"], ""
+        )
         self.testcase_compilation_args = ArgList(cfg["TESTCASE_COMPILATION_ARGS"], "")
         self.testcase_runtime_args = ArgList(cfg["TESTCASE_RUNTIME_ARGS"], "")
 
 
-def _read_config(config: Path, fallback_config: Optional[Path] = None) -> Mapping[str, Any]:
+def _read_config(
+    config: Path, fallback_config: Optional[Path] = None
+) -> Mapping[str, Any]:
     if fallback_config is None:
         fallback_doc = None
     else:

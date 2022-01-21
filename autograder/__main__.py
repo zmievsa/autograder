@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-
 L = logging.getLogger("AUTOGRADER")
 logging.basicConfig(level=logging.CRITICAL, handlers=[logging.StreamHandler()])
 
@@ -34,7 +33,12 @@ def main(argv: Optional[List[str]] = None):
 
 def _create_parser():
     parser = argparse.ArgumentParser(prog="autograder")
-    parser.add_argument("-V", "--version", action="store_true", help="print the autograder version number and exit")
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="print the autograder version number and exit",
+    )
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     _create_run_parser(subparsers)
     _create_stats_parser(subparsers)
@@ -44,9 +48,15 @@ def _create_parser():
 
 
 def _create_run_parser(subparsers):
-    parser = subparsers.add_parser("run", help="Grade submissions in submission path or in current directory")
-    parser.add_argument("-j", "--json", action="store_true", help="Output grades in json format")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Show all debugging output")
+    parser = subparsers.add_parser(
+        "run", help="Grade submissions in submission path or in current directory"
+    )
+    parser.add_argument(
+        "-j", "--json", action="store_true", help="Output grades in json format"
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Show all debugging output"
+    )
     _add_submission_path_argument(parser)
     _add_submission_list_argument(parser)
 
@@ -69,12 +79,16 @@ def _create_stats_parser(subparsers):
 
 
 def _create_guide_parser(subparsers):
-    parser = subparsers.add_parser("guide", help="Guide you through setting up a grading environment")
+    parser = subparsers.add_parser(
+        "guide", help="Guide you through setting up a grading environment"
+    )
     _add_submission_path_argument(parser)
 
 
 def _create_plagiarism_parser(subparsers):
-    parser = subparsers.add_parser("plagiarism", help="Checks how similar the submissions are to each other")
+    parser = subparsers.add_parser(
+        "plagiarism", help="Checks how similar the submissions are to each other"
+    )
     _add_submission_path_argument(parser)
     _add_submission_list_argument(parser)
 
@@ -112,20 +126,29 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
     elif args.command == "run":
         if args.verbose:
             L.setLevel(logging.DEBUG)
-        submissions = [s.name for s in args.submissions] if args.submissions else args.submissions
+        submissions = (
+            [s.name for s in args.submissions] if args.submissions else args.submissions
+        )
         return Grader(current_dir, args.json, submissions).run()
     elif args.command == "plagiarism":
         import json
 
         from . import plagiarism_detection
 
-        files = [f for f in current_dir.iterdir() if f.is_file() and not f.suffix.endswith(".txt")]
+        files = [
+            f
+            for f in current_dir.iterdir()
+            if f.is_file() and not f.suffix.endswith(".txt")
+        ]
         if args.submissions is not None:
             submissions = [submission.name for submission in args.submissions]
             files = [f for f in files if f.name in submissions]
         result = plagiarism_detection.compare(files)
         result = {tuple(k): v for k, v in result[list(result.keys())[0]].items()}
-        output = [{"student1": k[0].name, "student2": k[1].name, "similarity_score": v} for k, v in result.items()]
+        output = [
+            {"student1": k[0].name, "student2": k[1].name, "similarity_score": v}
+            for k, v in result.items()
+        ]
         output.sort(key=lambda v: v["similarity_score"], reverse=True)
         print(json.dumps({"results": output}, indent=4))
     else:

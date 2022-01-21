@@ -10,7 +10,6 @@ else:
     from typing.io import TextIO
 
 
-
 def serializedATN():
     with StringIO() as buf:
         buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\2x")
@@ -19,8 +18,8 @@ def serializedATN():
         buf.write("\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23")
         buf.write("\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30")
         buf.write("\4\31\t\31\4\32\t\32\4\33\t\33\4\34\t\34\4\35\t\35\4\36")
-        buf.write("\t\36\4\37\t\37\4 \t \4!\t!\4\"\t\"\4#\t#\4$\t$\4%\t%")
-        buf.write("\4&\t&\4\'\t\'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
+        buf.write('\t\36\4\37\t\37\4 \t \4!\t!\4"\t"\4#\t#\4$\t$\4%\t%')
+        buf.write("\4&\t&\4'\t'\4(\t(\4)\t)\4*\t*\4+\t+\4,\t,\4-\t-\4.")
         buf.write("\t.\4/\t/\4\60\t\60\4\61\t\61\4\62\t\62\4\63\t\63\4\64")
         buf.write("\t\64\4\65\t\65\4\66\t\66\4\67\t\67\48\t8\49\t9\4:\t:")
         buf.write("\4;\t;\4<\t<\4=\t=\4>\t>\4?\t?\4@\t@\4A\tA\4B\tB\4C\t")
@@ -60,9 +59,9 @@ def serializedATN():
         buf.write("\3\32\3\32\3\32\3\32\3\32\3\33\3\33\3\33\3\33\3\33\3\33")
         buf.write("\3\33\3\34\3\34\3\34\3\34\3\34\3\34\3\35\3\35\3\35\3\35")
         buf.write("\3\36\3\36\3\36\3\36\3\36\3\37\3\37\3\37\3 \3 \3 \3 \3")
-        buf.write(" \3 \3 \3!\3!\3!\3!\3\"\3\"\3\"\3\"\3\"\3#\3#\3#\3#\3")
+        buf.write(' \3 \3 \3!\3!\3!\3!\3"\3"\3"\3"\3"\3#\3#\3#\3#\3')
         buf.write("#\3#\3#\3#\3#\3$\3$\3$\3$\3$\3$\3$\3$\3$\3%\3%\3%\3%\3")
-        buf.write("%\3%\3%\3&\3&\3&\3&\3&\3&\3\'\3\'\3\'\3\'\3\'\3\'\3\'")
+        buf.write("%\3%\3%\3&\3&\3&\3&\3&\3&\3'\3'\3'\3'\3'\3'\3'")
         buf.write("\3(\3(\3(\3(\3(\3(\3(\3)\3)\3)\3)\3)\3)\3)\3*\3*\3*\3")
         buf.write("*\3*\3*\3*\3+\3+\3+\3+\3+\3+\3+\3,\3,\3,\3,\3,\3,\3,\3")
         buf.write(",\3-\3-\3-\3-\3-\3-\3.\3.\3.\3.\3.\3.\3.\3.\3.\3/\3/\3")
@@ -149,8 +148,8 @@ def serializedATN():
         buf.write("\u0546\n\u009d\f\u009d\16\u009d\u0549\13\u009d\3\u009d")
         buf.write("\3\u009d\3\u0539\2\u009e\3\3\5\4\7\5\t\6\13\7\r\b\17\t")
         buf.write("\21\n\23\13\25\f\27\r\31\16\33\17\35\20\37\21!\22#\23")
-        buf.write("%\24\'\25)\26+\27-\30/\31\61\32\63\33\65\34\67\359\36")
-        buf.write(";\37= ?!A\"C#E$G%I&K\'M(O)Q*S+U,W-Y.[/]\60_\61a\62c\63")
+        buf.write("%\24'\25)\26+\27-\30/\31\61\32\63\33\65\34\67\359\36")
+        buf.write(";\37= ?!A\"C#E$G%I&K'M(O)Q*S+U,W-Y.[/]\60_\61a\62c\63")
         buf.write("e\64g\65i\66k\67m8o9q:s;u<w=y>{?}@\177A\u0081B\u0083C")
         buf.write("\u0085D\u0087E\u0089F\u008bG\u008dH\u008fI\u0091J\u0093")
         buf.write("K\u0095L\u0097M\u0099N\u009bO\u009dP\u009fQ\u00a1R\u00a3")
@@ -168,12 +167,12 @@ def serializedATN():
         buf.write("\2ZZzz\3\2\63;\3\2\629\5\2\62;CHch\4\2WWww\4\2NNnn\4\2")
         buf.write("GGgg\4\2--//\4\2RRrr\6\2HHNNhhnn\6\2\f\f\17\17))^^\f\2")
         buf.write("$$))AA^^cdhhppttvvxx\5\2NNWWww\6\2\f\f\17\17$$^^\5\2\f")
-        buf.write("\f\17\17%%\4\2\f\f\17\17\3\2}}\3\2\177\177\4\2\13\13\"")
-        buf.write("\"\2\u0573\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2\t\3\2")
+        buf.write('\f\17\17%%\4\2\f\f\17\17\3\2}}\3\2\177\177\4\2\13\13"')
+        buf.write('"\2\u0573\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2\t\3\2')
         buf.write("\2\2\2\13\3\2\2\2\2\r\3\2\2\2\2\17\3\2\2\2\2\21\3\2\2")
         buf.write("\2\2\23\3\2\2\2\2\25\3\2\2\2\2\27\3\2\2\2\2\31\3\2\2\2")
         buf.write("\2\33\3\2\2\2\2\35\3\2\2\2\2\37\3\2\2\2\2!\3\2\2\2\2#")
-        buf.write("\3\2\2\2\2%\3\2\2\2\2\'\3\2\2\2\2)\3\2\2\2\2+\3\2\2\2")
+        buf.write("\3\2\2\2\2%\3\2\2\2\2'\3\2\2\2\2)\3\2\2\2\2+\3\2\2\2")
         buf.write("\2-\3\2\2\2\2/\3\2\2\2\2\61\3\2\2\2\2\63\3\2\2\2\2\65")
         buf.write("\3\2\2\2\2\67\3\2\2\2\29\3\2\2\2\2;\3\2\2\2\2=\3\2\2\2")
         buf.write("\2?\3\2\2\2\2A\3\2\2\2\2C\3\2\2\2\2E\3\2\2\2\2G\3\2\2")
@@ -204,7 +203,7 @@ def serializedATN():
         buf.write("\23\u019a\3\2\2\2\25\u01a4\3\2\2\2\27\u01af\3\2\2\2\31")
         buf.write("\u01b5\3\2\2\2\33\u01c3\3\2\2\2\35\u01cb\3\2\2\2\37\u01d8")
         buf.write("\3\2\2\2!\u01dd\3\2\2\2#\u01e3\3\2\2\2%\u01e8\3\2\2\2")
-        buf.write("\'\u01ed\3\2\2\2)\u01f3\3\2\2\2+\u01fc\3\2\2\2-\u0204")
+        buf.write("'\u01ed\3\2\2\2)\u01f3\3\2\2\2+\u01fc\3\2\2\2-\u0204")
         buf.write("\3\2\2\2/\u0207\3\2\2\2\61\u020e\3\2\2\2\63\u0213\3\2")
         buf.write("\2\2\65\u0218\3\2\2\2\67\u021f\3\2\2\29\u0225\3\2\2\2")
         buf.write(";\u0229\3\2\2\2=\u022e\3\2\2\2?\u0231\3\2\2\2A\u0238\3")
@@ -306,7 +305,7 @@ def serializedATN():
         buf.write("\36\3\2\2\2\u01d8\u01d9\7c\2\2\u01d9\u01da\7w\2\2\u01da")
         buf.write("\u01db\7v\2\2\u01db\u01dc\7q\2\2\u01dc \3\2\2\2\u01dd")
         buf.write("\u01de\7d\2\2\u01de\u01df\7t\2\2\u01df\u01e0\7g\2\2\u01e0")
-        buf.write("\u01e1\7c\2\2\u01e1\u01e2\7m\2\2\u01e2\"\3\2\2\2\u01e3")
+        buf.write('\u01e1\7c\2\2\u01e1\u01e2\7m\2\2\u01e2"\3\2\2\2\u01e3')
         buf.write("\u01e4\7e\2\2\u01e4\u01e5\7c\2\2\u01e5\u01e6\7u\2\2\u01e6")
         buf.write("\u01e7\7g\2\2\u01e7$\3\2\2\2\u01e8\u01e9\7e\2\2\u01e9")
         buf.write("\u01ea\7j\2\2\u01ea\u01eb\7c\2\2\u01eb\u01ec\7t\2\2\u01ec")
@@ -422,7 +421,7 @@ def serializedATN():
         buf.write("\2\2\u0333\u0334\7/\2\2\u0334\u0094\3\2\2\2\u0335\u0336")
         buf.write("\7/\2\2\u0336\u0337\7/\2\2\u0337\u0096\3\2\2\2\u0338\u0339")
         buf.write("\7,\2\2\u0339\u0098\3\2\2\2\u033a\u033b\7\61\2\2\u033b")
-        buf.write("\u009a\3\2\2\2\u033c\u033d\7\'\2\2\u033d\u009c\3\2\2\2")
+        buf.write("\u009a\3\2\2\2\u033c\u033d\7'\2\2\u033d\u009c\3\2\2\2")
         buf.write("\u033e\u033f\7(\2\2\u033f\u009e\3\2\2\2\u0340\u0341\7")
         buf.write("~\2\2\u0341\u00a0\3\2\2\2\u0342\u0343\7(\2\2\u0343\u0344")
         buf.write("\7(\2\2\u0344\u00a2\3\2\2\2\u0345\u0346\7~\2\2\u0346\u0347")
@@ -434,7 +433,7 @@ def serializedATN():
         buf.write("\u0355\7.\2\2\u0355\u00b2\3\2\2\2\u0356\u0357\7?\2\2\u0357")
         buf.write("\u00b4\3\2\2\2\u0358\u0359\7,\2\2\u0359\u035a\7?\2\2\u035a")
         buf.write("\u00b6\3\2\2\2\u035b\u035c\7\61\2\2\u035c\u035d\7?\2\2")
-        buf.write("\u035d\u00b8\3\2\2\2\u035e\u035f\7\'\2\2\u035f\u0360\7")
+        buf.write("\u035d\u00b8\3\2\2\2\u035e\u035f\7'\2\2\u035f\u0360\7")
         buf.write("?\2\2\u0360\u00ba\3\2\2\2\u0361\u0362\7-\2\2\u0362\u0363")
         buf.write("\7?\2\2\u0363\u00bc\3\2\2\2\u0364\u0365\7/\2\2\u0365\u0366")
         buf.write("\7?\2\2\u0366\u00be\3\2\2\2\u0367\u0368\7>\2\2\u0368\u0369")
@@ -667,7 +666,7 @@ class CLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
-    decisionsToDFA = [ DFA(ds, i) for i, ds in enumerate(atn.decisionToState) ]
+    decisionsToDFA = [DFA(ds, i) for i, ds in enumerate(atn.decisionToState)]
 
     T__0 = 1
     T__1 = 2
@@ -788,91 +787,392 @@ class CLexer(Lexer):
     BlockComment = 117
     LineComment = 118
 
-    channelNames = [ u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN" ]
+    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
 
-    modeNames = [ "DEFAULT_MODE" ]
+    modeNames = ["DEFAULT_MODE"]
 
-    literalNames = [ "<INVALID>",
-            "'__extension__'", "'__builtin_va_arg'", "'__builtin_offsetof'", 
-            "'__m128'", "'__m128d'", "'__m128i'", "'__typeof__'", "'__inline__'", 
-            "'__stdcall'", "'__declspec'", "'__asm'", "'__attribute__'", 
-            "'__asm__'", "'__volatile__'", "'auto'", "'break'", "'case'", 
-            "'char'", "'const'", "'continue'", "'default'", "'do'", "'double'", 
-            "'else'", "'enum'", "'extern'", "'float'", "'for'", "'goto'", 
-            "'if'", "'inline'", "'int'", "'long'", "'register'", "'restrict'", 
-            "'return'", "'short'", "'signed'", "'sizeof'", "'static'", "'struct'", 
-            "'switch'", "'typedef'", "'union'", "'unsigned'", "'void'", 
-            "'volatile'", "'while'", "'_Alignas'", "'_Alignof'", "'_Atomic'", 
-            "'_Bool'", "'_Complex'", "'_Generic'", "'_Imaginary'", "'_Noreturn'", 
-            "'_Static_assert'", "'_Thread_local'", "'('", "')'", "'['", 
-            "']'", "'{'", "'}'", "'<'", "'<='", "'>'", "'>='", "'<<'", "'>>'", 
-            "'+'", "'++'", "'-'", "'--'", "'*'", "'/'", "'%'", "'&'", "'|'", 
-            "'&&'", "'||'", "'^'", "'!'", "'~'", "'?'", "':'", "';'", "','", 
-            "'='", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", "'>>='", 
-            "'&='", "'^='", "'|='", "'=='", "'!='", "'->'", "'.'", "'...'" ]
+    literalNames = [
+        "<INVALID>",
+        "'__extension__'",
+        "'__builtin_va_arg'",
+        "'__builtin_offsetof'",
+        "'__m128'",
+        "'__m128d'",
+        "'__m128i'",
+        "'__typeof__'",
+        "'__inline__'",
+        "'__stdcall'",
+        "'__declspec'",
+        "'__asm'",
+        "'__attribute__'",
+        "'__asm__'",
+        "'__volatile__'",
+        "'auto'",
+        "'break'",
+        "'case'",
+        "'char'",
+        "'const'",
+        "'continue'",
+        "'default'",
+        "'do'",
+        "'double'",
+        "'else'",
+        "'enum'",
+        "'extern'",
+        "'float'",
+        "'for'",
+        "'goto'",
+        "'if'",
+        "'inline'",
+        "'int'",
+        "'long'",
+        "'register'",
+        "'restrict'",
+        "'return'",
+        "'short'",
+        "'signed'",
+        "'sizeof'",
+        "'static'",
+        "'struct'",
+        "'switch'",
+        "'typedef'",
+        "'union'",
+        "'unsigned'",
+        "'void'",
+        "'volatile'",
+        "'while'",
+        "'_Alignas'",
+        "'_Alignof'",
+        "'_Atomic'",
+        "'_Bool'",
+        "'_Complex'",
+        "'_Generic'",
+        "'_Imaginary'",
+        "'_Noreturn'",
+        "'_Static_assert'",
+        "'_Thread_local'",
+        "'('",
+        "')'",
+        "'['",
+        "']'",
+        "'{'",
+        "'}'",
+        "'<'",
+        "'<='",
+        "'>'",
+        "'>='",
+        "'<<'",
+        "'>>'",
+        "'+'",
+        "'++'",
+        "'-'",
+        "'--'",
+        "'*'",
+        "'/'",
+        "'%'",
+        "'&'",
+        "'|'",
+        "'&&'",
+        "'||'",
+        "'^'",
+        "'!'",
+        "'~'",
+        "'?'",
+        "':'",
+        "';'",
+        "','",
+        "'='",
+        "'*='",
+        "'/='",
+        "'%='",
+        "'+='",
+        "'-='",
+        "'<<='",
+        "'>>='",
+        "'&='",
+        "'^='",
+        "'|='",
+        "'=='",
+        "'!='",
+        "'->'",
+        "'.'",
+        "'...'",
+    ]
 
-    symbolicNames = [ "<INVALID>",
-            "Auto", "Break", "Case", "Char", "Const", "Continue", "Default", 
-            "Do", "Double", "Else", "Enum", "Extern", "Float", "For", "Goto", 
-            "If", "Inline", "Int", "Long", "Register", "Restrict", "Return", 
-            "Short", "Signed", "Sizeof", "Static", "Struct", "Switch", "Typedef", 
-            "Union", "Unsigned", "Void", "Volatile", "While", "Alignas", 
-            "Alignof", "Atomic", "Bool", "Complex", "Generic", "Imaginary", 
-            "Noreturn", "StaticAssert", "ThreadLocal", "LeftParen", "RightParen", 
-            "LeftBracket", "RightBracket", "LeftBrace", "RightBrace", "Less", 
-            "LessEqual", "Greater", "GreaterEqual", "LeftShift", "RightShift", 
-            "Plus", "PlusPlus", "Minus", "MinusMinus", "Star", "Div", "Mod", 
-            "And", "Or", "AndAnd", "OrOr", "Caret", "Not", "Tilde", "Question", 
-            "Colon", "Semi", "Comma", "Assign", "StarAssign", "DivAssign", 
-            "ModAssign", "PlusAssign", "MinusAssign", "LeftShiftAssign", 
-            "RightShiftAssign", "AndAssign", "XorAssign", "OrAssign", "Equal", 
-            "NotEqual", "Arrow", "Dot", "Ellipsis", "Identifier", "Constant", 
-            "DigitSequence", "StringLiteral", "ComplexDefine", "IncludeDirective", 
-            "AsmBlock", "LineAfterPreprocessing", "LineDirective", "PragmaDirective", 
-            "Whitespace", "Newline", "BlockComment", "LineComment" ]
+    symbolicNames = [
+        "<INVALID>",
+        "Auto",
+        "Break",
+        "Case",
+        "Char",
+        "Const",
+        "Continue",
+        "Default",
+        "Do",
+        "Double",
+        "Else",
+        "Enum",
+        "Extern",
+        "Float",
+        "For",
+        "Goto",
+        "If",
+        "Inline",
+        "Int",
+        "Long",
+        "Register",
+        "Restrict",
+        "Return",
+        "Short",
+        "Signed",
+        "Sizeof",
+        "Static",
+        "Struct",
+        "Switch",
+        "Typedef",
+        "Union",
+        "Unsigned",
+        "Void",
+        "Volatile",
+        "While",
+        "Alignas",
+        "Alignof",
+        "Atomic",
+        "Bool",
+        "Complex",
+        "Generic",
+        "Imaginary",
+        "Noreturn",
+        "StaticAssert",
+        "ThreadLocal",
+        "LeftParen",
+        "RightParen",
+        "LeftBracket",
+        "RightBracket",
+        "LeftBrace",
+        "RightBrace",
+        "Less",
+        "LessEqual",
+        "Greater",
+        "GreaterEqual",
+        "LeftShift",
+        "RightShift",
+        "Plus",
+        "PlusPlus",
+        "Minus",
+        "MinusMinus",
+        "Star",
+        "Div",
+        "Mod",
+        "And",
+        "Or",
+        "AndAnd",
+        "OrOr",
+        "Caret",
+        "Not",
+        "Tilde",
+        "Question",
+        "Colon",
+        "Semi",
+        "Comma",
+        "Assign",
+        "StarAssign",
+        "DivAssign",
+        "ModAssign",
+        "PlusAssign",
+        "MinusAssign",
+        "LeftShiftAssign",
+        "RightShiftAssign",
+        "AndAssign",
+        "XorAssign",
+        "OrAssign",
+        "Equal",
+        "NotEqual",
+        "Arrow",
+        "Dot",
+        "Ellipsis",
+        "Identifier",
+        "Constant",
+        "DigitSequence",
+        "StringLiteral",
+        "ComplexDefine",
+        "IncludeDirective",
+        "AsmBlock",
+        "LineAfterPreprocessing",
+        "LineDirective",
+        "PragmaDirective",
+        "Whitespace",
+        "Newline",
+        "BlockComment",
+        "LineComment",
+    ]
 
-    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", 
-                  "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13", 
-                  "Auto", "Break", "Case", "Char", "Const", "Continue", 
-                  "Default", "Do", "Double", "Else", "Enum", "Extern", "Float", 
-                  "For", "Goto", "If", "Inline", "Int", "Long", "Register", 
-                  "Restrict", "Return", "Short", "Signed", "Sizeof", "Static", 
-                  "Struct", "Switch", "Typedef", "Union", "Unsigned", "Void", 
-                  "Volatile", "While", "Alignas", "Alignof", "Atomic", "Bool", 
-                  "Complex", "Generic", "Imaginary", "Noreturn", "StaticAssert", 
-                  "ThreadLocal", "LeftParen", "RightParen", "LeftBracket", 
-                  "RightBracket", "LeftBrace", "RightBrace", "Less", "LessEqual", 
-                  "Greater", "GreaterEqual", "LeftShift", "RightShift", 
-                  "Plus", "PlusPlus", "Minus", "MinusMinus", "Star", "Div", 
-                  "Mod", "And", "Or", "AndAnd", "OrOr", "Caret", "Not", 
-                  "Tilde", "Question", "Colon", "Semi", "Comma", "Assign", 
-                  "StarAssign", "DivAssign", "ModAssign", "PlusAssign", 
-                  "MinusAssign", "LeftShiftAssign", "RightShiftAssign", 
-                  "AndAssign", "XorAssign", "OrAssign", "Equal", "NotEqual", 
-                  "Arrow", "Dot", "Ellipsis", "Identifier", "IdentifierNondigit", 
-                  "Nondigit", "Digit", "UniversalCharacterName", "HexQuad", 
-                  "Constant", "IntegerConstant", "BinaryConstant", "DecimalConstant", 
-                  "OctalConstant", "HexadecimalConstant", "HexadecimalPrefix", 
-                  "NonzeroDigit", "OctalDigit", "HexadecimalDigit", "IntegerSuffix", 
-                  "UnsignedSuffix", "LongSuffix", "LongLongSuffix", "FloatingConstant", 
-                  "DecimalFloatingConstant", "HexadecimalFloatingConstant", 
-                  "FractionalConstant", "ExponentPart", "Sign", "DigitSequence", 
-                  "HexadecimalFractionalConstant", "BinaryExponentPart", 
-                  "HexadecimalDigitSequence", "FloatingSuffix", "CharacterConstant", 
-                  "CCharSequence", "CChar", "EscapeSequence", "SimpleEscapeSequence", 
-                  "OctalEscapeSequence", "HexadecimalEscapeSequence", "StringLiteral", 
-                  "EncodingPrefix", "SCharSequence", "SChar", "ComplexDefine", 
-                  "IncludeDirective", "AsmBlock", "LineAfterPreprocessing", 
-                  "LineDirective", "PragmaDirective", "Whitespace", "Newline", 
-                  "BlockComment", "LineComment" ]
+    ruleNames = [
+        "T__0",
+        "T__1",
+        "T__2",
+        "T__3",
+        "T__4",
+        "T__5",
+        "T__6",
+        "T__7",
+        "T__8",
+        "T__9",
+        "T__10",
+        "T__11",
+        "T__12",
+        "T__13",
+        "Auto",
+        "Break",
+        "Case",
+        "Char",
+        "Const",
+        "Continue",
+        "Default",
+        "Do",
+        "Double",
+        "Else",
+        "Enum",
+        "Extern",
+        "Float",
+        "For",
+        "Goto",
+        "If",
+        "Inline",
+        "Int",
+        "Long",
+        "Register",
+        "Restrict",
+        "Return",
+        "Short",
+        "Signed",
+        "Sizeof",
+        "Static",
+        "Struct",
+        "Switch",
+        "Typedef",
+        "Union",
+        "Unsigned",
+        "Void",
+        "Volatile",
+        "While",
+        "Alignas",
+        "Alignof",
+        "Atomic",
+        "Bool",
+        "Complex",
+        "Generic",
+        "Imaginary",
+        "Noreturn",
+        "StaticAssert",
+        "ThreadLocal",
+        "LeftParen",
+        "RightParen",
+        "LeftBracket",
+        "RightBracket",
+        "LeftBrace",
+        "RightBrace",
+        "Less",
+        "LessEqual",
+        "Greater",
+        "GreaterEqual",
+        "LeftShift",
+        "RightShift",
+        "Plus",
+        "PlusPlus",
+        "Minus",
+        "MinusMinus",
+        "Star",
+        "Div",
+        "Mod",
+        "And",
+        "Or",
+        "AndAnd",
+        "OrOr",
+        "Caret",
+        "Not",
+        "Tilde",
+        "Question",
+        "Colon",
+        "Semi",
+        "Comma",
+        "Assign",
+        "StarAssign",
+        "DivAssign",
+        "ModAssign",
+        "PlusAssign",
+        "MinusAssign",
+        "LeftShiftAssign",
+        "RightShiftAssign",
+        "AndAssign",
+        "XorAssign",
+        "OrAssign",
+        "Equal",
+        "NotEqual",
+        "Arrow",
+        "Dot",
+        "Ellipsis",
+        "Identifier",
+        "IdentifierNondigit",
+        "Nondigit",
+        "Digit",
+        "UniversalCharacterName",
+        "HexQuad",
+        "Constant",
+        "IntegerConstant",
+        "BinaryConstant",
+        "DecimalConstant",
+        "OctalConstant",
+        "HexadecimalConstant",
+        "HexadecimalPrefix",
+        "NonzeroDigit",
+        "OctalDigit",
+        "HexadecimalDigit",
+        "IntegerSuffix",
+        "UnsignedSuffix",
+        "LongSuffix",
+        "LongLongSuffix",
+        "FloatingConstant",
+        "DecimalFloatingConstant",
+        "HexadecimalFloatingConstant",
+        "FractionalConstant",
+        "ExponentPart",
+        "Sign",
+        "DigitSequence",
+        "HexadecimalFractionalConstant",
+        "BinaryExponentPart",
+        "HexadecimalDigitSequence",
+        "FloatingSuffix",
+        "CharacterConstant",
+        "CCharSequence",
+        "CChar",
+        "EscapeSequence",
+        "SimpleEscapeSequence",
+        "OctalEscapeSequence",
+        "HexadecimalEscapeSequence",
+        "StringLiteral",
+        "EncodingPrefix",
+        "SCharSequence",
+        "SChar",
+        "ComplexDefine",
+        "IncludeDirective",
+        "AsmBlock",
+        "LineAfterPreprocessing",
+        "LineDirective",
+        "PragmaDirective",
+        "Whitespace",
+        "Newline",
+        "BlockComment",
+        "LineComment",
+    ]
 
     grammarFileName = "C.g4"
 
-    def __init__(self, input=None, output:TextIO = sys.stdout):
+    def __init__(self, input=None, output: TextIO = sys.stdout):
         super().__init__(input, output)
         self.checkVersion("4.9.2")
-        self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
+        self._interp = LexerATNSimulator(
+            self, self.atn, self.decisionsToDFA, PredictionContextCache()
+        )
         self._actions = None
         self._predicates = None
-
-

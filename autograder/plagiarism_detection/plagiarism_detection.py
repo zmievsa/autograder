@@ -32,8 +32,12 @@ def compare(paths: List[Path]) -> dict:
         similarityMatrix = build_similarity_matrix(parsed_file_map["freq"])
         # find the similarity score of comparing a file to itself. This is used to normalize the similarity score
         # calculated when comparing unique files
-        self_similarities = build_self_similarities(token_streams, similarityMatrix, lengths)
-        result = run_comparisons(token_streams, similarityMatrix, self_similarities, lengths)
+        self_similarities = build_self_similarities(
+            token_streams, similarityMatrix, lengths
+        )
+        result = run_comparisons(
+            token_streams, similarityMatrix, self_similarities, lengths
+        )
         results[language] = convert_results(result, files)
 
     return results
@@ -145,7 +149,9 @@ def build_similarity_matrix(freq: np.ndarray) -> np.ndarray:
     return np.array(matrix)
 
 
-def build_self_similarities(token_streams: np.ndarray, matrix: np.ndarray, lengths: np.ndarray) -> np.ndarray:
+def build_self_similarities(
+    token_streams: np.ndarray, matrix: np.ndarray, lengths: np.ndarray
+) -> np.ndarray:
     self_similarities = []
     for i in range(len(token_streams)):
         score = 0

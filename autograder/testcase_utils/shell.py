@@ -1,16 +1,15 @@
 import asyncio
+import logging
 import os
 import shutil
 import subprocess as synchronous_subprocess
 import sys
-import logging
 from asyncio import subprocess
 from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
 from pathlib import Path
 from typing import Any, Optional, Sequence, Union
-
 
 L = logging.getLogger("AUTOGRADER.testcase_utils.shell")
 
@@ -57,7 +56,9 @@ class ShellCommand:
         # That's the same way subprocess.Popen(text=True) gets the encoding
         encoding = getpreferredencoding(False)
         try:
-            result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout=timeout)
+            result = await asyncio.wait_for(
+                process.communicate(input=stdin.encode(encoding)), timeout=timeout
+            )
         except TimeoutError as e:
             # Windows doesn't know how to clean up its processes
             if process.returncode is None and sys.platform == "win32":

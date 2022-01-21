@@ -22,7 +22,9 @@ class TestCaseIO:
         self.name = testcase_path.name
         self.stem = testcase_path.stem
         f = formatters  # to make next line shorter
-        self.formatter = f.get(self.stem) or f.get(DEFAULT_ARGLIST_VALUE_KEY) or default_formatter
+        self.formatter = (
+            f.get(self.stem) or f.get(DEFAULT_ARGLIST_VALUE_KEY) or default_formatter
+        )
         self.output_file: Path = output_dir / f"{self.stem}.txt"
 
         if self.output_file.exists() and self.output_file.is_file():

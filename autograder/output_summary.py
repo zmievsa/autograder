@@ -45,8 +45,12 @@ class GradingOutputLogger:
 
     def print_single_student_grading_results(self, submission: Submission):
         student_final_result = f"{submission.final_grade}/{self.total_points_possible}"
-        self._print_single_student_grading_results_to_stdout(submission, student_final_result)
-        self._print_single_student_grading_results_to_file(submission, student_final_result)
+        self._print_single_student_grading_results_to_stdout(
+            submission, student_final_result
+        )
+        self._print_single_student_grading_results_to_file(
+            submission, student_final_result
+        )
 
     def print_final_score(self, submissions: Sequence[Submission], score: int):
         print(f"\nAverage score: {score}/{self.total_points_possible}")
@@ -54,7 +58,9 @@ class GradingOutputLogger:
     def print_key(self):
         print(KEY)
 
-    def _print_single_student_grading_results_to_stdout(self, submission: Submission, formatted_student_score: str):
+    def _print_single_student_grading_results_to_stdout(
+        self, submission: Submission, formatted_student_score: str
+    ):
         print(f"Grading {submission.name}")
         if submission.precompilation_error:
             print(f"{submission.precompilation_error}")
@@ -66,7 +72,9 @@ class GradingOutputLogger:
                 print(f"{test_name}: {grade.message}{additional_output}")
         print(f"\nResult: {formatted_student_score}\n\n")
 
-    def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
+    def _print_single_student_grading_results_to_file(
+        self, submission: Submission, formatted_student_score: str
+    ):
         (self.results_dir / submission.old_path.name).write_text(
             self._format_output_for_student_file(submission, formatted_student_score)
         )
@@ -74,7 +82,9 @@ class GradingOutputLogger:
     def _silence_generating_results(self):
         self._print_single_student_grading_results_to_stdout = _empty_func  # type: ignore
 
-    def _format_output_for_student_file(self, submission: Submission, formatted_student_score: str):
+    def _format_output_for_student_file(
+        self, submission: Submission, formatted_student_score: str
+    ):
         """Replace this function with anything else if you want the output to have a different style"""
         str_builder: Deque[str] = deque()
         b = str_builder.append
@@ -105,7 +115,12 @@ class JsonGradingOutputLogger(GradingOutputLogger):
         total_points_possible: int,
         generate_results: bool,
     ):
-        super().__init__(path_to_results_dir, assignment_name, total_points_possible, generate_results)
+        super().__init__(
+            path_to_results_dir,
+            assignment_name,
+            total_points_possible,
+            generate_results,
+        )
 
         self._print_single_student_grading_results_to_stdout = _empty_func
 

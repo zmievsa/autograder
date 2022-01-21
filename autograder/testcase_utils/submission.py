@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, List, Optional, Type
@@ -7,7 +7,9 @@ from typing import Dict, List, Optional, Type
 from .abstract_testcase import TestCase
 
 
-def find_appropriate_source_file_stem(file: Path, possible_source_file_stems: List[str]) -> Optional[str]:
+def find_appropriate_source_file_stem(
+    file: Path, possible_source_file_stems: List[str]
+) -> Optional[str]:
     for s in possible_source_file_stems:
         if s.lower() in file.stem.lower():
             return s
@@ -72,7 +74,9 @@ class Submission:
         message: str,
         extra_output_fields: Dict[str, str],
     ):
-        self.grades[test_name] = TestCaseGrade(testcase_score, testcase_weight, message, extra_output_fields)
+        self.grades[test_name] = TestCaseGrade(
+            testcase_score, testcase_weight, message, extra_output_fields
+        )
 
     def register_precompilation_error(self, error: str) -> None:
         self.precompilation_error = error
@@ -87,5 +91,7 @@ class Submission:
         for grade in self.grades.values():
             total_score += grade.testcase_score
             total_testcase_weight += grade.testcase_weight
-        normalized_score = total_score / total_testcase_weight * total_score_to_100_ratio
+        normalized_score = (
+            total_score / total_testcase_weight * total_score_to_100_ratio
+        )
         return round(normalized_score)
