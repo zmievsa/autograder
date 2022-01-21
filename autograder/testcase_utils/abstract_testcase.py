@@ -71,9 +71,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         return cls.type_source_file.parent / "templates"
 
     @abstractmethod
-    async def compile_testcase(
-        self, precompiled_submission: Path, cli_args: str
-    ) -> ShellCommand:
+    async def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         """Compiles student submission and testcase into a single executable
         (or simply returns the command to run the testcase if no further compilation is necessary)
 
@@ -122,9 +120,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
         pwd = temp/student_dir
         """
-        destination = (student_dir / possible_source_file_stems[0]).with_suffix(
-            cls.source_suffix
-        )
+        destination = (student_dir / possible_source_file_stems[0]).with_suffix(cls.source_suffix)
         shutil.copy(str(submission), str(destination))
         return destination
 
@@ -157,15 +153,11 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         """Returns student score and message to be displayed"""
         shutil.copy(self.path, precompiled_submission.with_name(self.path.name))
         try:
-            test_executable = await self.compile_testcase(
-                precompiled_submission, testcase_compilation_args
-            )
+            test_executable = await self.compile_testcase(precompiled_submission, testcase_compilation_args)
         except ShellError as e:
             return TestCaseResult(0, e.format("Failed to compile"))
 
-        result = await self._weightless_run(
-            precompiled_submission, test_executable, testcase_runtime_args
-        )
+        result = await self._weightless_run(precompiled_submission, test_executable, testcase_runtime_args)
         result.grade *= self.weight
 
         self.delete_executable_files(precompiled_submission)
@@ -173,9 +165,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
     def make_executable_path(self, submission: Path) -> Path:
         """By combining test name and student name, it makes a unique path"""
-        return submission.with_name(
-            self.path.stem + submission.stem + self.executable_suffix
-        )
+        return submission.with_name(self.path.stem + submission.stem + self.executable_suffix)
 
     def prepend_test_helper(self):
         """Prepends all of the associated test_helper code to test code
@@ -189,9 +179,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             f.write(final_content)
 
     def get_formatted_test_helper(self, **exta_format_kwargs: str) -> str:
-        return get_formatted_test_helper(
-            self.get_path_to_helper_module(), **exta_format_kwargs
-        )
+        return get_formatted_test_helper(self.get_path_to_helper_module(), **exta_format_kwargs)
 
     def delete_executable_files(self, precompiled_submission: Path):
         path = self.make_executable_path(precompiled_submission)
@@ -219,13 +207,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         except TimeoutError:
             return TestCaseResult(0, f"Exceeded time limit of {self.timeout} seconds")
         except ShellError as e:
-            return TestCaseResult(
-                0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n"
-            )
+            return TestCaseResult(0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n")
         raw_output = result.stdout
-        output, score, output_is_valid = validate_output(
-            raw_output, self.validating_string
-        )
+        output, score, output_is_valid = validate_output(raw_output, self.validating_string)
         if not output_is_valid:
             # This  means that either the student used built-in exit function himself
             # or some testcase helper is broken, or a testcase exits itself without
@@ -252,8 +236,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             return TestCaseResult(score, message)
         elif exit_code in SYSTEM_RESERVED_EXIT_CODES or exit_code < 0:
             # We should already handle this case in try, except block. Maybe we need more info in the error?
-            raise NotImplementedError(
-                f"System error with exit code {exit_code} has not been handled."
-            )
+            raise NotImplementedError(f"System error with exit code {exit_code} has not been handled.")
         else:
             raise ValueError(f"Unknown system code {exit_code} has not been handled.")

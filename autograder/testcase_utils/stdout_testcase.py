@@ -14,9 +14,7 @@ from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
 
 
-def is_multifile_submission(
-    submission_dir: Path, possible_source_file_stems: List[str]
-) -> bool:
+def is_multifile_submission(submission_dir: Path, possible_source_file_stems: List[str]) -> bool:
     if not submission_dir.is_dir():
         return False
     contents = list(submission_dir.iterdir())
@@ -26,11 +24,7 @@ def is_multifile_submission(
         contents = list(contents[0].iterdir())
 
     for f in submission_dir.iterdir():
-        if (
-            _is_makefile(f)
-            or find_appropriate_source_file_stem(f, possible_source_file_stems)
-            is not None
-        ):
+        if _is_makefile(f) or find_appropriate_source_file_stem(f, possible_source_file_stems) is not None:
             return True
     return False
 
@@ -61,9 +55,7 @@ class StdoutOnlyTestCase(TestCase):
 
     @classmethod
     def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
-        return contains_shebang(file) or is_multifile_submission(
-            file, possible_source_file_stems
-        )
+        return contains_shebang(file) or is_multifile_submission(file, possible_source_file_stems)
 
     @classmethod
     async def precompile_submission(
@@ -85,17 +77,13 @@ class StdoutOnlyTestCase(TestCase):
             return destination
         # A directory with a makefile
         else:
-            _copy_multifile_submission_contents_into_student_dir(
-                submission, student_dir
-            )
+            _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
             try:
                 await cls.compiler(*cli_args.split(), cwd=student_dir)
             except ShellError as e:
                 if "no makefile found" not in str(e):
                     raise e
-            executable = _find_submission_executable(
-                student_dir, possible_source_file_stems
-            )
+            executable = _find_submission_executable(student_dir, possible_source_file_stems)
             if executable is None:
                 raise ShellError(
                     -1,
@@ -115,9 +103,7 @@ class StdoutOnlyTestCase(TestCase):
     def delete_source_file(self, source_path: Path):
         """There is no testcase file"""
 
-    async def _run_stdout_only_testcase(
-        self, precompiled_submission: Path, *args: Any, **kwargs: Any
-    ):
+    async def _run_stdout_only_testcase(self, precompiled_submission: Path, *args: Any, **kwargs: Any):
         # Because student submissions do not play by our ExitCodeEventType rules,
         # we allow them to return 0 at the end.
         kwargs["allowed_exit_codes"] = (0,)
@@ -129,9 +115,7 @@ class StdoutOnlyTestCase(TestCase):
         return result
 
 
-def _copy_multifile_submission_contents_into_student_dir(
-    submission: Path, student_dir: Path
-):
+def _copy_multifile_submission_contents_into_student_dir(submission: Path, student_dir: Path):
     contents: List[Path] = list(submission.iterdir())
     while len(contents) == 1 and contents[0].is_dir():
         contents = list(contents[0].iterdir())
@@ -144,9 +128,7 @@ def _copy_multifile_submission_contents_into_student_dir(
         op(str(f), new_path)
 
 
-def _find_submission_executable(
-    student_dir: Path, possible_source_file_stems: List[str]
-):
+def _find_submission_executable(student_dir: Path, possible_source_file_stems: List[str]):
     for f in student_dir.iterdir():
         if find_appropriate_source_file_stem(f, possible_source_file_stems):
             return f

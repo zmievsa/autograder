@@ -5,7 +5,7 @@ TestCase                                Result
 test_output.c                           50/50
 Memory Leak Summary
 -----------------------------------
-address : 0x55771b72a2e0
+address : 0x55fb772b32e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
@@ -14,22 +14,22 @@ line    : 13
 test_result.c                           100/100
 Memory Leak Summary
 -----------------------------------
-address : 0x557cf16a02e0
+address : 0x5652de7cc2e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x557cf16a14e0
+address : 0x5652de7cd4e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x557cf16a16d0
+address : 0x5652de7cd6d0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x557cf16a18c0
+address : 0x5652de7cd8c0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13

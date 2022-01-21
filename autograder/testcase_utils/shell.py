@@ -56,9 +56,7 @@ class ShellCommand:
         # That's the same way subprocess.Popen(text=True) gets the encoding
         encoding = getpreferredencoding(False)
         try:
-            result = await asyncio.wait_for(
-                process.communicate(input=stdin.encode(encoding)), timeout=timeout
-            )
+            result = await asyncio.wait_for(process.communicate(input=stdin.encode(encoding)), timeout=timeout)
         except TimeoutError as e:
             # Windows doesn't know how to clean up its processes
             if process.returncode is None and sys.platform == "win32":

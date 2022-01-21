@@ -28,10 +28,6 @@ def format_template(template: str, safe: bool = True, **kwargs: Dict[str, Any]):
     return template
 
 
-def get_formatted_test_helper(
-    path_to_test_helper: Path, **exta_format_kwargs: str
-) -> str:
+def get_formatted_test_helper(path_to_test_helper: Path, **exta_format_kwargs: str) -> str:
     with path_to_test_helper.open() as helper_file:
-        return format_template(
-            helper_file.read(), safe=False, **FORMAT_KWARGS, **exta_format_kwargs
-        )
+        return format_template(helper_file.read(), safe=False, **FORMAT_KWARGS, **exta_format_kwargs)

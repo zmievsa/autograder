@@ -46,9 +46,7 @@ class TestCase(AbstractTestCase):
             kwargs["optimize"] = 1
         executable_path = copied_submission.with_suffix(cls.executable_suffix)
         try:
-            py_compile.compile(
-                file=str(copied_submission), cfile=str(executable_path), doraise=True
-            )
+            py_compile.compile(file=str(copied_submission), cfile=str(executable_path), doraise=True)
         except Exception as e:
             raise ShellError(1, str(e)) from e
         copied_submission.unlink()
@@ -70,9 +68,7 @@ class TestCase(AbstractTestCase):
         if "-O" in cli_args:
             kwargs["optimize"] = 1
         executable_path = self.path.with_suffix(self.executable_suffix)
-        py_compile.compile(
-            file=str(self.path), cfile=str(executable_path), doraise=True, **kwargs
-        )
+        py_compile.compile(file=str(self.path), cfile=str(executable_path), doraise=True, **kwargs)
         self.path.unlink()
         self.path = executable_path
 
