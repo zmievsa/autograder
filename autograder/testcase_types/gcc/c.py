@@ -9,7 +9,7 @@ from typing import Any, List, Mapping, Optional
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.abstract_testcase import TestCaseResult
-from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellCommand, ShellError, get_shell_command
+from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellCommand, get_shell_command
 from autograder.util import hide_path_to_directory
 
 INCLUDE_MEMLEAK: str = '\n#include "leak_detector_c.h"\n'
@@ -41,7 +41,7 @@ class TestCase(AbstractTestCase):
         return cls.compiler is not EMPTY_COMMAND
 
     @classmethod
-    def get_template_dir(cls):
+    def get_template_dir(cls) -> Path:
         return cls.type_source_file.parent / "c_templates"
 
     @classmethod
@@ -62,7 +62,8 @@ class TestCase(AbstractTestCase):
             async with lock:
                 if not cls.MEMLEAK_TEMP_DIR:
                     await cls.precompile_memleak_detector(cls.TESTCASE_COMPILATION_ARGS)
-            shutil.copy(Path(cls.MEMLEAK_TEMP_DIR.name) / PRECOMPILED_MEMLEAK_FNAME, student_dir)
+                else:
+                    shutil.copy(Path(cls.MEMLEAK_TEMP_DIR.name) / PRECOMPILED_MEMLEAK_FNAME, student_dir)
             cli_args_lst.extend(["-include", str(MEMLEAK_HEADER)])
 
         copied_submission = await super().precompile_submission(
@@ -87,7 +88,7 @@ class TestCase(AbstractTestCase):
             copied_submission.unlink()
         return precompiled_submission
 
-    async def precompile_testcase(self, cli_args: str):
+    async def precompile_testcase(self, cli_args: str) -> None:
         await self.compiler("-c", self.path, "-o", self.path.with_suffix(".o"), *cli_args.split())
         self.path.unlink()
         self.path = self.path.with_suffix(".o")
@@ -111,7 +112,7 @@ class TestCase(AbstractTestCase):
         return ShellCommand(executable_path)
 
     @classmethod
-    async def precompile_memleak_detector(cls, compilation_args: List[Any]):
+    async def precompile_memleak_detector(cls, compilation_args: List[Any]) -> None:
         cls.MEMLEAK_TEMP_DIR = TemporaryDirectory()
         tmp = Path(cls.MEMLEAK_TEMP_DIR.name)
         L.debug(f"CREATED TMP DIR FOR MEMLEAK, {cls.MEMLEAK_TEMP_DIR.name}")
