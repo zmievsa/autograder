@@ -85,6 +85,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         weight: float,
         io: TestCaseIO,
         config: Mapping[str, Any],
+        testcase_picker,
+        prepend_test_helper: bool = True
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
@@ -98,8 +100,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         self.validating_string = generate_validating_string()
 
         self.config = config
-
-        self.prepend_test_helper()
+        self.testcase_picker = testcase_picker
+        if prepend_test_helper:
+            self.prepend_test_helper()
 
     @classmethod
     async def precompile_submission(
@@ -113,6 +116,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         # For example, when all submissions share a single library that
         # needs to be precompiled only once.
         lock: asyncio.Lock,
+        testcase_picker,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -138,7 +142,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         pass
 
     @classmethod
-    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
+    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str], testcase_picker) -> bool:
         return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self) -> Path:

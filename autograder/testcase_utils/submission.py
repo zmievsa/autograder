@@ -11,6 +11,7 @@ def find_appropriate_source_file_stem(file: Path, possible_source_file_stems: Li
     for s in possible_source_file_stems:
         if s.lower() in file.stem.lower():
             return s
+    return None
 
 
 STUDENT_NAME_MATCHER = re.compile(r"(?P<student_name>[A-Za-z]+)_\d+_\d+_.+")
@@ -82,8 +83,8 @@ class Submission:
         self.final_grade = self._calculate_final_grade(total_score_to_100_ratio)
 
     def _calculate_final_grade(self, total_score_to_100_ratio: float) -> int:
-        total_score = 0
-        total_testcase_weight = 0
+        total_score = 0.0
+        total_testcase_weight = 0.0
         for grade in self.grades.values():
             total_score += grade.testcase_score
             total_testcase_weight += grade.testcase_weight

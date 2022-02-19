@@ -1,17 +1,46 @@
+import asyncio
+from enum import Enum
+from os import PathLike
+import os
 import shutil
 import stat
 import sys
-from pathlib import Path
-from typing import Any, Callable, List
+from pathlib import Path, PosixPath, WindowsPath
+import mimetypes
+from typing import Any, Callable, List, Mapping, TYPE_CHECKING, Optional, Type
 
 from ..config_manager import GradingConfig
 from .abstract_testcase import TestCase
 from .exit_codes import ExitCodeEventType
 from .shell import ShellCommand, ShellError, get_shell_command
 from .submission import find_appropriate_source_file_stem
+from .testcase_io import TestCaseIO
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
+
+if TYPE_CHECKING:
+    from .testcase_picker import TestCasePicker
+
+
+class PathWithStdoutOnlyInfo(type(Path())):
+    """This abomination is a hack to supply more info when running stdout only
+    submissions. To prevent hacks like this, the architecture will need to be
+    restructured to allow for things like stdout-only submissions.
+
+    I have a feeling we needed to focus on composition instead of inheritance (arguably)
+    and implement a different grader class for stdout submissions (definitely).
+    """
+
+    picked_submission_type: Optional[Type[TestCase]]
+
+    def __new__(cls, *args, picked_submission_type: Optional[Type[TestCase]] = None):
+        self = cls._from_parts(args, init=False)  # type: ignore
+        if not self._flavour.is_supported:
+            raise NotImplementedError(f"cannot instantiate {cls.__name__} on your system")
+        self._init()
+        self.picked_submission_type = picked_submission_type
+        return self
 
 
 def is_multifile_submission(submission_dir: Path, possible_source_file_stems: List[str]) -> bool:
@@ -30,17 +59,26 @@ def is_multifile_submission(submission_dir: Path, possible_source_file_stems: Li
 
 
 def _is_makefile(path: Path):
-    return not path.is_dir() and path.name in POSSIBLE_MAKEFILE_NAMES
+    return path.is_file() and path.name in POSSIBLE_MAKEFILE_NAMES
 
 
 def contains_shebang(path: Path) -> bool:
-    if not path.is_file():
+    guessed_type = mimetypes.guess_type(str(path))[0]
+    if not path.is_file() or guessed_type is None or not guessed_type.startswith("text/"):
         return False
     # Windows does not support shebang lines
     if sys.platform.startswith("win32"):
         return False
     with open(path) as f:
         return f.readline().startswith("#!")
+
+
+def has_supported_testcase_type(
+    path: Path,
+    possible_source_file_stems: List[str],
+    testcase_picker: "TestCasePicker",
+) -> bool:
+    return path.is_file() and testcase_picker.pick(path, possible_source_file_stems) is not None
 
 
 class StdoutOnlyTestCase(TestCase):
@@ -54,8 +92,12 @@ class StdoutOnlyTestCase(TestCase):
         return cls.compiler is not None
 
     @classmethod
-    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
-        return contains_shebang(file) or is_multifile_submission(file, possible_source_file_stems)
+    def is_a_type_of(cls, path: Path, possible_source_file_stems: List[str], testcase_picker: "TestCasePicker") -> bool:
+        return (
+            contains_shebang(path)
+            or has_supported_testcase_type(path, possible_source_file_stems, testcase_picker)
+            or is_multifile_submission(path, possible_source_file_stems)
+        )
 
     @classmethod
     async def precompile_submission(
@@ -64,19 +106,20 @@ class StdoutOnlyTestCase(TestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: GradingConfig,
-        lock,
+        config: Mapping[str, Any],
+        lock: asyncio.Lock,
+        testcase_picker: "TestCasePicker",
     ):
         """pwd is temp/student_dir"""
 
         # Single-file with shebang
-        if submission.is_file():
+        if contains_shebang(submission):
             destination = student_dir / submission.name
             shutil.copy(str(submission), str(destination))
             _make_executable(destination)
-            return destination
+            return PathWithStdoutOnlyInfo(destination)
         # A directory with a makefile
-        else:
+        elif submission.is_dir():
             _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
             try:
                 await cls.compiler(*cli_args.split(), cwd=student_dir)
@@ -89,10 +132,18 @@ class StdoutOnlyTestCase(TestCase):
                     -1,
                     "Submission was successfully precompiled but the executable could not be found. Most likely it was not in POSSIBLE_SOURCE_FILE_STEMS.",
                 )
-            return executable
+            return PathWithStdoutOnlyInfo(executable)
+        else:
+            ttype = testcase_picker.pick(submission, possible_source_file_stems)
+            if ttype is None:
+                raise ValueError(f"Failed to find a testcase type for submission {submission.name}")
+            destination = student_dir / submission.name
+            shutil.copy(str(submission), str(destination))
+
+            return PathWithStdoutOnlyInfo(destination, picked_submission_type=ttype)
 
     async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
-        return _add_args(self._run_stdout_only_testcase, precompiled_submission)
+        return _add_args(self._run_stdout_only_testcase, precompiled_submission, cli_args)
 
     def prepend_test_helper(self):
         """We don't need TestHelper when we are only checking inputs/outputs"""
@@ -103,11 +154,29 @@ class StdoutOnlyTestCase(TestCase):
     def delete_source_file(self, source_path: Path):
         """There is no testcase file"""
 
-    async def _run_stdout_only_testcase(self, precompiled_submission: Path, *args: Any, **kwargs: Any):
+    async def _run_stdout_only_testcase(
+        self,
+        precompiled_submission: PathWithStdoutOnlyInfo,
+        cli_args: str,
+        *args: Any,
+        **kwargs: Any,
+    ):
         # Because student submissions do not play by our ExitCodeEventType rules,
         # we allow them to return 0 at the end.
         kwargs["allowed_exit_codes"] = (0,)
-        result = await ShellCommand(precompiled_submission)(*args, **kwargs)
+        ttype = precompiled_submission.picked_submission_type
+        if ttype is not None:
+            result = await (await ttype(
+                precompiled_submission,
+                self.timeout,
+                self.weight,
+                self.io,
+                self.config,
+                self.testcase_picker,
+                prepend_test_helper=False
+            ).compile_testcase(precompiled_submission, cli_args))(*args, **kwargs)
+        else:
+            result = await ShellCommand(precompiled_submission)(*args, **kwargs)
 
         # We fake the validation string because there is no way we can truly validate such testcases
         result.stdout += f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}"
@@ -121,11 +190,12 @@ def _copy_multifile_submission_contents_into_student_dir(submission: Path, stude
         contents = list(contents[0].iterdir())
     for f in contents:
         new_path = student_dir / f.name
+        op: Callable[[PathLike, PathLike], Any]
         if f.is_dir():
             op = shutil.copytree
         else:
             op = shutil.copyfile
-        op(str(f), new_path)
+        op(f, new_path)
 
 
 def _find_submission_executable(student_dir: Path, possible_source_file_stems: List[str]):

@@ -9,7 +9,6 @@ logging.basicConfig(level=logging.CRITICAL, handlers=[logging.StreamHandler()])
 
 
 def main(argv: Optional[List[str]] = None):
-    """Returns the average score of the students"""
     if argv is None:
         argv = sys.argv[1:]
 
@@ -18,17 +17,14 @@ def main(argv: Optional[List[str]] = None):
     args = parser.parse_args(argv)
     if args.version:
         from autograder.__version__ import __version__
-
         print(__version__)
-        exit(0)
-    # the interface architecture needs to be refactored a bit. For now, this hack with getattr
+    # the interface architecture needs to be refactored a bit. For now, this hack with hasattr
     # will prevent errors if autograder has been called on its own.
-    elif getattr(args, "submission_path", None) is None:
+    elif not hasattr(args, "submission_path"):
         parser.print_help()
-        exit()
-
-    current_dir = (Path.cwd() / args.submission_path).resolve()
-    return _evaluate_args(args, current_dir)
+    else:
+        current_dir = (Path.cwd() / args.submission_path).resolve()
+        return _evaluate_args(args, current_dir)
 
 
 def _create_parser():
@@ -141,3 +137,4 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
 
 if __name__ == "__main__":
     main()
+    exit(0)

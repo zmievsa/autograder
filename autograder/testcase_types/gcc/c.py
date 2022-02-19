@@ -53,6 +53,8 @@ class TestCase(AbstractTestCase):
         cli_args: str,
         config: Mapping[str, Any],
         lock: asyncio.Lock,
+        *args,
+        **kwargs
     ) -> Path:
         """Compiles student submission without linking it to speed up total compilation time"""
 
@@ -61,9 +63,8 @@ class TestCase(AbstractTestCase):
             L.debug("Detected memleak to be enabled")
             async with lock:
                 if not cls.MEMLEAK_TEMP_DIR:
-                    await cls.precompile_memleak_detector(cls.TESTCASE_COMPILATION_ARGS)
-                else:
-                    shutil.copy(Path(cls.MEMLEAK_TEMP_DIR.name) / PRECOMPILED_MEMLEAK_FNAME, student_dir)
+                    cls.MEMLEAK_TEMP_DIR = await cls.precompile_memleak_detector(cls.TESTCASE_COMPILATION_ARGS)
+                shutil.copy(Path(cls.MEMLEAK_TEMP_DIR.name) / PRECOMPILED_MEMLEAK_FNAME, student_dir)
             cli_args_lst.extend(["-include", str(MEMLEAK_HEADER)])
 
         copied_submission = await super().precompile_submission(
@@ -73,6 +74,8 @@ class TestCase(AbstractTestCase):
             cli_args,
             config,
             lock,
+            *args,
+            **kwargs
         )
         precompiled_submission = copied_submission.with_suffix(".o")
         try:
@@ -95,10 +98,12 @@ class TestCase(AbstractTestCase):
 
     async def compile_testcase(self, precompiled_submission: Path, cli_args: str) -> ShellCommand:
         executable_path = self.make_executable_path(precompiled_submission)
-        files_to_compile = [
-            precompiled_submission.with_name(self.path.name),
-            precompiled_submission,
-        ]
+        path_to_self = precompiled_submission.with_name(self.path.name)
+        files_to_compile = [precompiled_submission]
+        
+        # This is a hack to allow compilation of stdout-only single-file testcases
+        if path_to_self != precompiled_submission:
+            files_to_compile.append(path_to_self)
         if memleak_is_enabled(self.config):
             files_to_compile.append(precompiled_submission.with_name(PRECOMPILED_MEMLEAK_FNAME))
         await self.compiler(
@@ -112,10 +117,10 @@ class TestCase(AbstractTestCase):
         return ShellCommand(executable_path)
 
     @classmethod
-    async def precompile_memleak_detector(cls, compilation_args: List[Any]) -> None:
-        cls.MEMLEAK_TEMP_DIR = TemporaryDirectory()
-        tmp = Path(cls.MEMLEAK_TEMP_DIR.name)
-        L.debug(f"CREATED TMP DIR FOR MEMLEAK, {cls.MEMLEAK_TEMP_DIR.name}")
+    async def precompile_memleak_detector(cls, compilation_args: List[Any]) -> TemporaryDirectory:
+        memleak_temp_dir = TemporaryDirectory()
+        tmp = Path(memleak_temp_dir.name)
+        L.debug(f"CREATED TMP DIR FOR MEMLEAK, {memleak_temp_dir.name}")
         await cls.compiler(
             "-c",
             MEMLEAK_SOURCE,
@@ -123,6 +128,7 @@ class TestCase(AbstractTestCase):
             tmp / PRECOMPILED_MEMLEAK_FNAME,
             *compilation_args,
         )
+        return memleak_temp_dir
 
     async def _weightless_run(
         self,
@@ -144,13 +150,13 @@ class TestCase(AbstractTestCase):
 
 
 def add_env_vars(command: ShellCommand, **env: str) -> ShellCommand:
-    async def inner(*args, **kwargs):
+    async def inner(*args: Any, **kwargs: Any):
         if not "env" in kwargs:
             kwargs["env"] = {}
         kwargs["env"].update(env)
         return await command(*args, **kwargs)
 
-    return inner
+    return inner # type: ignore
 
 
 def memleak_is_enabled(config: Mapping) -> bool:

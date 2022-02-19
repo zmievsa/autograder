@@ -37,19 +37,15 @@ class Grader:
     logger: GradingOutputLogger
     config: GradingConfig
     testcase_picker: TestCasePicker
+    extra_testcase_types: List[Type[TestCase]]
 
-    def __init__(
-        self,
-        current_dir: Path,
-        json_output: bool = False,
-        submissions: Optional[List[str]] = None,
-    ):
+    def __init__(self, current_dir: Path, json_output: bool = False, submissions: Optional[List[str]] = None) -> None:
         self.json_output = json_output
         self.raw_submissions = submissions
         self.stdout_formatters = {}
         self.paths = AutograderPaths(current_dir)
         self.config = GradingConfig(self.paths.config, self.paths.default_config)
-        self.testcase_picker = TestCasePicker(self.paths.testcase_types_dir, self.config.stdout_only_grading_enabled)
+        self.testcase_picker = TestCasePicker(self.paths.testcase_types_dir)
         self.stdout_formatters = self._import_formatters(self.paths.stdout_formatters)
         logger_type = JsonGradingOutputLogger if self.json_output else GradingOutputLogger
         self.logger = logger_type(
@@ -58,6 +54,7 @@ class Grader:
             self.config.total_points_possible,
             self.config.generate_results,
         )
+        self.extra_testcase_types = [StdoutOnlyTestCase] if self.config.stdout_only_grading_enabled else []
 
     def run(self) -> Tuple[Tuple[Submission], int]:
         io_choices = {}
@@ -80,10 +77,9 @@ class Grader:
             )
 
             if sys.platform == "win32":
-                loop = asyncio.ProactorEventLoop()
-                asyncio.set_event_loop(loop)
+                asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
-            tasks = map(Runner(self, asyncio.Lock()), self.submissions)
+            tasks = map(Runner(self, asyncio.Lock(), self.testcase_picker), self.submissions)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
             total_class_points = sum(s.final_grade for s in modified_submissions)
@@ -96,21 +92,21 @@ class Grader:
             self.cleanup()
         return modified_submissions, class_average
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.temp_dir.exists():
             # Windows doesn't know how to clean processes in time...
             if sys.platform == "win32":
                 time.sleep(1)
             self._temp_dir.cleanup()
 
-    def _prepare_directory_structure(self):
+    def _prepare_directory_structure(self) -> None:
         self._temp_dir = TemporaryDirectory()
         self.temp_dir = Path(self._temp_dir.name)
         self._check_required_directories_exist()
         if self.config.generate_results:
             self.paths.results_dir.mkdir(exist_ok=True)
 
-    def _check_required_directories_exist(self):
+    def _check_required_directories_exist(self) -> None:
         for directory in self.paths.required_dirs:
             if not directory.exists():
                 raise AutograderError(
@@ -126,8 +122,10 @@ class Grader:
             if submissions_to_grade is not None and submission_path.name not in submissions_to_grade:
                 continue
 
-            testcase_type = self.testcase_picker.pick(submission_path, self.config.possible_source_file_stems)
-            if testcase_type is not None:
+            testcase_type = self.testcase_picker.pick(
+                submission_path, self.config.possible_source_file_stems, self.extra_testcase_types
+            )
+            if testcase_type:
                 if (
                     self.config.any_submission_file_name_is_allowed
                     or find_appropriate_source_file_stem(submission_path, self.config.possible_source_file_stems)
@@ -147,7 +145,7 @@ class Grader:
     def _gather_io(self) -> Dict[str, TestCaseIO]:
         outputs = get_file_names(self.paths.output_dir)
         inputs = get_file_names(self.paths.input_dir)
-        io: Set[str] = set().union(outputs, inputs)
+        io: Set[str] = set(outputs).union(inputs)
         io_set = {Path(i) for i in io}
         dict_io = {
             p.stem: TestCaseIO(
@@ -168,6 +166,7 @@ class Grader:
                 self.config.testcase_weights[io.name],
                 io,
                 self.config.file,
+                self.testcase_picker,
             )
             for io in io_choices.values()
             if io.expected_output
@@ -185,8 +184,10 @@ class Grader:
         for test in self.paths.testcases_dir.iterdir():
             if not test.is_file():
                 continue
-            testcase_type = self.testcase_picker.pick(test, self.config.possible_source_file_stems)
-            if testcase_type is None:
+            testcase_type = self.testcase_picker.pick(
+                test, self.config.possible_source_file_stems, self.extra_testcase_types
+            )
+            if not testcase_type:
                 continue
             shutil.copy(str(test), str(self.temp_dir))
             tests[testcase_type].append(
@@ -196,14 +197,13 @@ class Grader:
                     self.config.testcase_weights[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
                     self.config.file,
+                    self.testcase_picker
                 )
             )
         return tests, io
 
     @staticmethod
-    def _import_formatters(
-        path_to_stdout_formatters: Path,
-    ) -> Dict[str, Callable[[str], str]]:
+    def _import_formatters(path_to_stdout_formatters: Path) -> Dict[str, Callable[[str], str]]:
         if path_to_stdout_formatters.exists():
             module = import_from_path("stdout_formatters", path_to_stdout_formatters)
             return {k: v for k, v in module.__dict__.items() if callable(v)}
@@ -245,7 +245,7 @@ class AutograderPaths:
     default_stdout_formatters: Path
     default_config: Path
 
-    def __init__(self, current_dir: Union[Path, str]):
+    def __init__(self, current_dir: Union[Path, str]) -> None:
         current_dir = Path(current_dir)
         self.current_dir = current_dir
         self.results_dir = current_dir / "results"
@@ -267,10 +267,10 @@ class AutograderPaths:
         self.default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
         self.default_config = autograder_dir / "default_config.toml"
 
-    def generate_config(self):
+    def generate_config(self) -> None:
         if not self.config.exists():
             if self.default_config.exists():
-                shutil.copy(str(self.default_config), str(self.config))
+                shutil.copy(self.default_config, self.config)
             else:
                 raise AutograderError(f"Failed to generate config:'{self.default_config}' not found.")
 
@@ -280,10 +280,12 @@ class Runner:
 
     grader: Grader
     lock: asyncio.Lock
+    testcase_picker: TestCasePicker
 
-    def __init__(self, grader: Grader, lock: asyncio.Lock):
+    def __init__(self, grader: Grader, lock: asyncio.Lock, testcase_picker: TestCasePicker) -> None:
         self.grader = grader
         self.lock = lock
+        self.testcase_picker = testcase_picker
 
     async def __call__(self, submission: Submission) -> Submission:
         await self.run_on_single_submission(submission, self.lock)
@@ -305,7 +307,7 @@ class Runner:
                 shutil.copy(str(path), str(new_path))
 
     # TODO: rename to "_run_testcases_on_submission" or something
-    async def _get_testcase_output(self, submission: Submission, lock: asyncio.Lock):
+    async def _get_testcase_output(self, submission: Submission, lock: asyncio.Lock) -> None:
         """Grades single submission and returns its normalized score
 
         Note: Has side effects in submission instance
@@ -318,15 +320,16 @@ class Runner:
                 self.grader.config.submission_precompilation_args[submission.old_path.name],
                 self.grader.config.file,
                 lock,
+                self.testcase_picker,
             )
         except ShellError as e:
             error = hide_path_to_directory(e.format("Failed to precompile:"), submission.temp_dir)
             submission.register_precompilation_error(error)
-            return 0
+            return
         allowed_tests = self.grader.tests.get(submission.type, [])
         if not allowed_tests:
             submission.register_precompilation_error("No suitable testcases found.")
-            return 0
+            return
         submission.type.run_additional_testcase_operations_in_student_dir(submission.temp_dir)
         for test in allowed_tests:
             result = await test.run(
