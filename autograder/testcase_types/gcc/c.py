@@ -145,7 +145,8 @@ class TestCase(AbstractTestCase):
             result = await super()._weightless_run(precompiled_submission, compiled_testcase, testcase_runtime_args)
             memleak_output_text = memleak_output.read_text() if memleak_output.is_file() else ""
             memleak_output_text = hide_path_to_directory(memleak_output_text, precompiled_submission.parent)
-        result.extra_output_fields["memleak_summary"] = memleak_output_text
+        if memleak_output_text:
+            result.extra_output_fields["Memory Leak Summary"] = memleak_output_text
         return result
 
 

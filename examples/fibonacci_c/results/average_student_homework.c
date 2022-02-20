@@ -3,37 +3,41 @@ Homework Test Results
 TestCase                                Result
 ================================================================
 test_output.c                           50/50
-Memory Leak Summary
+Memory Leak Summary:
+===================================
 -----------------------------------
-address : 0x55fb772b32e0
+address : 0x563c05b172e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
+===================================
 
 test_result.c                           100/100
-Memory Leak Summary
+Memory Leak Summary:
+===================================
 -----------------------------------
-address : 0x5652de7cc2e0
+address : 0x55deceb672e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x5652de7cd4e0
+address : 0x55deceb684e0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x5652de7cd6d0
+address : 0x55deceb686d0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
-address : 0x5652de7cd8c0
+address : 0x55deceb688c0
 size    : 200 bytes
 file    : .../average_student_homework.c
 line    : 13
 -----------------------------------
+===================================
 
 test_time.c                             Exceeded time limit of 1 seconds
 ================================================================

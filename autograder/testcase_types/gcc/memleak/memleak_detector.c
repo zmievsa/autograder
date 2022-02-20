@@ -201,17 +201,14 @@ static void configure_memleak(char *fname)
     if (fp_write == NULL)
     {
         fprintf(stderr, "\nMemleak Detector: cannot create or open file!\n");
-        // exit(1);
     }
 
     if (ptr_start == NULL)
     {
-        // fprintf(fp_write, "Memleak Detector: No Memory Leak recorded!\n");
         fclose(fp_write);
         return;
     }
 
-    fprintf(fp_write, "%s\n", "Memory Leak Summary");
     fprintf(fp_write, "%s\n", "-----------------------------------");
 
     for (leak_info = ptr_start; leak_info != NULL; leak_info = leak_info->next)

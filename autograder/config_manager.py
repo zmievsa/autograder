@@ -35,6 +35,7 @@ class GradingConfig:
 
     timeouts: ArgList[str, float]
     generate_results: bool
+    generate_student_outputs: bool
     stdout_only_grading_enabled: bool
     total_points_possible: int
     total_score_to_100_ratio: float
@@ -57,6 +58,7 @@ class GradingConfig:
         cfg = global_config[MAIN_CONFIG_SECTION]
         self.timeouts = ArgList(cfg["TIMEOUT"], 1)
         self.generate_results = cfg["GENERATE_RESULTS"]
+        self.generate_student_outputs = cfg["GENERATE_STUDENT_OUTPUTS"]
         self.stdout_only_grading_enabled = cfg["STDOUT_ONLY_GRADING_ENABLED"]
 
         self.total_points_possible = cfg["TOTAL_POINTS_POSSIBLE"]

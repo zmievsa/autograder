@@ -214,10 +214,13 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             return TestCaseResult(0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n")
         raw_output = result.stdout
         output, score, output_is_valid = validate_output(raw_output, self.validating_string)
+        extra_output_fields = {"Student Stdout": output} if self.config["CONFIG"]["GENERATE_STUDENT_OUTPUTS"] else {}
+
+        # This  means that either the student used built-in exit function himself
+        # or some testcase helper is broken, or a testcase exits itself without
+        # the use of helper functions.
         if not output_is_valid:
-            # This  means that either the student used built-in exit function himself
-            # or some testcase helper is broken, or a testcase exits itself without
-            # the use of helper functions.
+            print(self.config["CONFIG"]["GENERATE_STUDENT_OUTPUTS"])
             return TestCaseResult(
                 0,
                 "None of the helper functions have been called.\n"
@@ -226,9 +229,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             )
         elif exit_code == ExitCodeEventType.CHECK_STDOUT:
             if self.io.expected_output_equals(output):
-                return TestCaseResult(100, f"{int(100 * self.weight)}/{self.max_score}")
+                return TestCaseResult(100, f"{int(100 * self.weight)}/{self.max_score}", extra_output_fields)
             else:
-                return TestCaseResult(0, f"0/{self.max_score} (Wrong output)")
+                return TestCaseResult(0, f"0/{self.max_score} (Wrong output)", extra_output_fields)
         elif exit_code == ExitCodeEventType.RESULT:
             weighted_score = round(score * self.weight, 2)
             # We do this to make output prettier in case the student gets full points
