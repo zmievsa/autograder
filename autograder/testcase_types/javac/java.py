@@ -61,13 +61,7 @@ class TestCase(AbstractTestCase):
 
     @classmethod
     async def precompile_submission(
-        cls,
-        submission: Path,
-        student_dir: Path,
-        possible_source_file_stems: List[str],
-        cli_args: str,
-        *args,
-        **kwargs
+        cls, submission: Path, student_dir: Path, possible_source_file_stems: List[str], cli_args: str, *args, **kwargs
     ):
         stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
         if stem is None:
@@ -75,12 +69,7 @@ class TestCase(AbstractTestCase):
                 f"Submission {submission} has an inappropriate file name. Please, specify POSSIBLE_SOURCE_FILE_STEMS in config.ini"
             )
         copied_submission = await super().precompile_submission(
-            submission,
-            student_dir,
-            [stem],
-            cli_args,
-            *args,
-            **kwargs
+            submission, student_dir, [stem], cli_args, *args, **kwargs
         )
         try:
             if not REFLECTION_MATCHER.search(copied_submission.read_text()):

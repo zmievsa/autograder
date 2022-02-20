@@ -197,7 +197,7 @@ class Grader:
                     self.config.testcase_weights[test.name],
                     io.pop(test.stem, EMPTY_TESTCASE_IO),
                     self.config.file,
-                    self.testcase_picker
+                    self.testcase_picker,
                 )
             )
         return tests, io

@@ -1,13 +1,13 @@
 import asyncio
-from enum import Enum
-from os import PathLike
+import mimetypes
 import os
 import shutil
 import stat
 import sys
+from enum import Enum
+from os import PathLike
 from pathlib import Path, PosixPath, WindowsPath
-import mimetypes
-from typing import Any, Callable, List, Mapping, TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, List, Mapping, Optional, Type
 
 from ..config_manager import GradingConfig
 from .abstract_testcase import TestCase
@@ -18,6 +18,7 @@ from .testcase_io import TestCaseIO
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"
+MULTIFILE_SUBMISSION_NAME = "<<<Makefile>>>"  # This is a hack to give a semi-unique name to multifile submissions
 
 if TYPE_CHECKING:
     from .testcase_picker import TestCasePicker
@@ -122,17 +123,12 @@ class StdoutOnlyTestCase(TestCase):
         elif submission.is_dir():
             _copy_multifile_submission_contents_into_student_dir(submission, student_dir)
             try:
-                await cls.compiler(*cli_args.split(), cwd=student_dir)
+                await cls.compiler("compile", "--silent", *cli_args.split(), cwd=student_dir)
             except ShellError as e:
+                # Wat. Why? TODO: Why did I do this?
                 if "no makefile found" not in str(e):
                     raise e
-            executable = _find_submission_executable(student_dir, possible_source_file_stems)
-            if executable is None:
-                raise ShellError(
-                    -1,
-                    "Submission was successfully precompiled but the executable could not be found. Most likely it was not in POSSIBLE_SOURCE_FILE_STEMS.",
-                )
-            return PathWithStdoutOnlyInfo(executable)
+            return PathWithStdoutOnlyInfo(student_dir / MULTIFILE_SUBMISSION_NAME)
         else:
             ttype = testcase_picker.pick(submission, possible_source_file_stems)
             if ttype is None:
@@ -166,15 +162,19 @@ class StdoutOnlyTestCase(TestCase):
         kwargs["allowed_exit_codes"] = (0,)
         ttype = precompiled_submission.picked_submission_type
         if ttype is not None:
-            result = await (await ttype(
-                precompiled_submission,
-                self.timeout,
-                self.weight,
-                self.io,
-                self.config,
-                self.testcase_picker,
-                prepend_test_helper=False
-            ).compile_testcase(precompiled_submission, cli_args))(*args, **kwargs)
+            result = await (
+                await ttype(
+                    precompiled_submission,
+                    self.timeout,
+                    self.weight,
+                    self.io,
+                    self.config,
+                    self.testcase_picker,
+                    prepend_test_helper=False,
+                ).compile_testcase(precompiled_submission, cli_args)
+            )(*args, **kwargs)
+        elif precompiled_submission.name == MULTIFILE_SUBMISSION_NAME:
+            result = await self.compiler("run", "--silent", *args, **kwargs)
         else:
             result = await ShellCommand(precompiled_submission)(*args, **kwargs)
 

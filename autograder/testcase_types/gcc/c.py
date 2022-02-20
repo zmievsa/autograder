@@ -54,7 +54,7 @@ class TestCase(AbstractTestCase):
         config: Mapping[str, Any],
         lock: asyncio.Lock,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Path:
         """Compiles student submission without linking it to speed up total compilation time"""
 
@@ -68,14 +68,7 @@ class TestCase(AbstractTestCase):
             cli_args_lst.extend(["-include", str(MEMLEAK_HEADER)])
 
         copied_submission = await super().precompile_submission(
-            submission,
-            student_dir,
-            [submission.stem],
-            cli_args,
-            config,
-            lock,
-            *args,
-            **kwargs
+            submission, student_dir, [submission.stem], cli_args, config, lock, *args, **kwargs
         )
         precompiled_submission = copied_submission.with_suffix(".o")
         try:
@@ -100,7 +93,7 @@ class TestCase(AbstractTestCase):
         executable_path = self.make_executable_path(precompiled_submission)
         path_to_self = precompiled_submission.with_name(self.path.name)
         files_to_compile = [precompiled_submission]
-        
+
         # This is a hack to allow compilation of stdout-only single-file testcases
         if path_to_self != precompiled_submission:
             files_to_compile.append(path_to_self)
@@ -157,7 +150,7 @@ def add_env_vars(command: ShellCommand, **env: str) -> ShellCommand:
         kwargs["env"].update(env)
         return await command(*args, **kwargs)
 
-    return inner # type: ignore
+    return inner  # type: ignore
 
 
 def memleak_is_enabled(config: Mapping) -> bool:

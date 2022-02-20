@@ -33,12 +33,7 @@ class TestCase(AbstractTestCase):
         **kwargs,
     ):
         copied_submission = await super().precompile_submission(
-            submission,
-            student_dir,
-            [submission.stem],
-            cli_args,
-            *args,
-            **kwargs
+            submission, student_dir, [submission.stem], cli_args, *args, **kwargs
         )
         kwargs = {}
         if "-O" in cli_args:

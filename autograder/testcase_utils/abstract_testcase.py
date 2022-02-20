@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import os
 import shutil
 import sys
 from abc import ABC, ABCMeta, abstractmethod
@@ -86,7 +87,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         io: TestCaseIO,
         config: Mapping[str, Any],
         testcase_picker,
-        prepend_test_helper: bool = True
+        prepend_test_helper: bool = True,
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
@@ -204,7 +205,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
                 stdin=self.io.input,
                 timeout=self.timeout,
                 cwd=precompiled_submission.parent,
-                env={"VALIDATING_STRING": self.validating_string},
+                env={"VALIDATING_STRING": self.validating_string, **os.environ},
                 allowed_exit_codes=USED_EXIT_CODES,
             )
             exit_code = result.returncode

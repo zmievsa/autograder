@@ -1,2 +1,5 @@
-all:
-	gcc hw.c -o HomeworkExecutable.out
+compile:
+	gcc hw.c
+
+run:
+	./a.out

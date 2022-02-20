@@ -67,7 +67,7 @@ class GradingOutputLogger:
     def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
         output_for_student_file = self._format_output_for_student_file(submission, formatted_student_score)
         (self.results_dir / submission.old_path.name).write_text(output_for_student_file)
-    
+
     @staticmethod
     def _generate_additional_output(grade: TestCaseGrade) -> str:
         splitter = f'{35 * "="}\n'
