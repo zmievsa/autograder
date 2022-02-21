@@ -77,7 +77,7 @@ class GradingOutputLogger:
         return output
 
     def _silence_generating_results(self):
-        self._print_single_student_grading_results_to_stdout = _empty_func  # type: ignore
+        self._print_single_student_grading_results_to_file = _empty_func  # type: ignore
 
     def _format_output_for_student_file(self, submission: Submission, formatted_student_score: str):
         """Replace this function with anything else if you want the output to have a different style"""
