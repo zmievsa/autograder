@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import os
 import shutil
 import sys
 from abc import ABC, ABCMeta, abstractmethod
@@ -85,6 +86,8 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         weight: float,
         io: TestCaseIO,
         config: Mapping[str, Any],
+        testcase_picker,
+        prepend_test_helper: bool = True,
     ):
         self.test_helpers_dir = self.type_source_file.parent / "helpers"
         self.path = path
@@ -98,8 +101,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         self.validating_string = generate_validating_string()
 
         self.config = config
-
-        self.prepend_test_helper()
+        self.testcase_picker = testcase_picker
+        if prepend_test_helper:
+            self.prepend_test_helper()
 
     @classmethod
     async def precompile_submission(
@@ -113,6 +117,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         # For example, when all submissions share a single library that
         # needs to be precompiled only once.
         lock: asyncio.Lock,
+        testcase_picker,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -138,7 +143,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         pass
 
     @classmethod
-    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str]) -> bool:
+    def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str], testcase_picker) -> bool:
         return file.suffix == cls.source_suffix
 
     def get_path_to_helper_module(self) -> Path:
@@ -200,7 +205,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
                 stdin=self.io.input,
                 timeout=self.timeout,
                 cwd=precompiled_submission.parent,
-                env={"VALIDATING_STRING": self.validating_string},
+                env={"VALIDATING_STRING": self.validating_string, **os.environ},
                 allowed_exit_codes=USED_EXIT_CODES,
             )
             exit_code = result.returncode
@@ -210,10 +215,13 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             return TestCaseResult(0, f"Crashed due to signal {e.returncode}:\n{e.stderr}\n")
         raw_output = result.stdout
         output, score, output_is_valid = validate_output(raw_output, self.validating_string)
+        extra_output_fields = {"Student Stdout": output} if self.config["CONFIG"]["GENERATE_STUDENT_OUTPUTS"] else {}
+
+        # This  means that either the student used built-in exit function himself
+        # or some testcase helper is broken, or a testcase exits itself without
+        # the use of helper functions.
         if not output_is_valid:
-            # This  means that either the student used built-in exit function himself
-            # or some testcase helper is broken, or a testcase exits itself without
-            # the use of helper functions.
+            print(self.config["CONFIG"]["GENERATE_STUDENT_OUTPUTS"])
             return TestCaseResult(
                 0,
                 "None of the helper functions have been called.\n"
@@ -222,9 +230,9 @@ class TestCase(ABC, metaclass=SourceDirSaver):
             )
         elif exit_code == ExitCodeEventType.CHECK_STDOUT:
             if self.io.expected_output_equals(output):
-                return TestCaseResult(100, f"{int(100 * self.weight)}/{self.max_score}")
+                return TestCaseResult(100, f"{int(100 * self.weight)}/{self.max_score}", extra_output_fields)
             else:
-                return TestCaseResult(0, f"0/{self.max_score} (Wrong output)")
+                return TestCaseResult(0, f"0/{self.max_score} (Wrong output)", extra_output_fields)
         elif exit_code == ExitCodeEventType.RESULT:
             weighted_score = round(score * self.weight, 2)
             # We do this to make output prettier in case the student gets full points

@@ -1,16 +1,16 @@
 import asyncio
+import logging
 import os
 import shutil
 import subprocess as synchronous_subprocess
 import sys
-import logging
+import textwrap
 from asyncio import subprocess
 from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
 from pathlib import Path
-from typing import Any, Optional, Sequence, Union
-
+from typing import Any, Dict, Optional, Sequence, Union
 
 L = logging.getLogger("AUTOGRADER.testcase_utils.shell")
 
@@ -36,7 +36,7 @@ class ShellCommand:
         stdin: str = "",
         **kwargs: Any,
     ) -> ShellCommandResult:
-        os_specific_kwargs = {}
+        os_specific_kwargs: Dict[str, Any] = {}
         if sys.platform == "win32":
             os_specific_kwargs["startupinfo"] = synchronous_subprocess.STARTUPINFO(
                 dwFlags=synchronous_subprocess.STARTF_USESHOWWINDOW,
@@ -72,9 +72,9 @@ class ShellCommand:
         stdout, stderr = (s.decode(encoding) for s in result)
         L.debug(
             f"""({process.returncode}) EXECUTED CMD: {self.command_name} {' '.join([str(a) for a in args])}
-                STDOUT: {stdout.strip()}
-                STDERR: {stderr.strip()}
-            """
+    STDOUT: {stdout.strip()}
+    STDERR: {stderr.strip()}
+        """
         )
         returncode = process.returncode if process.returncode is not None else -1
         # Possible fix for OSX sometimes not recognizing correct returncodes

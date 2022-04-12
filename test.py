@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
 # TODO: Refactor this mess
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import multiprocessing
-from typing import Callable
-from io import StringIO
 import sys
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from io import StringIO
+from typing import Callable
 
 from autograder.__main__ import main as autograder
-
 
 TEST_DIRS = {
     "simplest_c": 100,

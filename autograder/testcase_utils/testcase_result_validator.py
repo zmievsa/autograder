@@ -12,7 +12,7 @@ LAST_LINE_SPLITTING_CHARACTER = "$"
 
 
 def generate_validating_string() -> str:
-    """ Generates a string of pseudo-random ascii characters """
+    """Generates a string of pseudo-random ascii characters"""
     # As far as I understand, we do not need this string to be cryptographically strong
     return "".join(random.choice(POSSIBLE_CHARS_IN_VALIDATING_STRING) for _ in range(VALIDATING_STRING_LENGTH))
 
@@ -29,8 +29,8 @@ def validate_output(output: str, required_validating_string: str) -> Tuple[str, 
     split_output = output.splitlines()
     last_line = split_output.pop(-1)
     try:
-        result, actual_validating_string = last_line.split(LAST_LINE_SPLITTING_CHARACTER, 1)
-        result = float(result)
+        raw_result, actual_validating_string = last_line.split(LAST_LINE_SPLITTING_CHARACTER, 1)
+        result = float(raw_result)
     except ValueError:  # Means that the last line is not formatted correctly
         return output, 0, False
     output = "\n".join(split_output)

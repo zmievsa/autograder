@@ -6,7 +6,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any, Deque, Sequence
 
-from .testcase_utils.submission import Submission
+from .testcase_utils.submission import Submission, TestCaseGrade
 
 KEY = """
 \nKey:
@@ -60,19 +60,24 @@ class GradingOutputLogger:
             print(f"{submission.precompilation_error}")
         else:
             for test_name, grade in submission.grades.items():
-                additional_output = "\n".join(grade.extra_output_fields.values())
-                if additional_output:
-                    additional_output = "\n" + additional_output
+                additional_output = self._generate_additional_output(grade)
                 print(f"{test_name}: {grade.message}{additional_output}")
         print(f"\nResult: {formatted_student_score}\n\n")
 
     def _print_single_student_grading_results_to_file(self, submission: Submission, formatted_student_score: str):
-        (self.results_dir / submission.old_path.name).write_text(
-            self._format_output_for_student_file(submission, formatted_student_score)
-        )
+        output_for_student_file = self._format_output_for_student_file(submission, formatted_student_score)
+        (self.results_dir / submission.old_path.name).write_text(output_for_student_file)
+
+    @staticmethod
+    def _generate_additional_output(grade: TestCaseGrade) -> str:
+        splitter = f'{35 * "="}\n'
+        output = "\n".join([f"{k}:\n{splitter}{v}{splitter}" for k, v in grade.extra_output_fields.items()])
+        if output:
+            output = "\n" + output
+        return output
 
     def _silence_generating_results(self):
-        self._print_single_student_grading_results_to_stdout = _empty_func  # type: ignore
+        self._print_single_student_grading_results_to_file = _empty_func  # type: ignore
 
     def _format_output_for_student_file(self, submission: Submission, formatted_student_score: str):
         """Replace this function with anything else if you want the output to have a different style"""
@@ -87,10 +92,8 @@ class GradingOutputLogger:
             b(submission.precompilation_error)
         else:
             for test_name, grade in submission.grades.items():
-                additional_output = "\n".join(grade.extra_output_fields.values())
                 b("\n%-40s%s" % (test_name, grade.message))
-                if additional_output:
-                    b("\n" + additional_output)
+                b(self._generate_additional_output(grade))
         b("\n================================================================\n")
         b("Result: " + formatted_student_score)
         b(KEY)
@@ -98,14 +101,8 @@ class GradingOutputLogger:
 
 
 class JsonGradingOutputLogger(GradingOutputLogger):
-    def __init__(
-        self,
-        path_to_results_dir: Path,
-        assignment_name: str,
-        total_points_possible: int,
-        generate_results: bool,
-    ):
-        super().__init__(path_to_results_dir, assignment_name, total_points_possible, generate_results)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._print_single_student_grading_results_to_stdout = _empty_func
 

@@ -954,9 +954,7 @@ class Python3Lexer(Lexer):
     def __init__(self, input=None, output: TextIO = sys.stdout):
         super().__init__(input, output)
         self.checkVersion("4.9.2")
-        self._interp = LexerATNSimulator(
-            self, self.atn, self.decisionsToDFA, PredictionContextCache()
-        )
+        self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
         self._actions = None
         self._predicates = None
 
@@ -1096,12 +1094,7 @@ class Python3Lexer(Lexer):
             if (
                 self.opened > 0
                 or nextnext_eof is False
-                and (
-                    la_char == "\r"
-                    or la_char == "\n"
-                    or la_char == "\f"
-                    or la_char == "#"
-                )
+                and (la_char == "\r" or la_char == "\n" or la_char == "\f" or la_char == "#")
             ):
                 self.skip()
             else:

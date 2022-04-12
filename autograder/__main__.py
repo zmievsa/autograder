@@ -4,13 +4,11 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-
 L = logging.getLogger("AUTOGRADER")
 logging.basicConfig(level=logging.CRITICAL, handlers=[logging.StreamHandler()])
 
 
 def main(argv: Optional[List[str]] = None):
-    """Returns the average score of the students"""
     if argv is None:
         argv = sys.argv[1:]
 
@@ -21,20 +19,23 @@ def main(argv: Optional[List[str]] = None):
         from autograder.__version__ import __version__
 
         print(__version__)
-        exit(0)
-    # the interface architecture needs to be refactored a bit. For now, this hack with getattr
+    # the interface architecture needs to be refactored a bit. For now, this hack with hasattr
     # will prevent errors if autograder has been called on its own.
-    elif getattr(args, "submission_path", None) is None:
+    elif not hasattr(args, "submission_path"):
         parser.print_help()
-        exit()
-
-    current_dir = (Path.cwd() / args.submission_path).resolve()
-    return _evaluate_args(args, current_dir)
+    else:
+        current_dir = (Path.cwd() / args.submission_path).resolve()
+        return _evaluate_args(args, current_dir)
 
 
 def _create_parser():
     parser = argparse.ArgumentParser(prog="autograder")
-    parser.add_argument("-V", "--version", action="store_true", help="print the autograder version number and exit")
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="print the autograder version number and exit",
+    )
     subparsers = parser.add_subparsers(title="Commands", dest="command")
     _create_run_parser(subparsers)
     _create_stats_parser(subparsers)

@@ -12,6 +12,7 @@ TESTCASE_PRECOMPILATION_ARGS = {}   # Extra arguments to be passed with each tes
 TESTCASE_COMPILATION_ARGS = {}      # Extra arguments to be passed with each testcase during compilation
 TESTCASE_RUNTIME_ARGS = {}          # Extra arguments to be passed to each testcase during runtime
 GENERATE_RESULTS = true             # Generate results directory with a result file per student
+GENERATE_STUDENT_OUTPUTS = false    # Print and save to result file the student stdout outputs students have generated for testcases
 STDOUT_ONLY_GRADING_ENABLED = false # Grade in stdout-only mode (Requires 'Possible Source File Stems')
 
 [GCC]

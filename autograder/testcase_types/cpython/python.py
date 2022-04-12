@@ -2,11 +2,10 @@ import asyncio
 import py_compile
 import sys
 from pathlib import Path
-from typing import Any, List, Mapping
-from autograder.config_manager import GradingConfig
+from typing import List
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
-from autograder.testcase_utils.shell import EMPTY_COMMAND, get_shell_command, ShellError
+from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellError, get_shell_command
 
 
 class TestCase(AbstractTestCase):
@@ -30,16 +29,11 @@ class TestCase(AbstractTestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: Mapping[str, Any],
-        lock: asyncio.Lock,
+        *args,
+        **kwargs,
     ):
         copied_submission = await super().precompile_submission(
-            submission,
-            student_dir,
-            [submission.stem],
-            cli_args,
-            config,
-            lock,
+            submission, student_dir, [submission.stem], cli_args, *args, **kwargs
         )
         kwargs = {}
         if "-O" in cli_args:
@@ -56,7 +50,10 @@ class TestCase(AbstractTestCase):
         return lambda *args, **kwargs: self.interpreter(
             self.make_executable_path(precompiled_submission),
             *args,
-            env={"STUDENT_SUBMISSION": precompiled_submission.stem, **kwargs.pop("env")},
+            env={
+                "STUDENT_SUBMISSION": precompiled_submission.stem,
+                **kwargs.pop("env"),
+            },
             **kwargs,
         )
 
