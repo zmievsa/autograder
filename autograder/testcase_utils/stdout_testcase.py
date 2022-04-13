@@ -9,8 +9,10 @@ from os import PathLike
 from pathlib import Path, PosixPath, WindowsPath
 from typing import TYPE_CHECKING, Any, Callable, List, Mapping, Optional, Type
 
+from .testcase_io import EMPTY_TESTCASE_IO
+
 from ..config_manager import GradingConfig
-from .abstract_testcase import TestCase
+from .abstract_testcase import TestCase, TestCaseResult
 from .exit_codes import ExitCodeEventType
 from .shell import ShellCommand, ShellError, get_shell_command
 from .submission import find_appropriate_source_file_stem
@@ -33,14 +35,21 @@ class PathWithStdoutOnlyInfo(type(Path())):
     and implement a different grader class for stdout submissions (definitely).
     """
 
-    picked_submission_type: Optional[Type[TestCase]]
+    compiled_submission: Optional[ShellCommand]
+    picked_testcase_type: Optional[Type[TestCase]]
 
-    def __new__(cls, *args, picked_submission_type: Optional[Type[TestCase]] = None):
+    def __new__(
+        cls,
+        *args,
+        compiled_submission: Optional[ShellCommand] = None,
+        picked_testcase_type: Optional[Type[TestCase]] = None,
+    ):
         self = cls._from_parts(args, init=False)  # type: ignore
         if not self._flavour.is_supported:
             raise NotImplementedError(f"cannot instantiate {cls.__name__} on your system")
         self._init()
-        self.picked_submission_type = picked_submission_type
+        self.compiled_submission = compiled_submission
+        self.picked_testcase_type = picked_testcase_type
         return self
 
 
@@ -107,7 +116,7 @@ class StdoutOnlyTestCase(TestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: Mapping[str, Any],
+        config: GradingConfig,
         lock: asyncio.Lock,
         testcase_picker: "TestCasePicker",
     ):
@@ -131,14 +140,36 @@ class StdoutOnlyTestCase(TestCase):
             return PathWithStdoutOnlyInfo(student_dir / MULTIFILE_SUBMISSION_NAME)
         else:
             ttype = testcase_picker.pick(submission, possible_source_file_stems)
-            if ttype is None:
+            # FIXME: This should be a part of the TestCasePicker.pick() method
+            stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
+            if ttype is None or stem is None:
                 raise ValueError(f"Failed to find a testcase type for submission {submission.name}")
-            destination = student_dir / submission.name
-            shutil.copy(str(submission), str(destination))
+            precompiled_submission = await ttype.precompile_submission(
+                submission,
+                student_dir,
+                [stem],
+                cli_args,
+                config,
+                lock,
+                testcase_picker,
+                remove_student_main=False,
+            )
+            final_executable = await ttype(
+                precompiled_submission,
+                0,
+                0,
+                EMPTY_TESTCASE_IO,
+                config.file,
+                testcase_picker,
+                prepend_test_helper=False,
+            ).compile_testcase(precompiled_submission, cli_args)
+            return PathWithStdoutOnlyInfo(
+                precompiled_submission,
+                compiled_submission=final_executable,
+                picked_testcase_type=ttype,
+            )
 
-            return PathWithStdoutOnlyInfo(destination, picked_submission_type=ttype)
-
-    async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
+    async def compile_testcase(self, precompiled_submission: PathWithStdoutOnlyInfo, cli_args: str) -> ShellCommand:
         return _add_args(self._run_stdout_only_testcase, precompiled_submission, cli_args)
 
     def prepend_test_helper(self):
@@ -160,19 +191,9 @@ class StdoutOnlyTestCase(TestCase):
         # Because student submissions do not play by our ExitCodeEventType rules,
         # we allow them to return 0 at the end.
         kwargs["allowed_exit_codes"] = (0,)
-        ttype = precompiled_submission.picked_submission_type
-        if ttype is not None:
-            result = await (
-                await ttype(
-                    precompiled_submission,
-                    self.timeout,
-                    self.weight,
-                    self.io,
-                    self.config,
-                    self.testcase_picker,
-                    prepend_test_helper=False,
-                ).compile_testcase(precompiled_submission, cli_args)
-            )(*args, **kwargs)
+        compiled_submission = precompiled_submission.compiled_submission
+        if compiled_submission is not None:
+            result = await compiled_submission(*args, **kwargs)
         elif precompiled_submission.name == MULTIFILE_SUBMISSION_NAME:
             result = await self.compiler("run", "--silent", *args, **kwargs)
         else:
@@ -182,6 +203,24 @@ class StdoutOnlyTestCase(TestCase):
         result.stdout += f"\n-1{LAST_LINE_SPLITTING_CHARACTER}{self.validating_string}"
         result.returncode = ExitCodeEventType.CHECK_STDOUT
         return result
+
+    async def _weightless_run(
+        self,
+        precompiled_submission: PathWithStdoutOnlyInfo,
+        compiled_testcase: ShellCommand,
+        testcase_runtime_args: str,
+    ) -> TestCaseResult:
+        if precompiled_submission.picked_testcase_type is not None:
+            return await precompiled_submission.picked_testcase_type._weightless_run(
+                self,
+                precompiled_submission,
+                compiled_testcase,
+                testcase_runtime_args,
+            )
+        else:
+            return await super(type(self), self)._weightless_run(
+                precompiled_submission, compiled_testcase, testcase_runtime_args
+            )
 
 
 def _copy_multifile_submission_contents_into_student_dir(submission: Path, student_dir: Path):
@@ -196,12 +235,6 @@ def _copy_multifile_submission_contents_into_student_dir(submission: Path, stude
         else:
             op = shutil.copyfile
         op(f, new_path)
-
-
-def _find_submission_executable(student_dir: Path, possible_source_file_stems: List[str]):
-    for f in student_dir.iterdir():
-        if find_appropriate_source_file_stem(f, possible_source_file_stems):
-            return f
 
 
 def _make_executable(f: Path) -> None:

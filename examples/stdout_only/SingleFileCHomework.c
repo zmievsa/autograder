@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 int numberSaver()
 {
@@ -22,7 +23,7 @@ int numberSaver()
         printf("%d) %d time(s)\n", i, arr[i - 1]);
         sum += (arr[i - 1] * i);
     }
-
+    malloc(sizeof(int));
     return sum;
 }
 

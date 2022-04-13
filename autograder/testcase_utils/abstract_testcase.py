@@ -112,12 +112,15 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: Mapping[str, Any],
+        config: GradingConfig,
         # Lock is used to allow for optimizations during precompilation.
         # For example, when all submissions share a single library that
         # needs to be precompiled only once.
         lock: asyncio.Lock,
         testcase_picker,
+        # These two varargs will allow StdoutOnlyTestCase to break the Liskov substiution principle in any way it wants
+        *args,
+        **kwargs,
     ) -> Path:
         """Copies student submission into student_dir and either precompiles
         it and returns the path to the precompiled submission or to the
@@ -125,6 +128,7 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
         pwd = temp/student_dir
         """
+        # FIXME: Make source_suffix an argument
         destination = (student_dir / possible_source_file_stems[0]).with_suffix(cls.source_suffix)
         shutil.copy(str(submission), str(destination))
         return destination

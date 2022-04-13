@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, List, Mapping, Optional
+from autograder.config_manager import GradingConfig
 
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.abstract_testcase import TestCaseResult
@@ -51,15 +52,16 @@ class TestCase(AbstractTestCase):
         student_dir: Path,
         possible_source_file_stems: List[str],
         cli_args: str,
-        config: Mapping[str, Any],
+        config: GradingConfig,
         lock: asyncio.Lock,
         *args,
+        remove_student_main=True,
         **kwargs,
     ) -> Path:
         """Compiles student submission without linking it to speed up total compilation time"""
 
         cli_args_lst = cli_args.split()
-        if memleak_is_enabled(config):
+        if memleak_is_enabled(config.file):
             L.debug("Detected memleak to be enabled")
             async with lock:
                 if not cls.MEMLEAK_TEMP_DIR:
@@ -71,15 +73,12 @@ class TestCase(AbstractTestCase):
             submission, student_dir, [submission.stem], cli_args, config, lock, *args, **kwargs
         )
         precompiled_submission = copied_submission.with_suffix(".o")
+        if remove_student_main:
+            extra_args = cli_args_lst + cls.SUBMISSION_COMPILATION_ARGS
+        else:
+            extra_args = cli_args_lst
         try:
-            await cls.compiler(
-                "-c",
-                copied_submission,
-                "-o",
-                precompiled_submission,
-                *cli_args_lst,
-                *cls.SUBMISSION_COMPILATION_ARGS,
-            )
+            await cls.compiler("-c", copied_submission, "-o", precompiled_submission, *extra_args)
         finally:
             copied_submission.unlink()
         return precompiled_submission
@@ -135,7 +134,9 @@ class TestCase(AbstractTestCase):
             memleak_output = Path(tmp) / "memleak.txt"
             L.debug(f"Created memleak output file {memleak_output}")
             compiled_testcase = add_env_vars(compiled_testcase, MEMLEAK_FILE=str(memleak_output))
-            result = await super()._weightless_run(precompiled_submission, compiled_testcase, testcase_runtime_args)
+            result = await super(type(self), self)._weightless_run(
+                precompiled_submission, compiled_testcase, testcase_runtime_args
+            )
             memleak_output_text = memleak_output.read_text() if memleak_output.is_file() else ""
             memleak_output_text = hide_path_to_directory(memleak_output_text, precompiled_submission.parent)
         if memleak_output_text:

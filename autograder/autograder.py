@@ -14,11 +14,9 @@ from .testcase_utils.abstract_testcase import TestCase
 from .testcase_utils.shell import ShellError
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
-from .testcase_utils.testcase_io import TestCaseIO
+from .testcase_utils.testcase_io import TestCaseIO, EMPTY_TESTCASE_IO
 from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, get_file_names, hide_path_to_directory, import_from_path
-
-EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()
 
 
 L = logging.getLogger("AUTOGRADER.grader")
@@ -318,7 +316,7 @@ class Runner:
                 submission.temp_dir,
                 self.grader.config.possible_source_file_stems,
                 self.grader.config.submission_precompilation_args[submission.old_path.name],
-                self.grader.config.file,
+                self.grader.config,
                 lock,
                 self.testcase_picker,
             )

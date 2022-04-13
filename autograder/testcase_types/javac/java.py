@@ -82,14 +82,16 @@ class TestCase(AbstractTestCase):
         return copied_submission.with_suffix(".class")
 
     async def compile_testcase(self, precompiled_submission: Path, cli_args: str):
-        new_self_path = precompiled_submission.with_name(self.path.name)
-        await self.compiler(
-            new_self_path,
-            "-cp",
-            CLASSPATH,
-            *cli_args.split(),
-            cwd=precompiled_submission.parent,
-        )
+        if not self.path is precompiled_submission:
+
+            new_self_path = precompiled_submission.with_name(self.path.name)
+            await self.compiler(
+                new_self_path,
+                "-cp",
+                CLASSPATH,
+                *cli_args.split(),
+                cwd=precompiled_submission.parent,
+            )
         return lambda *args, **kwargs: self.virtual_machine("-cp", CLASSPATH, self.path.stem, *args, **kwargs)
 
     @classmethod
