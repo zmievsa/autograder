@@ -225,7 +225,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
         # or some testcase helper is broken, or a testcase exits itself without
         # the use of helper functions.
         if not output_is_valid:
-            print(self.config["CONFIG"]["GENERATE_STUDENT_OUTPUTS"])
             return TestCaseResult(
                 0,
                 "None of the helper functions have been called.\n"

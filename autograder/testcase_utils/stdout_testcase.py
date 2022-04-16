@@ -140,14 +140,18 @@ class StdoutOnlyTestCase(TestCase):
             return PathWithStdoutOnlyInfo(student_dir / MULTIFILE_SUBMISSION_NAME)
         else:
             ttype = testcase_picker.pick(submission, possible_source_file_stems)
-            # FIXME: This should be a part of the TestCasePicker.pick() method
+            # FIXME: This should be a part of the TestCasePicker.pick() method. Or not?
             stem = find_appropriate_source_file_stem(submission, possible_source_file_stems)
-            if ttype is None or stem is None:
-                raise ValueError(f"Failed to find a testcase type for submission {submission.name}")
+            if ttype is None:
+                raise ShellError(1, f"Failed to find a testcase type for submission {submission.name}")
+            if stem is not None:
+                stems = [stem]
+            else:
+                stems = possible_source_file_stems
             precompiled_submission = await ttype.precompile_submission(
                 submission,
                 student_dir,
-                [stem],
+                stems,
                 cli_args,
                 config,
                 lock,

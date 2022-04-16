@@ -25,7 +25,7 @@ def main(argv: Optional[List[str]] = None):
         parser.print_help()
     else:
         current_dir = (Path.cwd() / args.submission_path).resolve()
-        return _evaluate_args(args, current_dir)
+        _evaluate_args(args, current_dir)
 
 
 def _create_parser():

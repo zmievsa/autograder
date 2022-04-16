@@ -129,13 +129,15 @@ class TestCase(AbstractTestCase):
         testcase_runtime_args: str,
     ) -> TestCaseResult:
         if not memleak_is_enabled(self.config):
-            return await super()._weightless_run(precompiled_submission, compiled_testcase, testcase_runtime_args)
+            return await AbstractTestCase._weightless_run(
+                self, precompiled_submission, compiled_testcase, testcase_runtime_args
+            )
         with TemporaryDirectory() as tmp:
             memleak_output = Path(tmp) / "memleak.txt"
             L.debug(f"Created memleak output file {memleak_output}")
             compiled_testcase = add_env_vars(compiled_testcase, MEMLEAK_FILE=str(memleak_output))
-            result = await super(type(self), self)._weightless_run(
-                precompiled_submission, compiled_testcase, testcase_runtime_args
+            result = await AbstractTestCase._weightless_run(
+                self, precompiled_submission, compiled_testcase, testcase_runtime_args
             )
             memleak_output_text = memleak_output.read_text() if memleak_output.is_file() else ""
             memleak_output_text = hide_path_to_directory(memleak_output_text, precompiled_submission.parent)
