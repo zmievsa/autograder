@@ -17,17 +17,18 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.12"
+python = ">=3.8,<3.12"
 antlr4-python3-runtime = "4.9.2"
 tomlkit = "^0.11.4"
 numba = "^0.56.2"
+numpy="^1.22.4"
 
 [tool.poetry.dev-dependencies]
-black = "^22.8.0"
-isort = "^5.10.1"
-pyupgrade = "^2.37.3"
-autoflake = "^1.5.3"
-bandit = {version = "^1.7.4", extras = ["toml"]}
+black = "*"
+isort = "*"
+pyupgrade = "*"
+autoflake = "*"
+bandit = {version = "*", extras = ["toml"]}
 
 [tool.poetry.scripts]
 autograder = 'autograder.__main__:main'
@@ -65,7 +66,7 @@ lines_between_sections = 1
 
 [tool.black]
 line-length = 120
-target_version = ['py37']
+target_version = ['py38']
 extend-exclude = 'examples'
 
 [tool.bandit]
