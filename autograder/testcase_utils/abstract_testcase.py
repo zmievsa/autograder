@@ -180,10 +180,10 @@ class TestCase(ABC, metaclass=SourceDirSaver):
 
         pwd = AutograderPaths.current_dir (i.e. the directory with all submissions)
         """
-        with self.path.open() as f:
+        with self.path.open(errors="replace") as f:
             content = f.read()
             final_content = self.get_formatted_test_helper() + "\n" + content
-        with self.path.open("w") as f:
+        with self.path.open("w", errors="replace") as f:
             f.write(final_content)
 
     def get_formatted_test_helper(self, **exta_format_kwargs: str) -> str:

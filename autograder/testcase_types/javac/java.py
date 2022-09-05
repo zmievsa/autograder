@@ -70,7 +70,7 @@ class TestCase(AbstractTestCase):
             submission, student_dir, [stem], cli_args, *args, **kwargs
         )
         try:
-            if not REFLECTION_MATCHER.search(copied_submission.read_text()):
+            if not REFLECTION_MATCHER.search(copied_submission.read_text(errors="replace")):
                 await cls.compiler(copied_submission, *cli_args.split(), cwd=student_dir)
             else:
                 raise ShellError(1, "The use of reflection is forbidden in student submissions.")

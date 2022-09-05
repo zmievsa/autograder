@@ -37,6 +37,7 @@ class GradingConfig:
     generate_student_outputs: bool
     stdout_only_grading_enabled: bool
     total_points_possible: int
+    max_concurrent_submissions: int
     total_score_to_100_ratio: float
 
     assignment_name: str
@@ -61,6 +62,7 @@ class GradingConfig:
         self.stdout_only_grading_enabled = cfg["STDOUT_ONLY_GRADING_ENABLED"]
 
         self.total_points_possible = cfg["TOTAL_POINTS_POSSIBLE"]
+        self.max_concurrent_submissions = cfg["MAX_CONCURRENT_SUBMISSIONS"]
         self.total_score_to_100_ratio = self.total_points_possible / 100
 
         self.assignment_name = cfg["ASSIGNMENT_NAME"]

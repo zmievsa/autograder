@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import shutil
+import signal
 import subprocess as synchronous_subprocess
 import sys
 from asyncio import subprocess
@@ -67,6 +68,9 @@ class ShellCommand:
                     stdout=synchronous_subprocess.DEVNULL,
                     stderr=synchronous_subprocess.DEVNULL,
                 )
+            else:
+                # For infinite processes
+                os.kill(process.pid, signal.SIGKILL)
             raise e
         stdout, stderr = (s.decode(encoding) for s in result)
         L.debug(

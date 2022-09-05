@@ -4,6 +4,7 @@
 [CONFIG]
 ASSIGNMENT_NAME = "Homework"        # For display in the output for the student
 TOTAL_POINTS_POSSIBLE = 100         # Total points given for tests
+MAX_CONCURRENT_SUBMISSIONS = 1000   # Maximum number of submissions that can be graded at the same time
 POSSIBLE_SOURCE_FILE_STEMS = []     # Comma-separated list of strings that must be in each submission. Empty means that we grade all submissions.
 TIMEOUT = { "DEFAULT" = 1 }         # Student's program is terminated if it takes more than this time in seconds
 TESTCASE_WEIGHT = { "DEFAULT" = 1 } # The testcase's grade will be multiplied by this number before calculating final grade

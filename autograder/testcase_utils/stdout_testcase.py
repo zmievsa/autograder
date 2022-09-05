@@ -75,7 +75,7 @@ def contains_shebang(path: Path) -> bool:
     # Windows does not support shebang lines
     if sys.platform.startswith("win32"):
         return False
-    with open(path) as f:
+    with open(path, errors="replace") as f:
         return f.readline().startswith("#!")
 
 

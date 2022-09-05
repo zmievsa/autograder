@@ -1,0 +1,31 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "12f0d9d1e8dae7242254196996c070a2d358bdd2a026005da6707b0a5e537e69"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.9"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "antlr4-python3-runtime": {
+            "hashes": [
+                "sha256:31f5abdc7faf16a1a6e9bf2eb31565d004359b821b09944436a34361929ae85a"
+            ],
+            "version": "==4.9.2"
+        },
+        "decaf2many": {
+            "editable": true,
+            "path": "./decaf2many"
+        }
+    },
+    "develop": {}
+}

@@ -75,8 +75,8 @@ class Grader:
 
             if sys.platform == "win32":
                 asyncio.set_event_loop(asyncio.ProactorEventLoop())
-
-            tasks = map(Runner(self, asyncio.Lock(), self.testcase_picker), self.submissions)
+            semaphore = asyncio.Semaphore(self.config.max_concurrent_submissions)
+            tasks = map(Runner(self, asyncio.Lock(), self.testcase_picker, semaphore), self.submissions)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
             total_class_points = sum(s.final_grade for s in modified_submissions)
@@ -275,18 +275,22 @@ class AutograderPaths:
 class Runner:
     """Grades single submissions"""
 
-    grader: Grader
-    lock: asyncio.Lock
-    testcase_picker: TestCasePicker
-
-    def __init__(self, grader: Grader, lock: asyncio.Lock, testcase_picker: TestCasePicker) -> None:
+    def __init__(
+        self,
+        grader: Grader,
+        lock: asyncio.Lock,
+        testcase_picker: TestCasePicker,
+        semaphore: asyncio.Semaphore,
+    ) -> None:
         self.grader = grader
         self.lock = lock
         self.testcase_picker = testcase_picker
+        self.semaphore = semaphore
 
     async def __call__(self, submission: Submission) -> Submission:
-        await self.run_on_single_submission(submission, self.lock)
-        return submission
+        async with self.semaphore:
+            await self.run_on_single_submission(submission, self.lock)
+            return submission
 
     async def run_on_single_submission(self, submission: Submission, lock: asyncio.Lock) -> None:
         self._copy_extra_files(submission.temp_dir)
