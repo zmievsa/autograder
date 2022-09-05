@@ -60,3 +60,6 @@ class TestCaseIO:
 
 def default_formatter(s: str) -> str:
     return s
+
+
+EMPTY_TESTCASE_IO = TestCaseIO.get_empty_io()

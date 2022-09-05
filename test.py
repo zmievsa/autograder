@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # TODO: Refactor this mess
+import json
 import multiprocessing
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
@@ -58,8 +59,9 @@ def error(s: str) -> str:
 def test_example(args):
     test_dir, expected_result = args
     with ErrorHandler(test_dir):
-        with silence_output():
-            real_result = int(autograder(["run", f"examples/{test_dir}"])[1])
+        with silence_output() as buf:
+            autograder(["run", f"examples/{test_dir}", "-j"])
+            real_result = int(json.loads(buf.getvalue())["average_score"])
         msg = f"CHECKING TEST {test_dir} to equal {expected_result}. Real result: {real_result}"
         if int(expected_result) == real_result:
             print(msg)
