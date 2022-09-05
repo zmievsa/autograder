@@ -22,7 +22,6 @@ def _empty_func(*a: Any, **kw: Any):
     """Python can't pickle lambdas so we use this
     Edit: Now pickling is not necessary but who cares anymore?
     """
-    pass
 
 
 # TODO: Replace path_to_results_dir and generate_results with path_to_results_dir: Optional[Path]

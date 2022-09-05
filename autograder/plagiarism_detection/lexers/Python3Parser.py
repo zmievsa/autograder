@@ -1,5 +1,4 @@
 # Generated from Python3.g4 by ANTLR 4.9.2
-# encoding: utf-8
 import sys
 from io import StringIO
 
@@ -1116,7 +1115,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 172
                 self.match(Python3Parser.NEWLINE)
-                pass
             elif token in [
                 Python3Parser.STRING,
                 Python3Parser.NUMBER,
@@ -1151,7 +1149,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 173
                 self.simple_stmt()
-                pass
             elif token in [
                 Python3Parser.DEF,
                 Python3Parser.IF,
@@ -1168,7 +1165,6 @@ class Python3Parser(Parser):
                 self.compound_stmt()
                 self.state = 175
                 self.match(Python3Parser.NEWLINE)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -1266,7 +1262,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -1285,7 +1281,6 @@ class Python3Parser(Parser):
                 if token in [Python3Parser.NEWLINE]:
                     self.state = 179
                     self.match(Python3Parser.NEWLINE)
-                    pass
                 elif token in [
                     Python3Parser.STRING,
                     Python3Parser.NUMBER,
@@ -1328,7 +1323,6 @@ class Python3Parser(Parser):
                 ]:
                     self.state = 180
                     self.stmt()
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -1484,7 +1478,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -1607,15 +1601,12 @@ class Python3Parser(Parser):
             if token in [Python3Parser.CLASS]:
                 self.state = 214
                 self.classdef()
-                pass
             elif token in [Python3Parser.DEF]:
                 self.state = 215
                 self.funcdef()
-                pass
             elif token in [Python3Parser.ASYNC]:
                 self.state = 216
                 self.async_funcdef()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -1951,7 +1942,6 @@ class Python3Parser(Parser):
                                     self.state = 273
                                     self.match(Python3Parser.COMMA)
 
-                        pass
                     elif token in [Python3Parser.POWER]:
                         self.state = 280
                         self.match(Python3Parser.POWER)
@@ -1964,13 +1954,11 @@ class Python3Parser(Parser):
                             self.state = 282
                             self.match(Python3Parser.COMMA)
 
-                        pass
                     elif token in [Python3Parser.CLOSE_PAREN]:
                         pass
                     else:
                         pass
 
-                pass
             elif token in [Python3Parser.STAR]:
                 self.state = 289
                 self.match(Python3Parser.STAR)
@@ -2024,7 +2012,6 @@ class Python3Parser(Parser):
                             self.state = 307
                             self.match(Python3Parser.COMMA)
 
-                pass
             elif token in [Python3Parser.POWER]:
                 self.state = 314
                 self.match(Python3Parser.POWER)
@@ -2037,7 +2024,6 @@ class Python3Parser(Parser):
                     self.state = 316
                     self.match(Python3Parser.COMMA)
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -2256,7 +2242,6 @@ class Python3Parser(Parser):
                                     self.state = 361
                                     self.match(Python3Parser.COMMA)
 
-                        pass
                     elif token in [Python3Parser.POWER]:
                         self.state = 368
                         self.match(Python3Parser.POWER)
@@ -2269,13 +2254,11 @@ class Python3Parser(Parser):
                             self.state = 370
                             self.match(Python3Parser.COMMA)
 
-                        pass
                     elif token in [Python3Parser.COLON]:
                         pass
                     else:
                         pass
 
-                pass
             elif token in [Python3Parser.STAR]:
                 self.state = 377
                 self.match(Python3Parser.STAR)
@@ -2329,7 +2312,6 @@ class Python3Parser(Parser):
                             self.state = 395
                             self.match(Python3Parser.COMMA)
 
-                pass
             elif token in [Python3Parser.POWER]:
                 self.state = 402
                 self.match(Python3Parser.POWER)
@@ -2342,7 +2324,6 @@ class Python3Parser(Parser):
                     self.state = 404
                     self.match(Python3Parser.COMMA)
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -2457,7 +2438,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 411
                 self.simple_stmt()
-                pass
             elif token in [
                 Python3Parser.DEF,
                 Python3Parser.IF,
@@ -2472,7 +2452,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 412
                 self.compound_stmt()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -2628,15 +2607,12 @@ class Python3Parser(Parser):
             ]:
                 self.state = 428
                 self.expr_stmt()
-                pass
             elif token in [Python3Parser.DEL]:
                 self.state = 429
                 self.del_stmt()
-                pass
             elif token in [Python3Parser.PASS]:
                 self.state = 430
                 self.pass_stmt()
-                pass
             elif token in [
                 Python3Parser.RETURN,
                 Python3Parser.RAISE,
@@ -2646,23 +2622,18 @@ class Python3Parser(Parser):
             ]:
                 self.state = 431
                 self.flow_stmt()
-                pass
             elif token in [Python3Parser.FROM, Python3Parser.IMPORT]:
                 self.state = 432
                 self.import_stmt()
-                pass
             elif token in [Python3Parser.GLOBAL]:
                 self.state = 433
                 self.global_stmt()
-                pass
             elif token in [Python3Parser.NONLOCAL]:
                 self.state = 434
                 self.nonlocal_stmt()
-                pass
             elif token in [Python3Parser.ASSERT]:
                 self.state = 435
                 self.assert_stmt()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -2734,7 +2705,6 @@ class Python3Parser(Parser):
             if token in [Python3Parser.COLON]:
                 self.state = 439
                 self.annassign()
-                pass
             elif token in [
                 Python3Parser.ADD_ASSIGN,
                 Python3Parser.SUB_ASSIGN,
@@ -2758,7 +2728,6 @@ class Python3Parser(Parser):
                 if token in [Python3Parser.YIELD]:
                     self.state = 441
                     self.yield_expr()
-                    pass
                 elif token in [
                     Python3Parser.STRING,
                     Python3Parser.NUMBER,
@@ -2779,11 +2748,9 @@ class Python3Parser(Parser):
                 ]:
                     self.state = 442
                     self.testlist()
-                    pass
                 else:
                     raise NoViableAltException(self)
 
-                pass
             elif token in [
                 Python3Parser.NEWLINE,
                 Python3Parser.SEMI_COLON,
@@ -2801,7 +2768,6 @@ class Python3Parser(Parser):
                     if token in [Python3Parser.YIELD]:
                         self.state = 446
                         self.yield_expr()
-                        pass
                     elif token in [
                         Python3Parser.STRING,
                         Python3Parser.NUMBER,
@@ -2823,7 +2789,6 @@ class Python3Parser(Parser):
                     ]:
                         self.state = 447
                         self.testlist_star_expr()
-                        pass
                     else:
                         raise NoViableAltException(self)
 
@@ -2831,7 +2796,6 @@ class Python3Parser(Parser):
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -2967,11 +2931,9 @@ class Python3Parser(Parser):
             ]:
                 self.state = 463
                 self.test()
-                pass
             elif token in [Python3Parser.STAR]:
                 self.state = 464
                 self.star_expr()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -3005,11 +2967,9 @@ class Python3Parser(Parser):
                     ]:
                         self.state = 468
                         self.test()
-                        pass
                     elif token in [Python3Parser.STAR]:
                         self.state = 469
                         self.star_expr()
-                        pass
                     else:
                         raise NoViableAltException(self)
 
@@ -3099,28 +3059,26 @@ class Python3Parser(Parser):
             self.state = 480
             _la = self._input.LA(1)
             if not (
-                (
-                    (((_la - 83)) & ~0x3F) == 0
-                    and (
-                        (1 << (_la - 83))
-                        & (
-                            (1 << (Python3Parser.ADD_ASSIGN - 83))
-                            | (1 << (Python3Parser.SUB_ASSIGN - 83))
-                            | (1 << (Python3Parser.MULT_ASSIGN - 83))
-                            | (1 << (Python3Parser.AT_ASSIGN - 83))
-                            | (1 << (Python3Parser.DIV_ASSIGN - 83))
-                            | (1 << (Python3Parser.MOD_ASSIGN - 83))
-                            | (1 << (Python3Parser.AND_ASSIGN - 83))
-                            | (1 << (Python3Parser.OR_ASSIGN - 83))
-                            | (1 << (Python3Parser.XOR_ASSIGN - 83))
-                            | (1 << (Python3Parser.LEFT_SHIFT_ASSIGN - 83))
-                            | (1 << (Python3Parser.RIGHT_SHIFT_ASSIGN - 83))
-                            | (1 << (Python3Parser.POWER_ASSIGN - 83))
-                            | (1 << (Python3Parser.IDIV_ASSIGN - 83))
-                        )
+                ((_la - 83) & ~0x3F) == 0
+                and (
+                    (1 << (_la - 83))
+                    & (
+                        (1 << (Python3Parser.ADD_ASSIGN - 83))
+                        | (1 << (Python3Parser.SUB_ASSIGN - 83))
+                        | (1 << (Python3Parser.MULT_ASSIGN - 83))
+                        | (1 << (Python3Parser.AT_ASSIGN - 83))
+                        | (1 << (Python3Parser.DIV_ASSIGN - 83))
+                        | (1 << (Python3Parser.MOD_ASSIGN - 83))
+                        | (1 << (Python3Parser.AND_ASSIGN - 83))
+                        | (1 << (Python3Parser.OR_ASSIGN - 83))
+                        | (1 << (Python3Parser.XOR_ASSIGN - 83))
+                        | (1 << (Python3Parser.LEFT_SHIFT_ASSIGN - 83))
+                        | (1 << (Python3Parser.RIGHT_SHIFT_ASSIGN - 83))
+                        | (1 << (Python3Parser.POWER_ASSIGN - 83))
+                        | (1 << (Python3Parser.IDIV_ASSIGN - 83))
                     )
-                    != 0
                 )
+                != 0
             ):
                 self._errHandler.recoverInline(self)
             else:
@@ -3258,27 +3216,22 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 487
                 self.break_stmt()
-                pass
             elif token in [Python3Parser.CONTINUE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 488
                 self.continue_stmt()
-                pass
             elif token in [Python3Parser.RETURN]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 489
                 self.return_stmt()
-                pass
             elif token in [Python3Parser.RAISE]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 490
                 self.raise_stmt()
-                pass
             elif token in [Python3Parser.YIELD]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 491
                 self.yield_stmt()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -3421,7 +3374,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -3544,7 +3497,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -3611,12 +3564,10 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 512
                 self.import_name()
-                pass
             elif token in [Python3Parser.FROM]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 513
                 self.import_from()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -3751,7 +3702,6 @@ class Python3Parser(Parser):
 
                 self.state = 526
                 self.dotted_name()
-                pass
 
             elif la_ == 2:
                 self.state = 528
@@ -3771,8 +3721,6 @@ class Python3Parser(Parser):
                     if not (_la == Python3Parser.DOT or _la == Python3Parser.ELLIPSIS):
                         break
 
-                pass
-
             self.state = 534
             self.match(Python3Parser.IMPORT)
             self.state = 541
@@ -3781,7 +3729,6 @@ class Python3Parser(Parser):
             if token in [Python3Parser.STAR]:
                 self.state = 535
                 self.match(Python3Parser.STAR)
-                pass
             elif token in [Python3Parser.OPEN_PAREN]:
                 self.state = 536
                 self.match(Python3Parser.OPEN_PAREN)
@@ -3789,11 +3736,9 @@ class Python3Parser(Parser):
                 self.import_as_names()
                 self.state = 538
                 self.match(Python3Parser.CLOSE_PAREN)
-                pass
             elif token in [Python3Parser.NAME]:
                 self.state = 540
                 self.import_as_names()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -4339,47 +4284,38 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 604
                 self.if_stmt()
-                pass
             elif token in [Python3Parser.WHILE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 605
                 self.while_stmt()
-                pass
             elif token in [Python3Parser.FOR]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 606
                 self.for_stmt()
-                pass
             elif token in [Python3Parser.TRY]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 607
                 self.try_stmt()
-                pass
             elif token in [Python3Parser.WITH]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 608
                 self.with_stmt()
-                pass
             elif token in [Python3Parser.DEF]:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 609
                 self.funcdef()
-                pass
             elif token in [Python3Parser.CLASS]:
                 self.enterOuterAlt(localctx, 7)
                 self.state = 610
                 self.classdef()
-                pass
             elif token in [Python3Parser.AT]:
                 self.enterOuterAlt(localctx, 8)
                 self.state = 611
                 self.decorated()
-                pass
             elif token in [Python3Parser.ASYNC]:
                 self.enterOuterAlt(localctx, 9)
                 self.state = 612
                 self.async_stmt()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -4435,15 +4371,12 @@ class Python3Parser(Parser):
             if token in [Python3Parser.DEF]:
                 self.state = 616
                 self.funcdef()
-                pass
             elif token in [Python3Parser.WITH]:
                 self.state = 617
                 self.with_stmt()
-                pass
             elif token in [Python3Parser.FOR]:
                 self.state = 618
                 self.for_stmt()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -4809,7 +4742,6 @@ class Python3Parser(Parser):
                     self.state = 678
                     self.suite()
 
-                pass
             elif token in [Python3Parser.FINALLY]:
                 self.state = 681
                 self.match(Python3Parser.FINALLY)
@@ -4817,7 +4749,6 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.COLON)
                 self.state = 683
                 self.suite()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -5019,7 +4950,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -5129,7 +5060,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 711
                 self.simple_stmt()
-                pass
             elif token in [Python3Parser.NEWLINE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 712
@@ -5189,7 +5119,7 @@ class Python3Parser(Parser):
                             != 0
                         )
                         or (
-                            (((_la - 66)) & ~0x3F) == 0
+                            ((_la - 66) & ~0x3F) == 0
                             and (
                                 (1 << (_la - 66))
                                 & (
@@ -5207,7 +5137,6 @@ class Python3Parser(Parser):
 
                 self.state = 719
                 self.match(Python3Parser.DEDENT)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -5297,12 +5226,10 @@ class Python3Parser(Parser):
                     self.state = 727
                     self.test()
 
-                pass
             elif token in [Python3Parser.LAMBDA]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 731
                 self.lambdef()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -5366,12 +5293,10 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 734
                 self.or_test()
-                pass
             elif token in [Python3Parser.LAMBDA]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 735
                 self.lambdef_nocond()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -5662,7 +5587,6 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.NOT)
                 self.state = 769
                 self.not_test()
-                pass
             elif token in [
                 Python3Parser.STRING,
                 Python3Parser.NUMBER,
@@ -5682,7 +5606,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 770
                 self.comparison()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -5736,7 +5659,7 @@ class Python3Parser(Parser):
             self.state = 779
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while (((_la - 18)) & ~0x3F) == 0 and (
+            while ((_la - 18) & ~0x3F) == 0 and (
                 (1 << (_la - 18))
                 & (
                     (1 << (Python3Parser.IN - 18))
@@ -5827,49 +5750,41 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 782
                 self.match(Python3Parser.LESS_THAN)
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 783
                 self.match(Python3Parser.GREATER_THAN)
-                pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 784
                 self.match(Python3Parser.EQUALS)
-                pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 785
                 self.match(Python3Parser.GT_EQ)
-                pass
 
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 786
                 self.match(Python3Parser.LT_EQ)
-                pass
 
             elif la_ == 6:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 787
                 self.match(Python3Parser.NOT_EQ_1)
-                pass
 
             elif la_ == 7:
                 self.enterOuterAlt(localctx, 7)
                 self.state = 788
                 self.match(Python3Parser.NOT_EQ_2)
-                pass
 
             elif la_ == 8:
                 self.enterOuterAlt(localctx, 8)
                 self.state = 789
                 self.match(Python3Parser.IN)
-                pass
 
             elif la_ == 9:
                 self.enterOuterAlt(localctx, 9)
@@ -5877,13 +5792,11 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.NOT)
                 self.state = 791
                 self.match(Python3Parser.IN)
-                pass
 
             elif la_ == 10:
                 self.enterOuterAlt(localctx, 10)
                 self.state = 792
                 self.match(Python3Parser.IS)
-                pass
 
             elif la_ == 11:
                 self.enterOuterAlt(localctx, 11)
@@ -5891,7 +5804,6 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.IS)
                 self.state = 794
                 self.match(Python3Parser.NOT)
-                pass
 
         except RecognitionException as re:
             localctx.exception = re
@@ -6326,7 +6238,7 @@ class Python3Parser(Parser):
             self.state = 845
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while (((_la - 51)) & ~0x3F) == 0 and (
+            while ((_la - 51) & ~0x3F) == 0 and (
                 (1 << (_la - 51))
                 & (
                     (1 << (Python3Parser.STAR - 51))
@@ -6339,20 +6251,18 @@ class Python3Parser(Parser):
                 self.state = 841
                 _la = self._input.LA(1)
                 if not (
-                    (
-                        (((_la - 51)) & ~0x3F) == 0
-                        and (
-                            (1 << (_la - 51))
-                            & (
-                                (1 << (Python3Parser.STAR - 51))
-                                | (1 << (Python3Parser.DIV - 51))
-                                | (1 << (Python3Parser.MOD - 51))
-                                | (1 << (Python3Parser.IDIV - 51))
-                                | (1 << (Python3Parser.AT - 51))
-                            )
+                    ((_la - 51) & ~0x3F) == 0
+                    and (
+                        (1 << (_la - 51))
+                        & (
+                            (1 << (Python3Parser.STAR - 51))
+                            | (1 << (Python3Parser.DIV - 51))
+                            | (1 << (Python3Parser.MOD - 51))
+                            | (1 << (Python3Parser.IDIV - 51))
+                            | (1 << (Python3Parser.AT - 51))
                         )
-                        != 0
                     )
+                    != 0
                 ):
                     self._errHandler.recoverInline(self)
                 else:
@@ -6419,18 +6329,16 @@ class Python3Parser(Parser):
                 self.state = 848
                 _la = self._input.LA(1)
                 if not (
-                    (
-                        (((_la - 66)) & ~0x3F) == 0
-                        and (
-                            (1 << (_la - 66))
-                            & (
-                                (1 << (Python3Parser.ADD - 66))
-                                | (1 << (Python3Parser.MINUS - 66))
-                                | (1 << (Python3Parser.NOT_OP - 66))
-                            )
+                    ((_la - 66) & ~0x3F) == 0
+                    and (
+                        (1 << (_la - 66))
+                        & (
+                            (1 << (Python3Parser.ADD - 66))
+                            | (1 << (Python3Parser.MINUS - 66))
+                            | (1 << (Python3Parser.NOT_OP - 66))
                         )
-                        != 0
                     )
+                    != 0
                 ):
                     self._errHandler.recoverInline(self)
                 else:
@@ -6438,7 +6346,6 @@ class Python3Parser(Parser):
                     self.consume()
                 self.state = 849
                 self.factor()
-                pass
             elif token in [
                 Python3Parser.STRING,
                 Python3Parser.NUMBER,
@@ -6455,7 +6362,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 850
                 self.power()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -6675,7 +6581,6 @@ class Python3Parser(Parser):
                 if token in [Python3Parser.YIELD]:
                     self.state = 869
                     self.yield_expr()
-                    pass
                 elif token in [
                     Python3Parser.STRING,
                     Python3Parser.NUMBER,
@@ -6697,14 +6602,12 @@ class Python3Parser(Parser):
                 ]:
                     self.state = 870
                     self.testlist_comp()
-                    pass
                 elif token in [Python3Parser.CLOSE_PAREN]:
                     pass
                 else:
                     pass
                 self.state = 873
                 self.match(Python3Parser.CLOSE_PAREN)
-                pass
             elif token in [Python3Parser.OPEN_BRACK]:
                 self.state = 874
                 self.match(Python3Parser.OPEN_BRACK)
@@ -6733,7 +6636,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -6750,7 +6653,6 @@ class Python3Parser(Parser):
 
                 self.state = 878
                 self.match(Python3Parser.CLOSE_BRACK)
-                pass
             elif token in [Python3Parser.OPEN_BRACE]:
                 self.state = 879
                 self.match(Python3Parser.OPEN_BRACE)
@@ -6780,7 +6682,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -6797,15 +6699,12 @@ class Python3Parser(Parser):
 
                 self.state = 883
                 self.match(Python3Parser.CLOSE_BRACE)
-                pass
             elif token in [Python3Parser.NAME]:
                 self.state = 884
                 self.match(Python3Parser.NAME)
-                pass
             elif token in [Python3Parser.NUMBER]:
                 self.state = 885
                 self.match(Python3Parser.NUMBER)
-                pass
             elif token in [Python3Parser.STRING]:
                 self.state = 887
                 self._errHandler.sync(self)
@@ -6819,23 +6718,18 @@ class Python3Parser(Parser):
                     if not (_la == Python3Parser.STRING):
                         break
 
-                pass
             elif token in [Python3Parser.ELLIPSIS]:
                 self.state = 891
                 self.match(Python3Parser.ELLIPSIS)
-                pass
             elif token in [Python3Parser.NONE]:
                 self.state = 892
                 self.match(Python3Parser.NONE)
-                pass
             elif token in [Python3Parser.TRUE]:
                 self.state = 893
                 self.match(Python3Parser.TRUE)
-                pass
             elif token in [Python3Parser.FALSE]:
                 self.state = 894
                 self.match(Python3Parser.FALSE)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -6916,11 +6810,9 @@ class Python3Parser(Parser):
             ]:
                 self.state = 897
                 self.test()
-                pass
             elif token in [Python3Parser.STAR]:
                 self.state = 898
                 self.star_expr()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -6930,7 +6822,6 @@ class Python3Parser(Parser):
             if token in [Python3Parser.FOR, Python3Parser.ASYNC]:
                 self.state = 901
                 self.comp_for()
-                pass
             elif token in [
                 Python3Parser.CLOSE_PAREN,
                 Python3Parser.COMMA,
@@ -6966,11 +6857,9 @@ class Python3Parser(Parser):
                         ]:
                             self.state = 903
                             self.test()
-                            pass
                         elif token in [Python3Parser.STAR]:
                             self.state = 904
                             self.star_expr()
-                            pass
                         else:
                             raise NoViableAltException(self)
 
@@ -6985,7 +6874,6 @@ class Python3Parser(Parser):
                     self.state = 912
                     self.match(Python3Parser.COMMA)
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -7078,7 +6966,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -7095,7 +6983,6 @@ class Python3Parser(Parser):
 
                 self.state = 921
                 self.match(Python3Parser.CLOSE_PAREN)
-                pass
             elif token in [Python3Parser.OPEN_BRACK]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 922
@@ -7104,14 +6991,12 @@ class Python3Parser(Parser):
                 self.subscriptlist()
                 self.state = 924
                 self.match(Python3Parser.CLOSE_BRACK)
-                pass
             elif token in [Python3Parser.DOT]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 926
                 self.match(Python3Parser.DOT)
                 self.state = 927
                 self.match(Python3Parser.NAME)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -7233,7 +7118,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 941
                 self.test()
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
@@ -7261,7 +7145,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -7302,7 +7186,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -7323,8 +7207,6 @@ class Python3Parser(Parser):
                 if _la == Python3Parser.COLON:
                     self.state = 949
                     self.sliceop()
-
-                pass
 
         except RecognitionException as re:
             localctx.exception = re
@@ -7391,7 +7273,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -7478,11 +7360,9 @@ class Python3Parser(Parser):
             ]:
                 self.state = 958
                 self.expr()
-                pass
             elif token in [Python3Parser.STAR]:
                 self.state = 959
                 self.star_expr()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -7514,11 +7394,9 @@ class Python3Parser(Parser):
                     ]:
                         self.state = 963
                         self.expr()
-                        pass
                     elif token in [Python3Parser.STAR]:
                         self.state = 964
                         self.star_expr()
-                        pass
                     else:
                         raise NoViableAltException(self)
 
@@ -7703,13 +7581,11 @@ class Python3Parser(Parser):
                     self.match(Python3Parser.COLON)
                     self.state = 988
                     self.test()
-                    pass
                 elif token in [Python3Parser.POWER]:
                     self.state = 990
                     self.match(Python3Parser.POWER)
                     self.state = 991
                     self.expr()
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -7719,7 +7595,6 @@ class Python3Parser(Parser):
                 if token in [Python3Parser.FOR, Python3Parser.ASYNC]:
                     self.state = 994
                     self.comp_for()
-                    pass
                 elif token in [Python3Parser.COMMA, Python3Parser.CLOSE_BRACE]:
                     self.state = 1006
                     self._errHandler.sync(self)
@@ -7755,13 +7630,11 @@ class Python3Parser(Parser):
                                 self.match(Python3Parser.COLON)
                                 self.state = 998
                                 self.test()
-                                pass
                             elif token in [Python3Parser.POWER]:
                                 self.state = 1000
                                 self.match(Python3Parser.POWER)
                                 self.state = 1001
                                 self.expr()
-                                pass
                             else:
                                 raise NoViableAltException(self)
 
@@ -7776,11 +7649,8 @@ class Python3Parser(Parser):
                         self.state = 1009
                         self.match(Python3Parser.COMMA)
 
-                    pass
                 else:
                     raise NoViableAltException(self)
-
-                pass
 
             elif la_ == 2:
                 self.state = 1016
@@ -7806,11 +7676,9 @@ class Python3Parser(Parser):
                 ]:
                     self.state = 1014
                     self.test()
-                    pass
                 elif token in [Python3Parser.STAR]:
                     self.state = 1015
                     self.star_expr()
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -7820,7 +7688,6 @@ class Python3Parser(Parser):
                 if token in [Python3Parser.FOR, Python3Parser.ASYNC]:
                     self.state = 1018
                     self.comp_for()
-                    pass
                 elif token in [Python3Parser.COMMA, Python3Parser.CLOSE_BRACE]:
                     self.state = 1026
                     self._errHandler.sync(self)
@@ -7852,11 +7719,9 @@ class Python3Parser(Parser):
                             ]:
                                 self.state = 1020
                                 self.test()
-                                pass
                             elif token in [Python3Parser.STAR]:
                                 self.state = 1021
                                 self.star_expr()
-                                pass
                             else:
                                 raise NoViableAltException(self)
 
@@ -7871,11 +7736,8 @@ class Python3Parser(Parser):
                         self.state = 1029
                         self.match(Python3Parser.COMMA)
 
-                    pass
                 else:
                     raise NoViableAltException(self)
-
-                pass
 
         except RecognitionException as re:
             localctx.exception = re
@@ -7967,7 +7829,7 @@ class Python3Parser(Parser):
                     )
                     != 0
                 ) or (
-                    (((_la - 66)) & ~0x3F) == 0
+                    ((_la - 66) & ~0x3F) == 0
                     and (
                         (1 << (_la - 66))
                         & (
@@ -8120,8 +7982,6 @@ class Python3Parser(Parser):
                     self.state = 1060
                     self.comp_for()
 
-                pass
-
             elif la_ == 2:
                 self.state = 1063
                 self.test()
@@ -8129,21 +7989,18 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.ASSIGN)
                 self.state = 1065
                 self.test()
-                pass
 
             elif la_ == 3:
                 self.state = 1067
                 self.match(Python3Parser.POWER)
                 self.state = 1068
                 self.test()
-                pass
 
             elif la_ == 4:
                 self.state = 1069
                 self.match(Python3Parser.STAR)
                 self.state = 1070
                 self.test()
-                pass
 
         except RecognitionException as re:
             localctx.exception = re
@@ -8189,12 +8046,10 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1073
                 self.comp_for()
-                pass
             elif token in [Python3Parser.IF]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1074
                 self.comp_if()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -8431,7 +8286,7 @@ class Python3Parser(Parser):
                 )
                 != 0
             ) or (
-                (((_la - 66)) & ~0x3F) == 0
+                ((_la - 66) & ~0x3F) == 0
                 and (
                     (1 << (_la - 66))
                     & (
@@ -8495,7 +8350,6 @@ class Python3Parser(Parser):
                 self.match(Python3Parser.FROM)
                 self.state = 1099
                 self.test()
-                pass
             elif token in [
                 Python3Parser.STRING,
                 Python3Parser.NUMBER,
@@ -8517,7 +8371,6 @@ class Python3Parser(Parser):
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1100
                 self.testlist()
-                pass
             else:
                 raise NoViableAltException(self)
 

@@ -1,13 +1,12 @@
 import asyncio
 import logging
-import os
 import shutil
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, List, Mapping, Optional
-from autograder.config_manager import GradingConfig
 
+from autograder.config_manager import GradingConfig
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.abstract_testcase import TestCaseResult
 from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellCommand, get_shell_command

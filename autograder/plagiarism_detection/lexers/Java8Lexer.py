@@ -628,7 +628,7 @@ class JavaLexer(Lexer):
     LINE_COMMENT = 107
     VAR = 108
 
-    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
+    channelNames = ["DEFAULT_TOKEN_CHANNEL", "HIDDEN"]
 
     modeNames = ["DEFAULT_MODE"]
 

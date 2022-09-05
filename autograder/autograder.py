@@ -14,10 +14,9 @@ from .testcase_utils.abstract_testcase import TestCase
 from .testcase_utils.shell import ShellError
 from .testcase_utils.stdout_testcase import StdoutOnlyTestCase
 from .testcase_utils.submission import Submission, find_appropriate_source_file_stem
-from .testcase_utils.testcase_io import TestCaseIO, EMPTY_TESTCASE_IO
+from .testcase_utils.testcase_io import EMPTY_TESTCASE_IO, TestCaseIO
 from .testcase_utils.testcase_picker import TestCasePicker
 from .util import AutograderError, get_file_names, hide_path_to_directory, import_from_path
-
 
 L = logging.getLogger("AUTOGRADER.grader")
 

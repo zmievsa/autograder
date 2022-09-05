@@ -1,4 +1,3 @@
-import asyncio
 import py_compile
 import sys
 from pathlib import Path

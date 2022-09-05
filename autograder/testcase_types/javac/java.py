@@ -1,11 +1,9 @@
-import asyncio
 import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, List, Mapping
+from typing import List
 
-from autograder.config_manager import GradingConfig
 from autograder.testcase_utils.abstract_testcase import TestCase as AbstractTestCase
 from autograder.testcase_utils.shell import EMPTY_COMMAND, ShellError, get_shell_command
 from autograder.testcase_utils.submission import find_appropriate_source_file_stem

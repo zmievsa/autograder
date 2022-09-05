@@ -6,7 +6,6 @@ from typing import List, Optional, Sequence, Type
 from autograder.util import AutograderError, import_from_path
 
 from .abstract_testcase import TestCase
-from .stdout_testcase import StdoutOnlyTestCase
 
 L = logging.getLogger("AUTOGRADER.testcase_utils.testcase_picker")
 

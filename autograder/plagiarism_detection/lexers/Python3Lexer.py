@@ -19,8 +19,8 @@ module_path = __name__[:-5]
 language_name = __name__.split(".")[-1]
 language_name = language_name[:-5]  # Remove Lexer from name
 LanguageParser = getattr(
-    importlib.import_module("{}Parser".format(module_path)),
-    "{}Parser".format(language_name),
+    importlib.import_module(f"{module_path}Parser"),
+    f"{language_name}Parser",
 )
 
 
@@ -631,7 +631,7 @@ class Python3Lexer(Lexer):
     SKIP_ = 96
     UNKNOWN_CHAR = 97
 
-    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
+    channelNames = ["DEFAULT_TOKEN_CHANNEL", "HIDDEN"]
 
     modeNames = ["DEFAULT_MODE"]
 

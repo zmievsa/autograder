@@ -7,7 +7,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from asyncio import TimeoutError
 from inspect import getsourcefile
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Tuple
+from typing import Any, Dict, List, Mapping
 
 from ..config_manager import GradingConfig
 from .exit_codes import SYSTEM_RESERVED_EXIT_CODES, USED_EXIT_CODES, ExitCodeEventType
@@ -144,7 +144,6 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     @classmethod
     def run_additional_testcase_operations_in_student_dir(cls, student_dir: Path):
         """Do nothing by default"""
-        pass
 
     @classmethod
     def is_a_type_of(cls, file: Path, possible_source_file_stems: List[str], testcase_picker) -> bool:

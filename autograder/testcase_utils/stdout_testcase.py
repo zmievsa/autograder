@@ -1,22 +1,18 @@
 import asyncio
 import mimetypes
-import os
 import shutil
 import stat
 import sys
-from enum import Enum
 from os import PathLike
-from pathlib import Path, PosixPath, WindowsPath
-from typing import TYPE_CHECKING, Any, Callable, List, Mapping, Optional, Type
-
-from .testcase_io import EMPTY_TESTCASE_IO
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 from ..config_manager import GradingConfig
 from .abstract_testcase import TestCase, TestCaseResult
 from .exit_codes import ExitCodeEventType
 from .shell import ShellCommand, ShellError, get_shell_command
 from .submission import find_appropriate_source_file_stem
-from .testcase_io import TestCaseIO
+from .testcase_io import EMPTY_TESTCASE_IO
 from .testcase_result_validator import LAST_LINE_SPLITTING_CHARACTER
 
 POSSIBLE_MAKEFILE_NAMES = "GNUmakefile", "makefile", "Makefile"

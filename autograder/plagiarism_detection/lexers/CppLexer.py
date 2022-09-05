@@ -876,7 +876,7 @@ class CppLexer(Lexer):
     BlockComment = 144
     LineComment = 145
 
-    channelNames = [u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN"]
+    channelNames = ["DEFAULT_TOKEN_CHANNEL", "HIDDEN"]
 
     modeNames = ["DEFAULT_MODE"]
 
