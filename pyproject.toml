@@ -17,14 +17,17 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.10"
+python = ">=3.7,<3.12"
 antlr4-python3-runtime = "4.9.2"
-tomlkit = "^0.7.2"
-numba = "^0.54.1"
+tomlkit = "^0.11.4"
+numba = "^0.56.2"
 
 [tool.poetry.dev-dependencies]
-black = "^21.9b0"
+black = "^22.8.0"
 isort = "^5.10.1"
+pyupgrade = "^2.37.3"
+autoflake = "^1.5.3"
+bandit = {version = "^1.7.4", extras = ["toml"]}
 
 [tool.poetry.scripts]
 autograder = 'autograder.__main__:main'
@@ -32,3 +35,39 @@ autograder = 'autograder.__main__:main'
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+data_file = "coverage/coverage"
+parallel = true
+source = ["."]
+
+[tool.coverage.html]
+skip_covered = true
+skip_empty = true
+
+[tool.coverage.report]
+omit = ["examples/*"]
+fail_under = 80
+skip_covered = true
+skip_empty = true
+show_missing = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+skip_gitignore = true
+skip_glob = ["examples/*"]
+line_length = 120
+lines_between_sections = 1
+
+[tool.black]
+line-length = 120
+target_version = ['py37']
+extend-exclude = 'examples'
+
+[tool.bandit]
+exclude_dirs = ["./examples"]
+skips = ["B104"]
