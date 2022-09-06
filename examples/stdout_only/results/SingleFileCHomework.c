@@ -6,7 +6,7 @@ test_output.txt                         100/100
 Memory Leak Summary:
 ===================================
 -----------------------------------
-address : 0x55c366c062c0
+address : 0x56467dc642c0
 size    : 4 bytes
 file    : .../SingleFileCHomework.c
 line    : 26
@@ -17,7 +17,7 @@ wrong_output_with_zero_weight.txt       0/0 (Wrong output)
 Memory Leak Summary:
 ===================================
 -----------------------------------
-address : 0x5565c95da2c0
+address : 0x55bf3230b2c0
 size    : 4 bytes
 file    : .../SingleFileCHomework.c
 line    : 26

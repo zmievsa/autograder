@@ -29,6 +29,8 @@ isort = "*"
 pyupgrade = "*"
 autoflake = "*"
 bandit = {version = "*", extras = ["toml"]}
+pytest = "^7.1.3"
+coverage = "^6.4.4"
 
 [tool.poetry.scripts]
 autograder = 'autograder.__main__:main'
@@ -37,20 +39,17 @@ autograder = 'autograder.__main__:main'
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-
 [tool.coverage.run]
 data_file = "coverage/coverage"
 parallel = true
-source = ["."]
+source = ["autograder"]
 
 [tool.coverage.html]
 skip_covered = true
 skip_empty = true
 
 [tool.coverage.report]
-omit = ["examples/*"]
+omit = ["examples/*", "autograder/plagiarism_detection/lexers/*"]
 fail_under = 80
 skip_covered = true
 skip_empty = true

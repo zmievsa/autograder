@@ -9,3 +9,5 @@ dist
 .idea/*
 *.code-workplace
 debug.py
+coverage
+htmlcov
