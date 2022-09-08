@@ -2,7 +2,7 @@
   <a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
 </p>
 
-Autograder aims to provide a simple, yet secure and highly configurable way to grade programming assignments.
+Autograder aims to provide a simple, yet secure and configurable way to grade programming assignments.
 
 ## Features
 
