@@ -55,7 +55,7 @@ Provides a simple, secure, and configurable way to grade programming assignments
 * Java
 * C
 * C++
-* CPython (3.8-3.9)
+* CPython (3.8-3.11)
 * Any programming language if stdout-only grading is used
 
 ## Quickstart
