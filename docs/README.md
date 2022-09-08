@@ -1,6 +1,6 @@
 # Autograder
 
-Autograder aims to provide a simple, yet secure and configurable way to grade programming assignments.
+Provides a simple, secure, and configurable way to grade programming assignments.
 
 ## Table of Contents  
 
