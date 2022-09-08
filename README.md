@@ -1,7 +1,11 @@
+![AutoGrader](https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg)
+
 <p align="center">
-  <a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
-<b>Provides a simple, secure, and configurable way to grade programming assignments</b>
+  <b>Provides a simple, secure, and configurable way to grade programming assignments</b>
 </p>
+
+![PyPI](https://img.shields.io/pypi/v/assignment-autograder?color=01448C)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/assignment-autograder?color=01448C)
 
 ## Features
 
