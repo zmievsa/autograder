@@ -1,6 +1,4 @@
-<p align="center">
-  <a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
-</p>
+<a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
 
 > **Provides a simple, secure, and configurable way to grade programming assignments**
 
