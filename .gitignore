@@ -11,3 +11,15 @@ dist
 debug.py
 coverage
 htmlcov
+
+.DS_Store
+.idea
+*.log
+/_playwright-report
+/_playwright-results
+/lib
+/node_modules
+/themes
+
+# exceptions
+!.gitkeep
