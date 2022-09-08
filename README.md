@@ -4,6 +4,8 @@
   <b>Provides a simple, secure, and configurable way to grade programming assignments</b>
 </p>
 
+---
+
 ![PyPI](https://img.shields.io/pypi/v/assignment-autograder)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/assignment-autograder)
 
