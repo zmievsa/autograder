@@ -1,6 +1,6 @@
-<img alt="AutoGrader" width="210" src="_media/logo.svg?sanitize=true">
+<img alt="AutoGrader" width="420" src="_media/logo_with_text.svg?sanitize=true">
 
-> Automatic grading for instructor use in programming courses
+> A simple, secure, and configurable way to grade any programming assignments
 
 [GitHub](https://github.com/ovsyanka83/autograder/)
 [Get Started](#Installation)
