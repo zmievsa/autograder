@@ -91,6 +91,7 @@ class ShellCommand:
                 stdout=synchronous_subprocess.DEVNULL,
                 stderr=synchronous_subprocess.DEVNULL,
             )
+            process._transport.close()
         return ShellCommandResult(returncode, stdout, stderr)
 
 
