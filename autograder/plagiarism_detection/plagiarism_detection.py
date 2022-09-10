@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-from antlr4 import InputStream, CommonTokenStream
+from antlr4 import CommonTokenStream, InputStream
 
 from .comparison import get_similarity
 from .lexers.CLexer import CLexer
