@@ -40,10 +40,14 @@ class PathWithStdoutOnlyInfo(type(Path())):
         compiled_submission: Optional[ShellCommand] = None,
         picked_testcase_type: Optional[Type[TestCase]] = None,
     ):
-        self = cls._from_parts(args, init=False)  # type: ignore
+        if sys.version_info < (3, 10):
+            self = cls._from_parts(args, init=False)  # type: ignore
+        else:
+            self = cls._from_parts(args)  # type: ignore
         if not self._flavour.is_supported:
             raise NotImplementedError(f"cannot instantiate {cls.__name__} on your system")
-        self._init()
+        if sys.version_info < (3, 10):
+            self._init()
         self.compiled_submission = compiled_submission
         self.picked_testcase_type = picked_testcase_type
         return self

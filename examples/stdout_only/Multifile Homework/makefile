@@ -1,5 +1,5 @@
 compile:
-	gcc hw.c
+	gcc hw.c -o executable
 
 run:
-	./a.out
+	./executable
