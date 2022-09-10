@@ -9,7 +9,7 @@ dist
 .idea/*
 *.code-workplace
 debug.py
-coverage
+coverage*
 htmlcov
 
 .DS_Store
