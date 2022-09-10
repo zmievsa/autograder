@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         with:
           name: coverage
-          path: coverage.xml
+          path: coverage
 
   Coverage:
     needs: Tests
