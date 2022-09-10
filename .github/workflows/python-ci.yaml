@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         with:
           name: coverage
-          path: coverage/coverage
+          path: coverage
 
   Coverage:
     needs: Tests
@@ -50,8 +50,11 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: coverage
+      - name: Test that coverage is there
+        run: ls -R
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./coverage/coverage
+          files: ./coverage/coverage/coverage
           fail_ci_if_error: true
