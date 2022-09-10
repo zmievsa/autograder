@@ -40,7 +40,7 @@ def test_multiple_languages():
 
 
 def test_stdout_only():
-    run_test("stdout_only", 100 if sys.platform != "win32" else 33)
+    run_test("stdout_only", 100)
 
 
 def test_extra_files():
