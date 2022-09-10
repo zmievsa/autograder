@@ -20,14 +20,14 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/setup-java@v3
-        with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
-        with:
-          compiler: gcc
+      # - uses: actions/setup-java@v3
+      #   with:
+      #     distribution: "temurin"
+      #     java-version: "17"
+      # - name: Setup Cpp
+      #   uses: aminya/setup-cpp@v1
+      #   with:
+      #     compiler: gcc
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
         with:
@@ -51,7 +51,9 @@ jobs:
         with:
           path: coverage
       - name: Test that coverage is there
-        run: ls -R
+        run: |
+          ls -R
+          cat ./coverage/coverage/coverage
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
