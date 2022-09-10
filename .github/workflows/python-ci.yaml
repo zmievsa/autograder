@@ -1,4 +1,4 @@
-name: CI
+name: Tests
 on:
   push:
     branches: [main]
@@ -46,7 +46,9 @@ jobs:
   Coverage:
     needs: Tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Upload coverage
         uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage
+          fail_ci_if_error: true

@@ -6,6 +6,7 @@
 
 ---
 
+![Codecov](https://img.shields.io/codecov/c/github/Ovsyanka83/autograder)
 ![PyPI](https://img.shields.io/pypi/v/assignment-autograder)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/assignment-autograder)
 
