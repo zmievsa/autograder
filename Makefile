@@ -23,7 +23,7 @@ format:
 	poetry run black autograder;
 
 test:
-	poetry run pytest -v --cov=autograder --cov-report=term-missing:skip-covered tests/test_examples.py::test_python --cov-fail-under=50;
+	poetry run pytest -v --cov=autograder --cov-report=term-missing:skip-covered --cov-report=xml tests/test_examples.py::test_python --cov-fail-under=50;
 
 update-examples:
 	bash update_examples.bash

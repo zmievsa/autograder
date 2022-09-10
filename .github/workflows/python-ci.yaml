@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         with:
           name: coverage
-          path: coverage
+          path: coverage.xml
 
   Coverage:
     needs: Tests
@@ -54,3 +54,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
+          token: ${{secrets.CODECOV_TOKEN}}
