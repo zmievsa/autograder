@@ -6,4 +6,3 @@
 POSSIBLE_SOURCE_FILE_STEMS = ["Homework"]
 
 TESTCASE_WEIGHT = { "TestOutput.java" = 0.5, "TestResult.java" = 1 }
-TIMEOUT = { "DEFAULT" = 10 }

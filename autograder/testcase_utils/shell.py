@@ -72,6 +72,7 @@ class ShellCommand:
                 # For infinite processes
                 os.kill(process.pid, signal.SIGKILL)
             raise e
+
         stdout, stderr = (s.decode(encoding) for s in result)
         L.debug(
             f"""({process.returncode}) EXECUTED CMD: {self.command_name} {' '.join([str(a) for a in args])}
@@ -84,14 +85,6 @@ class ShellCommand:
         # Delete after testing if unnecessary
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
-        if sys.platform == "win32":
-            synchronous_subprocess.run(
-                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
-                **os_specific_kwargs,
-                stdout=synchronous_subprocess.DEVNULL,
-                stderr=synchronous_subprocess.DEVNULL,
-            )
-            process._transport.close()
         return ShellCommandResult(returncode, stdout, stderr)
 
 
