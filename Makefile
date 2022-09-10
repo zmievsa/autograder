@@ -22,8 +22,8 @@ format:
 	poetry run isort autograder; \
 	poetry run black autograder;
 
+# poetry run coverage run -m pytest tests -v && poetry run coverage combine && poetry run coverage report;
 test:
-	poetry run coverage run -m pytest tests -v && poetry run coverage combine && poetry run coverage report;
-
+	poetry run autograder run examples/java -v
 update-examples:
 	bash update_examples.bash
