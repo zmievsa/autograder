@@ -24,8 +24,10 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-      - name: Install C/C++ buildtools
-        run: sudo apt install -y build-essential
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: gcc
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
         with:
