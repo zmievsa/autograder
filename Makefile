@@ -23,6 +23,6 @@ format:
 	poetry run black autograder;
 
 test:
-	poetry run coverage run -m pytest tests/test_examples.py::test_python -v && poetry run coverage combine && poetry run coverage report --fail-under 50;
+	poetry run coverage run -m pytest tests/test_examples.py::test_python -v && poetry run coverage combine && poetry run coverage xml --fail-under 50;
 update-examples:
 	bash update_examples.bash
