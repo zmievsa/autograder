@@ -51,10 +51,7 @@ jobs:
         with:
           path: coverage
       - name: Test that coverage is there
-        run: |
-          - ls
-          - ls ./coverage
-          - ls ./coverage/coverage
+        run: ls -R
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
