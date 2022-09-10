@@ -84,6 +84,8 @@ class ShellCommand:
         # Delete after testing if unnecessary
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
+
+        process._transport.close()
         return ShellCommandResult(returncode, stdout, stderr)
 
 
