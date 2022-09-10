@@ -23,9 +23,7 @@ format:
 	poetry run black autograder;
 
 test:
-	poetry run coverage run -m pytest tests -v; \
-	poetry run coverage combine; \
-    poetry run coverage report
+	poetry run coverage run -m pytest tests -v && poetry run coverage report;
 
 update-examples:
 	bash update_examples.bash
