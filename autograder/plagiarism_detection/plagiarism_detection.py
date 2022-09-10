@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-from antlr4 import *
+from antlr4 import InputStream, CommonTokenStream
 
 from .comparison import get_similarity
 from .lexers.CLexer import CLexer
@@ -106,7 +106,7 @@ def parse_files(language: dict) -> dict:
         freq = [1e-10 for x in range(len(freq))]
     else:
         for i in range(len(freq)):
-            freq[i] = max(freq[i] / total_tokens, 1e-10)
+            freq[i] = max(freq[i] / total_tokens, 1e-10)  # type: ignore
     lengths = np.array([len(x) for x in tokenStreams])
     converted_token_stream = np.zeros((len(tokenStreams), np.max(lengths)), np.int32)
     for i in range(len(tokenStreams)):

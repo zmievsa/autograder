@@ -6,7 +6,7 @@ import sys
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, cast
 
 from .config_manager import GradingConfig
 from .output_summary import GradingOutputLogger, JsonGradingOutputLogger
@@ -53,7 +53,7 @@ class Grader:
         )
         self.extra_testcase_types = [StdoutOnlyTestCase] if self.config.stdout_only_grading_enabled else []
 
-    def run(self) -> Tuple[Tuple[Submission], int]:
+    def run(self) -> Tuple[List[Submission], int]:
         io_choices = {}
         try:
             self._prepare_directory_structure()
@@ -79,6 +79,8 @@ class Grader:
             tasks = map(Runner(self, asyncio.Lock(), self.testcase_picker, semaphore), self.submissions)
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*precompilation_tasks))
             modified_submissions = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
+            # https://github.com/python/typeshed/issues/2652
+            modified_submissions = cast(List[Submission], modified_submissions)
             total_class_points = sum(s.final_grade for s in modified_submissions)
             class_average = round(total_class_points / len(self.submissions))
             self.logger.print_final_score(modified_submissions, class_average)

@@ -25,7 +25,6 @@ format:
 test:
 	poetry run coverage run -m pytest tests -v; \
 	poetry run coverage combine; \
-	poetry run coverage html; \
     poetry run coverage report
 
 update-examples:

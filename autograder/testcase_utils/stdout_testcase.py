@@ -169,7 +169,7 @@ class StdoutOnlyTestCase(TestCase):
                 picked_testcase_type=ttype,
             )
 
-    async def compile_testcase(self, precompiled_submission: PathWithStdoutOnlyInfo, cli_args: str) -> ShellCommand:
+    async def compile_testcase(self, precompiled_submission: PathWithStdoutOnlyInfo, cli_args: str) -> Callable:
         return _add_args(self._run_stdout_only_testcase, precompiled_submission, cli_args)
 
     def prepend_test_helper(self):

@@ -16,7 +16,7 @@ def main(argv: Optional[List[str]] = None):
 
     args = parser.parse_args(argv)
     if args.version:
-        from autograder.__version__ import __version__
+        from autograder import __version__
 
         print(__version__)
     # the interface architecture needs to be refactored a bit. For now, this hack with hasattr

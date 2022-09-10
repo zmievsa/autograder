@@ -46,10 +46,11 @@ SYSTEM_RESERVED_EXIT_CODES = [
     255,
 ]
 
-USED_EXIT_CODES = (3, 4, 5)
-
 
 class ExitCodeEventType(IntEnum):
     RESULT = 3
     CHECK_STDOUT = 4
     CHEAT_ATTEMPT = 5
+
+
+USED_EXIT_CODES = {int(c) for c in ExitCodeEventType}

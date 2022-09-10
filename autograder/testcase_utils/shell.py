@@ -10,7 +10,7 @@ from concurrent.futures import TimeoutError
 from dataclasses import dataclass
 from locale import getpreferredencoding
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Collection, Dict, Optional, Union
 
 L = logging.getLogger("AUTOGRADER.testcase_utils.shell")
 
@@ -31,7 +31,7 @@ class ShellCommand:
     async def __call__(
         self,
         *args: object,
-        allowed_exit_codes: Sequence[int] = (0,),
+        allowed_exit_codes: Collection[int] = (0,),
         timeout: Optional[float] = None,
         stdin: str = "",
         **kwargs: Any,
