@@ -56,7 +56,7 @@ class Submission:
 
     def __init__(self, file: Path, testcase_type: Type[TestCase]):
         self.old_path = file
-        self._temp_dir = TemporaryDirectory(prefix=f"ag_hw_{file.stem}")
+        self._temp_dir = TemporaryDirectory()
         self.temp_dir = Path(self._temp_dir.name)
         self.temp_path = self.temp_dir / file.name
         self.name = get_submission_name(file)
