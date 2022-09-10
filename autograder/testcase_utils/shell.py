@@ -84,8 +84,13 @@ class ShellCommand:
         # Delete after testing if unnecessary
         if process.returncode not in allowed_exit_codes:
             raise ShellError(returncode, stderr)
-
-        process._transport.close()
+        if sys.platform == "win32":
+            synchronous_subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                **os_specific_kwargs,
+                stdout=synchronous_subprocess.DEVNULL,
+                stderr=synchronous_subprocess.DEVNULL,
+            )
         return ShellCommandResult(returncode, stdout, stderr)
 
 
