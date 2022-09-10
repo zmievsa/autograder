@@ -50,6 +50,11 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: coverage
+        run: |
+          - ls
+          - ls ./coverage
+          - ls ./coverage/coverage
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
