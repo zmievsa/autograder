@@ -6,10 +6,9 @@
 
 ---
 
-
 <p align="center">
 <a href="https://github.com/ovsyanka83/autograder/actions?query=workflow%3ATests+event%3Apush+branch%3Amain" target="_blank">
-    <img src="https://github.com/Ovsyanka83/autograder/actions/workflows/python-ci.yaml/badge.svg?branch=main&event=push" alt="Test">
+    <img src="https://github.com/Ovsyanka83/autograder/actions/workflows/test.yaml/badge.svg?branch=main&event=push" alt="Test">
 </a>
 <a href="https://codecov.io/gh/ovsyanka83/autograder" target="_blank">
     <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
@@ -21,7 +20,6 @@
     <img src="https://img.shields.io/pypi/pyversions/assignment-autograder" alt="Supported Python versions">
 </a>
 </p>
-
 
 ## Features
 
