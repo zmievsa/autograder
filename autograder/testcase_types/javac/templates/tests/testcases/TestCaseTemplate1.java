@@ -8,7 +8,7 @@ public class TestCaseTemplate1 {
         // It can have any arguments and return values -- use it like any other method.
         int result = Homework.someStudentMethod();
         int SOME_EXPECTED_RESULT = 83;
-        if (res == SOME_EXPECTED_RESULT)
+        if (result == SOME_EXPECTED_RESULT)
             PASS();
         else
             FAIL();

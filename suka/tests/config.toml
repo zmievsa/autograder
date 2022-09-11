@@ -1,0 +1,21 @@
+# If any of these fields are missing in your config, then this config's
+# fields replace them automatically
+
+[CONFIG]
+ASSIGNMENT_NAME = "Homework" # For display in the output for the student
+TOTAL_POINTS_POSSIBLE = 100 # Total points given for tests
+MAX_CONCURRENT_SUBMISSIONS = 1000 # Maximum number of submissions that can be graded at the same time
+POSSIBLE_SOURCE_FILE_STEMS = [
+] # Comma-separated list of strings that must be in each submission. Empty means that we grade all submissions.
+TIMEOUT = { "DEFAULT" = 3 } # Student's program is terminated if it takes more than this time in seconds
+TESTCASE_WEIGHT = { "DEFAULT" = 1 } # The testcase's grade will be multiplied by this number before calculating final grade
+SUBMISSION_PRECOMPILATION_ARGS = {} # Extra arguments to be passed with each submission during pre-compilation
+TESTCASE_PRECOMPILATION_ARGS = {} # Extra arguments to be passed with each testcase during pre-compilation
+TESTCASE_COMPILATION_ARGS = {} # Extra arguments to be passed with each testcase during compilation
+TESTCASE_RUNTIME_ARGS = {} # Extra arguments to be passed to each testcase during runtime
+GENERATE_RESULTS = true # Generate results directory with a result file per student
+GENERATE_STUDENT_OUTPUTS = false # Print and save to result file the student stdout outputs students have generated for testcases
+STDOUT_ONLY_GRADING_ENABLED = false # Grade in stdout-only mode (Requires 'Possible Source File Stems')
+
+[GCC]
+MEMORY_LEAK_DETECTION = false # if true, memory leak summary will be generated for each student submission

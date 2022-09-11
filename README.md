@@ -15,10 +15,10 @@
     <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
 </a>
 <a href="https://pypi.org/project/assignment-autograder/" target="_blank">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/assignment-autograder" alt="Package version">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/assignment-autograder?color=%2334D058&label=pypi%20package" alt="Package version">
 </a>
 <a href="https://pypi.org/project/assignment-autograder/" target="_blank">
-    <img src="https://img.shields.io/pypi/pyversions/assignment-autograder" alt="Supported Python versions">
+    <img src="https://img.shields.io/pypi/pyversions/assignment-autograder?color=%2334D058" alt="Supported Python versions">
 </a>
 </p>
 

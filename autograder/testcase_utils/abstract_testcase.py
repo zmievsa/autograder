@@ -67,8 +67,10 @@ class TestCase(ABC, metaclass=SourceDirSaver):
     def is_installed(cls) -> bool:
         """Returns True if software necessary to run the testcase is installed on the system"""
 
+    # TODO: Think about unifying these two methods
+
     @classmethod
-    def get_template_dir(cls):
+    def get_template_dir(cls) -> Path:
         return cls.type_source_file.parent / "templates"
 
     @abstractmethod

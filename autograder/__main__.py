@@ -3,6 +3,8 @@ import logging
 import sys
 from pathlib import Path
 from typing import List, Optional
+from autograder import guide
+
 
 L = logging.getLogger("AUTOGRADER")
 logging.basicConfig(level=logging.CRITICAL, handlers=[logging.StreamHandler()])
@@ -71,6 +73,14 @@ def _create_stats_parser(subparsers):
 
 def _create_guide_parser(subparsers):
     parser = subparsers.add_parser("guide", help="Guide you through setting up a grading environment")
+    parser.add_argument("-y", "--no-interactive", action="store_true", help="Disable prompts")
+    parser.add_argument(
+        "-l",
+        "--language",
+        default=None,
+        choices=[name for name in guide._get_supported_languages().keys()],
+        help="Programming language, for which to generate template testcases and sample submissions",
+    )
     _add_submission_path_argument(parser)
 
 
@@ -107,9 +117,7 @@ def _evaluate_args(args: argparse.Namespace, current_dir: Path):
     from autograder.autograder import AutograderPaths, Grader
 
     if args.command == "guide":
-        from autograder import guide
-
-        guide.main(AutograderPaths(current_dir))
+        guide.main(AutograderPaths(current_dir), args.language, not args.no_interactive)
     elif args.command == "run":
         if args.verbose:
             L.setLevel(logging.DEBUG)

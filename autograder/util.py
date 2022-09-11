@@ -2,7 +2,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Iterable
+from typing import Dict, Iterable, Type
 
 
 class AutograderError(Exception):
@@ -11,14 +11,12 @@ class AutograderError(Exception):
 
 def import_from_path(module_name: str, path: Path) -> ModuleType:
     spec = importlib.util.spec_from_file_location(module_name, path)
-    if not (spec and spec.loader):
-        raise TypeError(f"File loader for {path} was not found. Please, refer to importlib docs.")
-    module = importlib.util.module_from_spec(spec)
+    module = importlib.util.module_from_spec(spec)  # type: ignore
     sys.modules[module_name] = module
     # exec_module is not always available which is why a linter won't be able to find it.
     # Docs do not state specific conditions for when it is available so if it's not, we
     # are okay with raising an ImportError.
-    spec.loader.exec_module(module)
+    spec.loader.exec_module(module)  # type: ignore
     return module
 
 

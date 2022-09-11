@@ -221,10 +221,7 @@ class AutograderPaths:
         "input_dir",
         "output_dir",
         "stdout_formatters",
-        "testcase_types_dir",
-        "default_stdout_formatters",
         "config",
-        "default_config",
         "required_dirs",
     )
     current_dir: Path
@@ -240,9 +237,10 @@ class AutograderPaths:
     config: Path
     required_dirs: Tuple[Path, ...]
 
-    testcase_types_dir: Path
-    default_stdout_formatters: Path
-    default_config: Path
+    autograder_dir = Path(__file__).parent
+    testcase_types_dir = autograder_dir / "testcase_types"
+    default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
+    default_config = autograder_dir / "default_config.toml"
 
     def __init__(self, current_dir: Union[Path, str]) -> None:
         current_dir = Path(current_dir)
@@ -260,11 +258,6 @@ class AutograderPaths:
         self.config = self.tests_dir / "config.toml"
 
         self.required_dirs = ()
-
-        autograder_dir = Path(__file__).parent
-        self.testcase_types_dir = autograder_dir / "testcase_types"
-        self.default_stdout_formatters = autograder_dir / "default_stdout_formatters.py"
-        self.default_config = autograder_dir / "default_config.toml"
 
     def generate_config(self) -> None:
         if not self.config.exists():
