@@ -36,22 +36,13 @@ jobs:
         run: poetry install
       - name: Test
         run: make test
-      - name: Save coverage
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         with:
-          name: coverage
-          path: coverage.xml
+          fail_ci_if_error: true
 
   Coverage:
     needs: Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          path: coverage
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
-        with:
-          fail_ci_if_error: true
-          token: ${{secrets.CODECOV_TOKEN}}
