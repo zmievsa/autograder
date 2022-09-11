@@ -2,7 +2,7 @@
   <a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
 </p>
 <p align="center">
-  <b>Provides a simple, secure, and configurable way to grade programming assignments</b>
+  <b>A simple, secure, and versatile way to automatically grade programming assignments</b>
 </p>
 
 ---
