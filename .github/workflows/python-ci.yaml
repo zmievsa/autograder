@@ -11,23 +11,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8"]
+        python-version: ["3.8", "3.9", "3.10"]
         poetry-version: ["1.2.0"]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      # - uses: actions/setup-java@v3
-      #   with:
-      #     distribution: "temurin"
-      #     java-version: "17"
-      # - name: Setup Cpp
-      #   uses: aminya/setup-cpp@v1
-      #   with:
-      #     compiler: gcc
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: gcc
       - name: Install poetry
         uses: abatilo/actions-poetry@v2
         with:
@@ -36,23 +36,5 @@ jobs:
         run: poetry install
       - name: Test
         run: make test
-      - name: Save coverage
-        uses: actions/upload-artifact@v3
-        if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
-        with:
-          name: coverage
-          path: coverage.xml
-
-  Coverage:
-    needs: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          path: coverage
-      - name: Copy coverage to root
-        run: mv coverage/coverage.xml .
       - name: Upload coverage
         uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true
