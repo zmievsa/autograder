@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "assignment-autograder"
-version = "3.7.2"
+version = "3.7.3"
 description = "Automatic assignment grading for instructor use in programming courses"
 authors = ["Ovsyanka <szmiev2000@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
+documentation = "https://ovsyanka83.github.io/autograder/"
 repository = "https://github.com/Ovsyanka83/autograder"
 include = ["autograder/**/*"]
 packages = [{ include = "autograder" }]
