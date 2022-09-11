@@ -3,11 +3,12 @@ import os
 
 def test_env():
     print(os.getenv("VALIDATING_STRING"))
-    exit(103)
+    exit(3)
 
 
+# The student might hope to get successful on an empty stdout check
 def test_exit():
-    exit(103)
+    exit(4)
 
 
 def test_import():

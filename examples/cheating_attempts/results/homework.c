@@ -2,12 +2,12 @@ Homework Test Results
 
 TestCase                                Result
 ================================================================
-test_env.c                              Crashed due to signal 103:
-
-
-test_exit.c                             Crashed due to signal 103:
-
-
+test_env.c                              None of the helper functions have been called.
+Instead, exit() has been called with exit_code 3.
+It could indicate student cheating or testcase_utils being written incorrectly.
+test_exit.c                             None of the helper functions have been called.
+Instead, exit() has been called with exit_code 4.
+It could indicate student cheating or testcase_utils being written incorrectly.
 ================================================================
 Result: 0/100
 
