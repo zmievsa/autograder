@@ -41,8 +41,3 @@ jobs:
         if: ${{ matrix.python-version == '3.8' && matrix.os == 'ubuntu-latest' }}
         with:
           fail_ci_if_error: true
-
-  Coverage:
-    needs: Tests
-    runs-on: ubuntu-latest
-    steps:
