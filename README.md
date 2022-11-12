@@ -14,11 +14,11 @@
 <a href="https://codecov.io/gh/ovsyanka83/autograder" target="_blank">
     <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
 </a>
-<a href="https://pypi.org/project/assignment-autograder/" target="_blank">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/assignment-autograder?color=%2334D058&label=pypi%20package" alt="Package version">
+<a href="https://pypi.org/project/autograder/" target="_blank">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/autograder?color=%2334D058&label=pypi%20package" alt="Package version">
 </a>
-<a href="https://pypi.org/project/assignment-autograder/" target="_blank">
-    <img src="https://img.shields.io/pypi/pyversions/assignment-autograder?color=%2334D058" alt="Supported Python versions">
+<a href="https://pypi.org/project/autograder/" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/autograder?color=%2334D058" alt="Supported Python versions">
 </a>
 </p>
 
@@ -40,7 +40,7 @@
 
 ## Installation
 
-* Run `pip install assignment-autograder`
+* Run `pip install autograder`
 * To grade various programming languages, you'd need to install:
   * `gcc`/`clang` for C/C++ support
   * `Java JDK` for java support
@@ -49,7 +49,7 @@
 
 ### Updates
 
-`pip install -U --no-cache-dir assignment-autograder`
+`pip install -U --no-cache-dir autograder`
 
 ## Quickstart
 
