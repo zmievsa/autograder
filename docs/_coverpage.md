@@ -2,7 +2,7 @@
 
 > A simple, secure, and versatile way to automatically grade programming assignments
 
-[GitHub](https://github.com/ovsyanka83/autograder/)
+[GitHub](https://github.com/zmievsa//autograder/)
 [Get Started](#Installation)
 
 ![color](#f7f7ee)

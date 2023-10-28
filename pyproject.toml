@@ -6,7 +6,7 @@ authors = ["Stanislav Zmiev <zmievsa@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
 documentation = "https://ovsyanka83.github.io/autograder/"
-repository = "https://github.com/Ovsyanka83/autograder"
+repository = "https://github.com/zmievsa//autograder"
 # this might be unnecessary, I don't remember and am too lazy too google
 include = ["autograder/**/*"]
 classifiers = [

@@ -8,8 +8,8 @@
 ---
 
 <p align="center">
-<a href="https://github.com/ovsyanka83/autograder/actions?query=workflow%3ATests+event%3Apush+branch%3Amain" target="_blank">
-    <img src="https://github.com/Ovsyanka83/autograder/actions/workflows/test.yaml/badge.svg?branch=main&event=push" alt="Test">
+<a href="https://github.com/zmievsa//autograder/actions?query=workflow%3ATests+event%3Apush+branch%3Amain" target="_blank">
+    <img src="https://github.com/zmievsa//autograder/actions/workflows/test.yaml/badge.svg?branch=main&event=push" alt="Test">
 </a>
 <a href="https://codecov.io/gh/ovsyanka83/autograder" target="_blank">
     <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
@@ -31,7 +31,7 @@
 * Can grade C, C++, Java, and Python code in regular mode
 * Can grade any programming language in stdout-only mode
 * A file with testcase grades and details can be generated for each student
-* You can customize the total points for the assignment, maximum running time of student's program, file names to be considered for grading, formatters for checking student stdout, and [so much more](https://github.com/Ovsyanka83/autograder/blob/master/autograder/default_config.toml).
+* You can customize the total points for the assignment, maximum running time of student's program, file names to be considered for grading, formatters for checking student stdout, and [so much more](https://github.com/zmievsa//autograder/blob/master/autograder/default_config.toml).
 * [Anti Cheating capabilities](https://ovsyanka83.github.io/autograder/#/?id=anti-cheating) that make it nearly impossible for students to cheat
 * Grading submissions in multiple programming languages at once
 * JSON result output supported if autograder needs to be integrated as a part of a larger utility
