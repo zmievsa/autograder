@@ -1,8 +1,8 @@
 <a href="https://github.com/zmievsa/autograder/actions?query=workflow%3ATests+event%3Apush+branch%3Amain" target="_blank">
     <img src="https://github.com/zmievsa/autograder/actions/workflows/test.yaml/badge.svg?branch=main&event=push" alt="Test">
 </a>
-<a href="https://codecov.io/gh/ovsyanka83/autograder" target="_blank">
-    <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
+<a href="https://codecov.io/gh/zmievsa/autograder" target="_blank">
+    <img src="https://img.shields.io/codecov/c/github/zmievsa/autograder?color=%2334D058" alt="Coverage">
 </a>
 <a href="https://pypi.org/project/autograder/" target="_blank">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/autograder?color=%2334D058&label=pypi%20package" alt="Package version">

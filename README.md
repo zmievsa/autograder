@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://ovsyanka83.github.io/autograder/"><img src="https://raw.githubusercontent.com/Ovsyanka83/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
+  <a href="https://zmievsa.github.io/autograder/"><img src="https://raw.githubusercontent.com/zmievsa/autograder/main/docs/_media/logo_with_text.svg" alt="AutoGrader"></a>
 </p>
 <p align="center">
   <b>A simple, secure, and versatile way to automatically grade programming assignments</b>
@@ -11,8 +11,8 @@
 <a href="https://github.com/zmievsa/autograder/actions?query=workflow%3ATests+event%3Apush+branch%3Amain" target="_blank">
     <img src="https://github.com/zmievsa/autograder/actions/workflows/test.yaml/badge.svg?branch=main&event=push" alt="Test">
 </a>
-<a href="https://codecov.io/gh/ovsyanka83/autograder" target="_blank">
-    <img src="https://img.shields.io/codecov/c/github/ovsyanka83/autograder?color=%2334D058" alt="Coverage">
+<a href="https://codecov.io/gh/zmievsa/autograder" target="_blank">
+    <img src="https://img.shields.io/codecov/c/github/zmievsa/autograder?color=%2334D058" alt="Coverage">
 </a>
 <a href="https://pypi.org/project/autograder/" target="_blank">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/autograder?color=%2334D058&label=pypi%20package" alt="Package version">
@@ -25,14 +25,14 @@
 ## Features
 
 * Blazingly fast (can grade hundreads of submissions using dozens of testcases in a few minutes. Seconds if grading python)
-* [Easy to grade](https://ovsyanka83.github.io/autograder/#/?id=usage)
-* [Easy-to-write testcases](https://ovsyanka83.github.io/autograder/#/?id=writing-testcases)  
-* Testcase grade can be based on [student's stdout](https://ovsyanka83.github.io/autograder/#/?id=helper-functions)
+* [Easy to grade](https://zmievsa.github.io/autograder/#/?id=usage)
+* [Easy-to-write testcases](https://zmievsa.github.io/autograder/#/?id=writing-testcases)  
+* Testcase grade can be based on [student's stdout](https://zmievsa.github.io/autograder/#/?id=helper-functions)
 * Can grade C, C++, Java, and Python code in regular mode
 * Can grade any programming language in stdout-only mode
 * A file with testcase grades and details can be generated for each student
 * You can customize the total points for the assignment, maximum running time of student's program, file names to be considered for grading, formatters for checking student stdout, and [so much more](https://github.com/zmievsa/autograder/blob/master/autograder/default_config.toml).
-* [Anti Cheating capabilities](https://ovsyanka83.github.io/autograder/#/?id=anti-cheating) that make it nearly impossible for students to cheat
+* [Anti Cheating capabilities](https://zmievsa.github.io/autograder/#/?id=anti-cheating) that make it nearly impossible for students to cheat
 * Grading submissions in multiple programming languages at once
 * JSON result output supported if autograder needs to be integrated as a part of a larger utility
 * Can check submissions for similarity (plagiarism)
@@ -54,7 +54,7 @@
 ## Quickstart
 
 * Run `autograder guide path/to/directory/you'd/like/to/grade`. The guide will create all of the necessary configurations and directories for grading and will explain how to grade.
-* Read the [usage](https://ovsyanka83.github.io/autograder/#/?id=usage) section of the docs
+* Read the [usage](https://zmievsa.github.io/autograder/#/?id=usage) section of the docs
 
 ## Supported Platforms
 

@@ -17,11 +17,15 @@ def create_dir(path: Path):
 
 def main(paths: AutograderPaths, language_name: Optional[str] = None, interactive=True):
     if not paths.current_dir.exists() or not paths.current_dir.is_dir():
-        print(f"Directory {paths.current_dir} not found. Please, use an existing directory.")
+        print(
+            f"Directory {paths.current_dir} not found. Please, use an existing directory."
+        )
         return
     print("Hello. I will now guide you through the initial setup of autograder.")
     if interactive:
-        ans = input(f"Would you like to grade submissions located in '{paths.current_dir}'? (Yes/No) ")
+        ans = input(
+            f"Would you like to grade submissions located in '{paths.current_dir}'? (Yes/No) "
+        )
     else:
         ans = "y"
     if not ans.lower().startswith("y"):
@@ -36,7 +40,9 @@ def main(paths: AutograderPaths, language_name: Optional[str] = None, interactiv
     create_dir(paths.extra_dir)
     config_path = paths.config
     if not config_path.exists():
-        print(f"config.ini not found in {paths.tests_dir}. Creating a default config...")
+        print(
+            f"config.ini not found in {paths.tests_dir}. Creating a default config..."
+        )
         paths.generate_config()
     else:
         print("Found config.ini")
@@ -65,7 +71,9 @@ def main(paths: AutograderPaths, language_name: Optional[str] = None, interactiv
         shutil.copytree(lang.get_template_dir(), paths.current_dir, dirs_exist_ok=True)
         if lang.source_suffix.endswith("java"):
             print("\nJava forces us to have the same name for module and class so")
-            print("you must put expected names for java submissions in tests/config.ini. Right now it's 'Homework'")
+            print(
+                "you must put expected names for java submissions in tests/config.ini. Right now it's 'Homework'"
+            )
     print(
         "\n\nNow if you want to grade your submissions, you can use 'autograder run path/to/submissions/dir' "
         "for this directory."
@@ -74,24 +82,38 @@ def main(paths: AutograderPaths, language_name: Optional[str] = None, interactiv
     print("If you want to see command line options, use 'autograder -h'")
     print(f"You can put the stdin inputs to your testcases into {paths.input_dir}")
     print(f"You can put the expected outputs to your testcases into {paths.output_dir}")
-    print(f"You can put the extra files to be available for each testcase into {paths.extra_dir}")
+    print(
+        f"You can put the extra files to be available for each testcase into {paths.extra_dir}"
+    )
     print(f"You can configure grading by editing {paths.config}")
-    print("You can find docs at https://ovsyanka83.github.io/autograder/")
+    print("You can find docs at https://zmievsa.github.io/autograder/")
 
 
 def _get_supported_languages() -> Dict[str, Type[TestCase]]:
-    testcase_types = TestCasePicker.discover_testcase_types(AutograderPaths.testcase_types_dir)
-    return {t.type_source_file.stem: t for t in testcase_types if (t.get_template_dir()).exists()}
+    testcase_types = TestCasePicker.discover_testcase_types(
+        AutograderPaths.testcase_types_dir
+    )
+    return {
+        t.type_source_file.stem: t
+        for t in testcase_types
+        if (t.get_template_dir()).exists()
+    }
 
 
-def _get_a_valid_language_choice(supported_languages: Dict[str, Type[TestCase]]) -> Type[TestCase]:
+def _get_a_valid_language_choice(
+    supported_languages: Dict[str, Type[TestCase]],
+) -> Type[TestCase]:
     allowed_languages = ", ".join(name for name in supported_languages.keys())
 
     while True:
-        choice = input(f"Choose a programming language you'd like to get templates for ({allowed_languages}): ")
+        choice = input(
+            f"Choose a programming language you'd like to get templates for ({allowed_languages}): "
+        )
         lang = supported_languages.get(choice, None)
         if lang is None:
-            print(f"Couldn't find the language with name '{choice}'. Please, try again.")
+            print(
+                f"Couldn't find the language with name '{choice}'. Please, try again."
+            )
         else:
             break
     return lang

@@ -5,7 +5,7 @@ description = "A simple, secure, and versatile way to automatically grade progra
 authors = ["Stanislav Zmiev <zmievsa@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
-documentation = "https://ovsyanka83.github.io/autograder/"
+documentation = "https://zmievsa.github.io/autograder/"
 repository = "https://github.com/zmievsa/autograder"
 # this might be unnecessary, I don't remember and am too lazy too google
 include = ["autograder/**/*"]
