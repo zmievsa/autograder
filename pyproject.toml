@@ -7,7 +7,7 @@ license = "GPL-3.0"
 readme = "README.md"
 documentation = "https://zmievsa.github.io/autograder/"
 repository = "https://github.com/zmievsa/autograder"
-# this might be unnecessary, I don't remember and am too lazy too google
+# this might be unnecessary, I don't remember and am too lazy to google
 include = ["autograder/**/*"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
