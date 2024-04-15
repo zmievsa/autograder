@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autograder"
-version = "3.7.6"
+version = "3.7.7"
 description = "A simple, secure, and versatile way to automatically grade programming assignments"
 authors = ["Stanislav Zmiev <zmievsa@gmail.com>"]
 license = "GPL-3.0"
